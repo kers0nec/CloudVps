@@ -16,7 +16,6 @@ def init_db():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     
-    # Users table
     c.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id TEXT PRIMARY KEY,
@@ -27,7 +26,6 @@ def init_db():
         )
     ''')
     
-    # VPS instances table
     c.execute('''
         CREATE TABLE IF NOT EXISTS vps_instances (
             id TEXT PRIMARY KEY,
@@ -71,7 +69,6 @@ def get_db():
     conn.row_factory = sqlite3.Row
     return conn
 
-# ============ AUTH DECORATOR ============
 def auth_required(f):
     def decorated(*args, **kwargs):
         api_key = request.headers.get('X-API-Key') or request.args.get('api_key')
@@ -79,10 +76,7 @@ def auth_required(f):
             return jsonify({'error': 'API key required'}), 401
         
         conn = get_db()
-        user = conn.execute(
-            'SELECT * FROM users WHERE api_key = ?',
-            (api_key,)
-        ).fetchone()
+        user = conn.execute('SELECT * FROM users WHERE api_key = ?', (api_key,)).fetchone()
         conn.close()
         
         if not user:
@@ -93,7 +87,32 @@ def auth_required(f):
     decorated.__name__ = f.__name__
     return decorated
 
-# ============ PUBLIC ROUTES ============
+# ============ KERS0NE BRANDING ============
+@app.route('/', methods=['GET'])
+def home():
+    return jsonify({
+        'name': 'Kers0ne CloudVPS API',
+        'version': '1.0.0',
+        'brand': 'kers0ne',
+        'creator': 'Kers0ne',
+        'status': 'online',
+        'endpoints': {
+            'public': {
+                'POST /api/register': 'Create account',
+                'POST /api/login': 'Get API key',
+                'GET /api/plans': 'List VPS plans'
+            },
+            'protected (API key required)': {
+                'POST /api/vps': 'Create VPS',
+                'GET /api/vps': 'List all VPS',
+                'GET /api/vps/<id>': 'Get VPS details',
+                'POST /api/vps/<id>/start': 'Start VPS',
+                'POST /api/vps/<id>/stop': 'Stop VPS',
+                'DELETE /api/vps/<id>': 'Delete VPS',
+                'GET /api/user': 'Get user info'
+            }
+        }
+    })
 
 @app.route('/api/register', methods=['POST'])
 def register():
@@ -120,7 +139,8 @@ def register():
             'success': True,
             'api_key': api_key,
             'user_id': user_id,
-            'username': username
+            'username': username,
+            'brand': 'kers0ne'
         })
     except sqlite3.IntegrityError:
         conn.close()
@@ -149,14 +169,13 @@ def login():
         'success': True,
         'api_key': user['api_key'],
         'user_id': user['id'],
-        'username': user['username']
+        'username': user['username'],
+        'brand': 'kers0ne'
     })
 
 @app.route('/api/plans', methods=['GET'])
 def plans():
     return jsonify(get_plans())
-
-# ============ PROTECTED ROUTES ============
 
 @app.route('/api/vps', methods=['POST'])
 @auth_required
@@ -184,6 +203,7 @@ def create_vps():
     
     return jsonify({
         'success': True,
+        'brand': 'kers0ne',
         'vps': {
             'id': vps_id,
             'name': name,
@@ -208,6 +228,7 @@ def list_vps():
     
     return jsonify({
         'success': True,
+        'brand': 'kers0ne',
         'vps': [dict(row) for row in vps_list]
     })
 
@@ -224,7 +245,11 @@ def get_vps(vps_id):
     if not vps:
         return jsonify({'error': 'VPS not found'}), 404
     
-    return jsonify({'success': True, 'vps': dict(vps)})
+    return jsonify({
+        'success': True,
+        'brand': 'kers0ne',
+        'vps': dict(vps)
+    })
 
 @app.route('/api/vps/<vps_id>/start', methods=['POST'])
 @auth_required
@@ -239,14 +264,11 @@ def start_vps(vps_id):
         conn.close()
         return jsonify({'error': 'VPS not found'}), 404
     
-    conn.execute(
-        'UPDATE vps_instances SET status = ? WHERE id = ?',
-        ('running', vps_id)
-    )
+    conn.execute('UPDATE vps_instances SET status = ? WHERE id = ?', ('running', vps_id))
     conn.commit()
     conn.close()
     
-    return jsonify({'success': True, 'status': 'running'})
+    return jsonify({'success': True, 'brand': 'kers0ne', 'status': 'running'})
 
 @app.route('/api/vps/<vps_id>/stop', methods=['POST'])
 @auth_required
@@ -261,14 +283,11 @@ def stop_vps(vps_id):
         conn.close()
         return jsonify({'error': 'VPS not found'}), 404
     
-    conn.execute(
-        'UPDATE vps_instances SET status = ? WHERE id = ?',
-        ('stopped', vps_id)
-    )
+    conn.execute('UPDATE vps_instances SET status = ? WHERE id = ?', ('stopped', vps_id))
     conn.commit()
     conn.close()
     
-    return jsonify({'success': True, 'status': 'stopped'})
+    return jsonify({'success': True, 'brand': 'kers0ne', 'status': 'stopped'})
 
 @app.route('/api/vps/<vps_id>', methods=['DELETE'])
 @auth_required
@@ -283,14 +302,11 @@ def delete_vps(vps_id):
         conn.close()
         return jsonify({'error': 'VPS not found'}), 404
     
-    conn.execute(
-        'DELETE FROM vps_instances WHERE id = ?',
-        (vps_id,)
-    )
+    conn.execute('DELETE FROM vps_instances WHERE id = ?', (vps_id,))
     conn.commit()
     conn.close()
     
-    return jsonify({'success': True})
+    return jsonify({'success': True, 'brand': 'kers0ne'})
 
 @app.route('/api/user', methods=['GET'])
 @auth_required
@@ -304,34 +320,12 @@ def get_user():
     
     return jsonify({
         'success': True,
+        'brand': 'kers0ne',
         'user': {
             'id': request.user['id'],
             'username': request.user['username'],
             'api_key': request.user['api_key'],
             'vps_count': vps_count['count']
-        }
-    })
-
-@app.route('/', methods=['GET'])
-def home():
-    return jsonify({
-        'name': 'VPS API',
-        'version': '1.0.0',
-        'endpoints': {
-            'public': {
-                'POST /api/register': 'Create account',
-                'POST /api/login': 'Get API key',
-                'GET /api/plans': 'List VPS plans'
-            },
-            'protected (API key required)': {
-                'POST /api/vps': 'Create VPS',
-                'GET /api/vps': 'List all VPS',
-                'GET /api/vps/<id>': 'Get VPS details',
-                'POST /api/vps/<id>/start': 'Start VPS',
-                'POST /api/vps/<id>/stop': 'Stop VPS',
-                'DELETE /api/vps/<id>': 'Delete VPS',
-                'GET /api/user': 'Get user info'
-            }
         }
     })
 
