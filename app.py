@@ -3,7 +3,6 @@ from flask_cors import CORS
 import sqlite3
 import random
 import string
-import hashlib
 import os
 from datetime import datetime
 
