@@ -475,7 +475,7 @@
   </div>
 
   <script>
-    const API_BASE = 'https://cloudvps.onrender.com';
+    const API_BASE = window.location.origin;
     let apiKey = localStorage.getItem('apiKey') || '';
     let currentUser = localStorage.getItem('username') || '';
 
