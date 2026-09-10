@@ -88,13 +88,18 @@
       font-size: 1rem;
     }
 
+    .btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
     .btn-primary {
       background: #3b82f6;
       color: #fff;
       width: 100%;
     }
 
-    .btn-primary:hover {
+    .btn-primary:hover:not(:disabled) {
       background: #2563eb;
     }
 
@@ -103,7 +108,7 @@
       color: #fff;
     }
 
-    .btn-success:hover {
+    .btn-success:hover:not(:disabled) {
       background: #16a34a;
     }
 
@@ -112,7 +117,7 @@
       color: #fff;
     }
 
-    .btn-danger:hover {
+    .btn-danger:hover:not(:disabled) {
       background: #dc2626;
     }
 
@@ -122,7 +127,7 @@
       color: #f9fafb;
     }
 
-    .btn-secondary:hover {
+    .btn-secondary:hover:not(:disabled) {
       background: #1f2937;
     }
 
@@ -202,6 +207,17 @@
       text-decoration: underline;
     }
 
+    .backend-banner {
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.5);
+      color: #fbbf24;
+      border-radius: 10px;
+      padding: 0.9rem 1.2rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.92rem;
+      line-height: 1.4;
+    }
+
     .create-card {
       background: #111827;
       border: 1px solid #1f2937;
@@ -279,10 +295,17 @@
       color: #ef4444;
     }
 
+    .status-warning {
+      background: rgba(245, 158, 11, 0.2);
+      color: #f59e0b;
+    }
+
     .vps-card .specs {
       color: #9ca3af;
       font-size: 0.9rem;
       margin: 0.5rem 0;
+      line-height: 1.5;
+      word-break: break-all;
     }
 
     .vps-card .actions {
@@ -296,6 +319,7 @@
       text-align: center;
       color: #9ca3af;
       padding: 3rem 0;
+      grid-column: 1 / -1;
     }
 
     .badge {
@@ -390,19 +414,19 @@
     <div id="authContainer">
       <div class="auth-card">
         <h1>🚀 Kers0ne CloudVPS</h1>
-        <p class="subtitle">Free VPS hosting — powered by kers0ne</p>
+        <p class="subtitle">VPS hosting — powered by kers0ne</p>
 
         <!-- Login Form -->
         <form id="loginForm">
           <div class="form-group">
             <label>Username</label>
-            <input type="text" id="loginUsername" placeholder="Enter username" required>
+            <input type="text" id="loginUsername" placeholder="Enter username" required autocomplete="username">
           </div>
           <div class="form-group">
             <label>Password</label>
-            <input type="password" id="loginPassword" placeholder="Enter password" required>
+            <input type="password" id="loginPassword" placeholder="Enter password" required autocomplete="current-password">
           </div>
-          <button type="submit" class="btn btn-primary">Login</button>
+          <button type="submit" class="btn btn-primary" id="loginBtn">Login</button>
           <div id="loginError" class="error hidden"></div>
         </form>
 
@@ -410,13 +434,13 @@
         <form id="registerForm" class="hidden">
           <div class="form-group">
             <label>Username</label>
-            <input type="text" id="registerUsername" placeholder="Choose username" required>
+            <input type="text" id="registerUsername" placeholder="Choose username" required autocomplete="username">
           </div>
           <div class="form-group">
             <label>Password</label>
-            <input type="password" id="registerPassword" placeholder="Choose password" required>
+            <input type="password" id="registerPassword" placeholder="Choose password (min 6 characters)" required autocomplete="new-password">
           </div>
-          <button type="submit" class="btn btn-primary">Create Account</button>
+          <button type="submit" class="btn btn-primary" id="registerBtn">Create Account</button>
           <div id="registerError" class="error hidden"></div>
         </form>
 
@@ -425,7 +449,7 @@
           <span class="toggle-link" id="toggleAuth">Register</span>
         </div>
 
-        <div class="brand-badge">⚡ kers0ne • free vps</div>
+        <div class="brand-badge">⚡ kers0ne • cloudvps</div>
       </div>
     </div>
 
@@ -434,7 +458,7 @@
       <div class="header">
         <div>
           <h1>🚀 Kers0ne CloudVPS</h1>
-          <span style="color: #9ca3af; font-size: 0.9rem;">Free VPS hosting — powered by kers0ne</span>
+          <span style="color: #9ca3af; font-size: 0.9rem;">VPS hosting — powered by kers0ne</span>
         </div>
         <div class="user-info">
           <span id="userDisplay">User</span>
@@ -443,17 +467,21 @@
         </div>
       </div>
 
+      <!-- Backend health (real status from /api/health) -->
+      <div id="backendBanner" class="backend-banner hidden">
+        <strong>⚠ VPS backend offline.</strong>
+        <span id="backendDetail">The Docker daemon is not reachable — provisioning, start and stop will fail until it is back.</span>
+      </div>
+
       <!-- Create VPS -->
       <div class="create-card">
         <h2>Create New VPS</h2>
-        <p class="subtitle">Deploy a free VPS instance instantly</p>
+        <p class="subtitle">Provisions a real Docker container (Ubuntu) with the limits of the selected plan</p>
         <div class="flex-row">
           <div class="form-group">
             <label>Plan</label>
             <select id="createPlan">
-              <option value="starter">Starter (0.5 CPU, 512MB)</option>
-              <option value="standard" selected>Standard (1 CPU, 1GB)</option>
-              <option value="performance">Performance (2 CPU, 2GB)</option>
+              <option value="">Loading plans…</option>
             </select>
           </div>
           <div class="form-group">
@@ -478,12 +506,16 @@
     const API_BASE = window.location.origin;
     let apiKey = localStorage.getItem('apiKey') || '';
     let currentUser = localStorage.getItem('username') || '';
+    let plans = {};
+    let busy = false; // guards start/stop/delete against double-clicks
 
     // ============ DOM REFS ============
     const authContainer = document.getElementById('authContainer');
     const dashboardContainer = document.getElementById('dashboardContainer');
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
+    const loginBtn = document.getElementById('loginBtn');
+    const registerBtn = document.getElementById('registerBtn');
     const toggleAuth = document.getElementById('toggleAuth');
     const toggleText = document.getElementById('toggleText');
     const loginError = document.getElementById('loginError');
@@ -496,8 +528,36 @@
     const createName = document.getElementById('createName');
     const createPlan = document.getElementById('createPlan');
     const createError = document.getElementById('createError');
+    const backendBanner = document.getElementById('backendBanner');
+    const backendDetail = document.getElementById('backendDetail');
 
     let isLogin = true;
+
+    // ============ API HELPER ============
+    // Every call returns the real parsed response; network failures throw.
+    async function api(path, { method = 'GET', body = null, auth = true } = {}) {
+      const headers = {};
+      if (auth && apiKey) headers['X-API-Key'] = apiKey;
+      if (body !== null) headers['Content-Type'] = 'application/json';
+      const res = await fetch(`${API_BASE}${path}`, {
+        method,
+        headers,
+        body: body !== null ? JSON.stringify(body) : undefined
+      });
+      let data = {};
+      try { data = await res.json(); } catch (_) { /* non-JSON response */ }
+      return { ok: res.ok, status: res.status, data };
+    }
+
+    function sessionExpired() {
+      localStorage.removeItem('apiKey');
+      localStorage.removeItem('username');
+      apiKey = '';
+      currentUser = '';
+      authContainer.style.display = 'block';
+      dashboardContainer.classList.remove('active');
+      showToast('Session expired. Please login again.', 'error');
+    }
 
     // ============ TOAST ============
     function showToast(message, type = 'success') {
@@ -527,11 +587,18 @@
       registerError.classList.add('hidden');
     });
 
+    function enterDashboard() {
+      authContainer.style.display = 'none';
+      dashboardContainer.classList.add('active');
+      userDisplay.textContent = currentUser;
+      loadDashboard();
+    }
+
     // ============ REGISTER ============
     registerForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const username = document.getElementById('registerUsername').value.trim();
-      const password = document.getElementById('registerPassword').value.trim();
+      const password = document.getElementById('registerPassword').value;
 
       if (!username || !password) {
         registerError.textContent = 'Username and password required';
@@ -539,32 +606,33 @@
         return;
       }
 
+      registerBtn.disabled = true;
+      registerBtn.textContent = 'Creating account…';
       try {
-        const res = await fetch(`${API_BASE}/api/register`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password })
+        const { ok, status, data } = await api('/api/register', {
+          method: 'POST', auth: false, body: { username, password }
         });
-        const data = await res.json();
 
-        if (data.error) {
-          registerError.textContent = data.error;
+        if (!ok || data.error) {
+          registerError.textContent = data.error || `Request failed (${status})`;
           registerError.classList.remove('hidden');
           return;
         }
 
-        showToast('Account created! Please login.', 'success');
+        // The API returns real credentials — log in directly with them.
+        apiKey = data.api_key;
+        currentUser = data.username;
+        localStorage.setItem('apiKey', apiKey);
+        localStorage.setItem('username', currentUser);
         registerError.classList.add('hidden');
-        // Switch to login
-        isLogin = true;
-        loginForm.classList.remove('hidden');
-        registerForm.classList.add('hidden');
-        toggleText.textContent = "Don't have an account?";
-        toggleAuth.textContent = 'Register';
-        document.getElementById('loginUsername').value = username;
+        showToast(`Account created. Welcome, ${currentUser}!`, 'success');
+        enterDashboard();
       } catch (e) {
         registerError.textContent = 'Network error. Try again.';
         registerError.classList.remove('hidden');
+      } finally {
+        registerBtn.disabled = false;
+        registerBtn.textContent = 'Create Account';
       }
     });
 
@@ -572,7 +640,7 @@
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const username = document.getElementById('loginUsername').value.trim();
-      const password = document.getElementById('loginPassword').value.trim();
+      const password = document.getElementById('loginPassword').value;
 
       if (!username || !password) {
         loginError.textContent = 'Username and password required';
@@ -580,16 +648,15 @@
         return;
       }
 
+      loginBtn.disabled = true;
+      loginBtn.textContent = 'Logging in…';
       try {
-        const res = await fetch(`${API_BASE}/api/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password })
+        const { ok, data } = await api('/api/login', {
+          method: 'POST', auth: false, body: { username, password }
         });
-        const data = await res.json();
 
-        if (data.error) {
-          loginError.textContent = data.error;
+        if (!ok || data.error) {
+          loginError.textContent = data.error || 'Login failed';
           loginError.classList.remove('hidden');
           return;
         }
@@ -601,10 +668,13 @@
 
         loginError.classList.add('hidden');
         showToast(`Welcome back, ${currentUser}!`, 'success');
-        loadDashboard();
+        enterDashboard();
       } catch (e) {
         loginError.textContent = 'Network error. Try again.';
         loginError.classList.remove('hidden');
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Login';
       }
     });
 
@@ -619,18 +689,49 @@
       showToast('Logged out.', 'success');
     });
 
-    // ============ LOAD DASHBOARD ============
+    // ============ DASHBOARD BOOTSTRAP ============
     async function loadDashboard() {
-      if (!apiKey) {
-        authContainer.style.display = 'block';
-        dashboardContainer.classList.remove('active');
-        return;
-      }
+      await Promise.all([checkBackend(), loadPlans(), loadVPS()]);
+    }
 
-      authContainer.style.display = 'none';
-      dashboardContainer.classList.add('active');
-      userDisplay.textContent = currentUser;
-      await loadVPS();
+    // ============ BACKEND HEALTH ============
+    async function checkBackend() {
+      try {
+        const { ok, data } = await api('/api/health', { auth: false });
+        if (ok && data.docker === false) {
+          backendDetail.textContent =
+            'The Docker daemon is not reachable, so VPS operations will fail. ' +
+            (data.detail ? `Backend says: ${data.detail}` : '');
+          backendBanner.classList.remove('hidden');
+        } else {
+          backendBanner.classList.add('hidden');
+        }
+      } catch (e) {
+        backendDetail.textContent = 'Cannot contact the CloudVPS API at all.';
+        backendBanner.classList.remove('hidden');
+      }
+    }
+
+    // ============ PLANS (single source of truth: /api/plans) ============
+    async function loadPlans() {
+      try {
+        const { ok, data } = await api('/api/plans', { auth: false });
+        if (!ok || data.error) throw new Error(data.error || 'failed');
+        plans = data;
+        const keys = Object.keys(plans);
+        if (keys.length === 0) {
+          createPlan.innerHTML = '<option value="">No plans available</option>';
+          return;
+        }
+        createPlan.innerHTML = keys.map(key => {
+          const p = plans[key];
+          const label = key.charAt(0).toUpperCase() + key.slice(1);
+          return `<option value="${escapeHtml(key)}"${key === 'standard' ? ' selected' : ''}>` +
+                 `${escapeHtml(label)} — ${escapeHtml(p.cpu)} CPU, ${escapeHtml(p.memory)} RAM, ${escapeHtml(p.storage)} disk</option>`;
+        }).join('');
+      } catch (e) {
+        createPlan.innerHTML = '<option value="">Could not load plans</option>';
+      }
     }
 
     // ============ LOAD VPS ============
@@ -638,22 +739,11 @@
       vpsList.innerHTML = '<div class="empty-state">Loading your VPS instances...</div>';
 
       try {
-        const res = await fetch(`${API_BASE}/api/vps`, {
-          headers: { 'X-API-Key': apiKey }
-        });
-        const data = await res.json();
+        const { ok, status, data } = await api('/api/vps');
 
-        if (data.error) {
-          if (data.error.includes('Invalid API key')) {
-            localStorage.removeItem('apiKey');
-            localStorage.removeItem('username');
-            apiKey = '';
-            authContainer.style.display = 'block';
-            dashboardContainer.classList.remove('active');
-            showToast('Session expired. Please login again.', 'error');
-            return;
-          }
-          vpsList.innerHTML = `<div class="empty-state">Error: ${data.error}</div>`;
+        if (!ok || data.error) {
+          if (status === 401) return sessionExpired();
+          vpsList.innerHTML = `<div class="empty-state">Error: ${escapeHtml(data.error || 'Unknown error')}</div>`;
           return;
         }
 
@@ -674,19 +764,20 @@
           <div class="vps-card">
             <div class="name">${escapeHtml(vps.name)}</div>
             <div>
-              <span class="status status-${vps.status}">${vps.status}</span>
-              <span class="badge">${vps.plan}</span>
+              <span class="status ${statusClass(vps.status)}">${escapeHtml(vps.status)}</span>
+              <span class="badge">${escapeHtml(vps.plan)}</span>
             </div>
             <div class="specs">
-              CPU: ${vps.cpu} · Memory: ${vps.memory} · Storage: ${vps.storage}<br>
-              IP: ${vps.ip} · ID: ${vps.id}
+              CPU: ${escapeHtml(vps.cpu)} · Memory: ${escapeHtml(vps.memory)} · Storage: ${escapeHtml(vps.storage)}<br>
+              IP: ${escapeHtml(vps.ip || 'N/A')} · ID: ${escapeHtml(vps.id)}<br>
+              Container: <span title="${escapeHtml(vps.container_id || '')}">${escapeHtml((vps.container_id || 'n/a').slice(0, 12))}</span>
             </div>
             <div class="actions">
               ${vps.status === 'running' ?
-                `<button class="btn btn-danger btn-sm" onclick="stopVPS('${vps.id}')">Stop</button>` :
-                `<button class="btn btn-success btn-sm" onclick="startVPS('${vps.id}')">Start</button>`
+                `<button class="btn btn-danger btn-sm" onclick="stopVPS('${escapeHtml(vps.id)}')">Stop</button>` :
+                `<button class="btn btn-success btn-sm" onclick="startVPS('${escapeHtml(vps.id)}')">Start</button>`
               }
-              <button class="btn btn-danger btn-sm" onclick="deleteVPS('${vps.id}')">Delete</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteVPS('${escapeHtml(vps.id)}')">Delete</button>
             </div>
           </div>
         `).join('');
@@ -695,34 +786,41 @@
       }
     }
 
+    function statusClass(status) {
+      if (status === 'running') return 'status-running';
+      if (['paused', 'restarting', 'created'].includes(status)) return 'status-warning';
+      return 'status-stopped'; // exited, dead, removing, unknown
+    }
+
     // ============ CREATE VPS ============
     createBtn.addEventListener('click', async () => {
-      const name = createName.value.trim() || `vps-${Date.now().toString(36)}`;
+      const name = createName.value.trim();
       const plan = createPlan.value;
+      if (!plan) {
+        createError.textContent = 'No plan selected yet.';
+        createError.classList.remove('hidden');
+        return;
+      }
 
-      createBtn.textContent = 'Deploying...';
+      createBtn.textContent = 'Deploying…';
       createBtn.disabled = true;
       createError.classList.add('hidden');
 
       try {
-        const res = await fetch(`${API_BASE}/api/vps`, {
+        const { ok, status, data } = await api('/api/vps', {
           method: 'POST',
-          headers: {
-            'X-API-Key': apiKey,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ name, plan })
+          body: { name: name || undefined, plan }
         });
-        const data = await res.json();
 
-        if (data.error) {
-          createError.textContent = data.error;
+        if (!ok || data.error) {
+          if (status === 401) return sessionExpired();
+          createError.textContent = data.error || `Request failed (${status})`;
           createError.classList.remove('hidden');
           return;
         }
 
         createName.value = '';
-        showToast(`VPS "${data.vps.name}" created successfully! 🚀`, 'success');
+        showToast(`VPS "${data.vps.name}" provisioned — status: ${data.vps.status}`, 'success');
         loadVPS();
       } catch (e) {
         createError.textContent = 'Network error. Try again.';
@@ -733,68 +831,54 @@
       }
     });
 
-    // ============ START VPS ============
-    async function startVPS(id) {
+    // ============ VPS ACTIONS ============
+    // Each action waits for the real API result before reporting anything.
+    async function vpsAction(id, verb, path, method = 'POST') {
+      if (busy) return;
+      busy = true;
       try {
-        await fetch(`${API_BASE}/api/vps/${id}/start`, {
-          method: 'POST',
-          headers: { 'X-API-Key': apiKey }
-        });
-        showToast('VPS starting...', 'success');
-        loadVPS();
+        const { ok, status, data } = await api(path, { method });
+        if (!ok || data.error) {
+          if (status === 401) return sessionExpired();
+          showToast(`Failed to ${verb} VPS: ${data.error || `HTTP ${status}`}`, 'error');
+        } else {
+          const detail = data.status ? ` — now ${data.status}` : '';
+          showToast(`VPS ${verb} successful${detail}`, 'success');
+        }
       } catch (e) {
-        showToast('Error starting VPS', 'error');
+        showToast(`Network error while trying to ${verb} VPS`, 'error');
+      } finally {
+        busy = false;
+        loadVPS();
       }
     }
 
-    // ============ STOP VPS ============
-    async function stopVPS(id) {
-      try {
-        await fetch(`${API_BASE}/api/vps/${id}/stop`, {
-          method: 'POST',
-          headers: { 'X-API-Key': apiKey }
-        });
-        showToast('VPS stopping...', 'success');
-        loadVPS();
-      } catch (e) {
-        showToast('Error stopping VPS', 'error');
-      }
-    }
-
-    // ============ DELETE VPS ============
-    async function deleteVPS(id) {
-      if (!confirm('Delete this VPS permanently?')) return;
-
-      try {
-        await fetch(`${API_BASE}/api/vps/${id}`, {
-          method: 'DELETE',
-          headers: { 'X-API-Key': apiKey }
-        });
-        showToast('VPS deleted.', 'success');
-        loadVPS();
-      } catch (e) {
-        showToast('Error deleting VPS', 'error');
-      }
+    function startVPS(id) { return vpsAction(id, 'start', `/api/vps/${id}/start`); }
+    function stopVPS(id) { return vpsAction(id, 'stop', `/api/vps/${id}/stop`); }
+    function deleteVPS(id) {
+      if (!confirm('Delete this VPS permanently? The container will be destroyed.')) return;
+      return vpsAction(id, 'delete', `/api/vps/${id}`, 'DELETE');
     }
 
     // ============ UTILITY ============
     function escapeHtml(str) {
       const div = document.createElement('div');
-      div.textContent = str;
+      div.textContent = str == null ? '' : String(str);
       return div.innerHTML;
     }
 
     // ============ CHECK SESSION ============
     if (apiKey && currentUser) {
-      loadDashboard();
+      enterDashboard();
     } else {
       authContainer.style.display = 'block';
       dashboardContainer.classList.remove('active');
     }
 
-    // Auto-refresh VPS every 30 seconds
+    // Auto-refresh VPS state + backend health every 30 seconds
     setInterval(() => {
       if (dashboardContainer.classList.contains('active')) {
+        checkBackend();
         loadVPS();
       }
     }, 30000);
