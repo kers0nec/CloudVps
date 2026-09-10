@@ -65,11 +65,17 @@ def _ip_of(container):
     return (container.attrs.get('NetworkSettings') or {}).get('IPAddress') or 'N/A'
 
 
-def _host_config(client, config, with_disk=True):
+def _host_kwargs(config, with_disk=True):
+    """Resource limits for the container's HostConfig.
+
+    ``containers.create()`` on docker-py >= 4 builds the HostConfig from
+    individual keyword arguments (cpu_shares/mem_limit/storage_opt); passing
+    a pre-built ``host_config=`` object is rejected with a TypeError.
+    """
     kwargs = {'cpu_shares': config['cpu_shares'], 'mem_limit': config['mem_limit']}
     if with_disk:
         kwargs['storage_opt'] = {'size': config['disk']}
-    return client.api.create_host_config(**kwargs)
+    return kwargs
 
 
 def create_vps_container(user_id, plan='starter'):
@@ -86,8 +92,8 @@ def create_vps_container(user_id, plan='starter'):
             name=container_name,
             command='sleep infinity',
             hostname=container_name,
-            host_config=_host_config(client, config, with_disk),
             labels=labels,
+            **_host_kwargs(config, with_disk),
         )
 
     try:
