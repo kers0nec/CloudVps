@@ -10,14 +10,22 @@ truth for container state.
 - User registration / login with hashed passwords (Werkzeug `pbkdf2:sha256`).
 - API-key authenticated REST API.
 - Create / start / stop / delete real VPS containers.
-- Live status and IP synced from the Docker daemon on every list request.
+- Live status and IP synced from the Docker daemon on every list request;
+  rows whose container no longer exists are pruned automatically.
+- `/api/health` reports live Docker reachability (with the backend error
+  detail), and the dashboard shows a banner whenever the daemon is offline.
+- Plan catalogue served by `/api/plans` — the dashboard renders it dynamically,
+  so there is a single source of truth for plans.
 - Single-page dashboard (`index.html`) served by the same app.
 
 ## Requirements
 - Python 3.10+
 - A working Docker daemon that this app can reach (`DOCKER_HOST`, or the
   default local socket). Without Docker, the API boots and serves the UI but
-  returns a clear `503` when a VPS operation is attempted.
+  returns a clear `503` (including the backend error detail) when a VPS
+  operation is attempted.
+- `docker-py >= 7.1.0` (pinned in `requirements.txt`); 7.0.0 is incompatible
+  with modern `requests` and fails with "Not supported URL scheme http+docker".
 
 ## Install
 ```bash

@@ -11,6 +11,7 @@ reachable, instead of crashing at import time.
 
 import random
 import string
+import time
 
 # ---------------------------------------------------------------------------
 # Plan catalogue. `cpu_shares`/`mem_limit` are applied to the container as real
@@ -32,15 +33,21 @@ _client = None
 
 
 def get_client():
-    """Return a cached Docker client, connecting on first use."""
+    """Return a cached Docker client, connecting on first use.
+
+    A failed connection never leaves a half-initialised client behind, so the
+    next call retries cleanly once the daemon is reachable.
+    """
     global _client
     if _client is None:
         import docker
+        client = docker.from_env()
         try:
-            _client = docker.from_env()
-            _client.ping()
+            client.ping()
         except Exception as exc:  # docker not running / not installed
+            client.close()
             raise RuntimeError(f"Docker is not available: {exc}")
+        _client = client
     return _client
 
 
@@ -91,14 +98,22 @@ def create_vps_container(user_id, plan='starter'):
             # Pull the base image on demand, then retry.
             client.images.pull(VPS_IMAGE)
             container = _create(with_disk=True)
-        elif 'storage-opt' in msg or 'size' in msg or 'Storage' in msg:
-            # Disk quota unsupported here — bring the VPS up with CPU/RAM only.
+        elif 'storage' in msg.lower():
+            # Disk quota unsupported on this host's storage driver — bring the
+            # VPS up with CPU/RAM limits only.
             container = _create(with_disk=False)
         else:
             raise
 
     container.start()
-    container.reload()
+
+    # Give the network stack a moment to assign the bridge IP, then sync state.
+    deadline = time.time() + 5
+    while True:
+        container.reload()
+        if _ip_of(container) not in (None, 'N/A', '') or time.time() >= deadline:
+            break
+        time.sleep(0.25)
     return {
         'container_id': container.id,
         'name': container.name,
@@ -125,15 +140,6 @@ def describe(container):
         'plan': (container.labels or {}).get('plan', 'starter'),
         'ip': _ip_of(container),
     }
-
-
-def list_user_containers(user_id):
-    """All containers belonging to a user, regardless of state."""
-    client = get_client()
-    containers = client.containers.list(
-        all=True, filters={'label': f'user_id={user_id}'}
-    )
-    return [describe(c) for c in containers]
 
 
 def start_container(container_id):

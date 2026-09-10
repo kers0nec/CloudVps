@@ -8,6 +8,7 @@ ownership metadata and the HTTP surface. No fake/placeholder data is stored.
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
 import sqlite3
 import random
 import string
@@ -73,7 +74,7 @@ init_db()
 
 
 def get_db():
-    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False, timeout=10)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -96,6 +97,7 @@ def error(message, code=400):
 
 
 def auth_required(f):
+    @wraps(f)
     def decorated(*args, **kwargs):
         api_key = request.headers.get('X-API-Key') or request.args.get('api_key')
         if not api_key:
@@ -109,19 +111,38 @@ def auth_required(f):
             return error('Invalid API key', 401)
         request.user = dict(user)
         return f(*args, **kwargs)
-    decorated.__name__ = f.__name__
     return decorated
 
 
 def handle_engine(exc):
     """Translate engine errors into HTTP responses."""
     msg = str(exc)
-    if 'Docker is not available' in msg:
+    is_docker_error = isinstance(exc, ConnectionError)
+    try:
+        from docker.errors import DockerException  # base of all docker-py errors
+        is_docker_error = is_docker_error or isinstance(exc, DockerException)
+    except ImportError:  # docker package not installed at all
+        is_docker_error = is_docker_error or 'No module named' in msg
+    if is_docker_error or 'Docker is not available' in msg:
         return error(
             'VPS backend (Docker) is not reachable. Start the Docker daemon '
-            'and ensure this app can talk to it.', 503
+            'and ensure this app can talk to it. '
+            f'(Backend error: {msg})', 503
         )
     return error(f'VPS operation failed: {msg}', 500)
+
+
+def container_gone(exc):
+    """True when the engine error means the container no longer exists."""
+    msg = str(exc).lower()
+    return 'not found' in msg or 'no such container' in msg
+
+
+def drop_vps_row(vps_id):
+    conn = get_db()
+    conn.execute('DELETE FROM vps_instances WHERE id = ?', (vps_id,))
+    conn.commit()
+    conn.close()
 
 
 def refresh_vps_row(conn, row):
@@ -141,7 +162,7 @@ def refresh_vps_row(conn, row):
         updated['ip'] = snap['ip']
         return updated
     except Exception as exc:  # noqa: BLE001
-        if 'not found' in str(exc).lower() or 'no such container' in str(exc).lower():
+        if container_gone(exc):
             # Real container is gone — reflect reality in the database.
             conn.execute('DELETE FROM vps_instances WHERE id = ?', (row['id'],))
             return None
@@ -158,11 +179,19 @@ def index():
 @app.route('/api/health')
 def health():
     docker_ok = True
+    detail = 'Docker daemon reachable'
     try:
         vps_engine.get_client().ping()
-    except Exception:
+    except Exception as exc:  # noqa: BLE001
         docker_ok = False
-    return jsonify({'status': 'ok', 'docker': docker_ok})
+        detail = str(exc)
+    return jsonify({
+        'status': 'ok',
+        'docker': docker_ok,
+        'detail': detail,
+        'image': vps_engine.VPS_IMAGE,
+        'plans': list(get_plans().keys()),
+    })
 
 
 # ============================ AUTH ============================
@@ -217,7 +246,8 @@ def login():
     ).fetchone()
     conn.close()
 
-    if not user or not check_password_hash(user['password_hash'], password):
+    if not user or not user['password_hash'] or not check_password_hash(
+            user['password_hash'], password):
         return error('Invalid credentials', 401)
 
     return jsonify({
@@ -317,15 +347,19 @@ def list_vps():
 @app.route('/api/vps/<vps_id>', methods=['GET'])
 @auth_required
 def get_vps(vps_id):
-    conn = get_db()
-    row = conn.execute(
-        'SELECT * FROM vps_instances WHERE id = ? AND user_id = ?',
-        (vps_id, request.user['id']),
-    ).fetchone()
-    conn.close()
-    if not row:
+    with _db_lock:
+        conn = get_db()
+        row = conn.execute(
+            'SELECT * FROM vps_instances WHERE id = ? AND user_id = ?',
+            (vps_id, request.user['id']),
+        ).fetchone()
+        # Sync status/IP from the real container before returning.
+        synced = refresh_vps_row(conn, dict(row)) if row else None
+        conn.commit()
+        conn.close()
+    if not synced:
         return error('VPS not found', 404)
-    return jsonify({'success': True, 'vps': dict(row)})
+    return jsonify({'success': True, 'vps': synced})
 
 
 def _own_row(vps_id):
@@ -350,6 +384,9 @@ def start_vps(vps_id):
     try:
         status = vps_engine.start_container(row['container_id'])
     except Exception as exc:  # noqa: BLE001
+        if container_gone(exc):
+            drop_vps_row(vps_id)
+            return error('This VPS no longer exists and was removed.', 404)
         return handle_engine(exc)
     conn = get_db()
     conn.execute('UPDATE vps_instances SET status = ? WHERE id = ?',
@@ -368,6 +405,9 @@ def stop_vps(vps_id):
     try:
         status = vps_engine.stop_container(row['container_id'])
     except Exception as exc:  # noqa: BLE001
+        if container_gone(exc):
+            drop_vps_row(vps_id)
+            return error('This VPS no longer exists and was removed.', 404)
         return handle_engine(exc)
     conn = get_db()
     conn.execute('UPDATE vps_instances SET status = ? WHERE id = ?',
@@ -386,12 +426,9 @@ def delete_vps(vps_id):
     try:
         vps_engine.delete_container(row['container_id'])
     except Exception as exc:  # noqa: BLE001
-        if 'not found' not in str(exc).lower() and 'no such container' not in str(exc).lower():
+        if not container_gone(exc):
             return handle_engine(exc)
-    conn = get_db()
-    conn.execute('DELETE FROM vps_instances WHERE id = ?', (vps_id,))
-    conn.commit()
-    conn.close()
+    drop_vps_row(vps_id)
     return jsonify({'success': True})
 
 
