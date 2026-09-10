@@ -143,7 +143,7 @@ def error(message, code=400):
 def auth_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        api_key = request.headers.get('X-API-Key') or request.args.get('api_key')
+        api_key = request.headers.get('X-API-Key') or request.args.get('api_key') or request.cookies.get('api_key')
         with _db_lock:
             conn = get_db()
             user = None
@@ -153,21 +153,11 @@ def auth_required(f):
                 ).fetchone()
                 if row:
                     user = dict(row)
-            if not user:
-                # Retrieve first user or create a persistent default session so deployment never fails
-                row = conn.execute('SELECT * FROM users ORDER BY created_at ASC LIMIT 1').fetchone()
-                if row:
-                    user = dict(row)
-                else:
-                    uid = generate_id()
-                    key = generate_api_key()
-                    conn.execute(
-                        'INSERT INTO users (id, username, password_hash, api_key) VALUES (?, ?, ?, ?)',
-                        (uid, 'admin_vps', generate_password_hash('freevps123'), key)
-                    )
-                    conn.commit()
-                    user = {'id': uid, 'username': 'admin_vps', 'api_key': key}
             conn.close()
+
+        if not user:
+            return error('Authentication required. Please sign up or log in.', 401)
+
         request.user = user
         return f(*args, **kwargs)
     return decorated
@@ -252,6 +242,8 @@ def register():
 
     if not username or not password:
         return error('Username and password required')
+    if len(username) < 3:
+        return error('Username must be at least 3 characters')
     if len(password) < 6:
         return error('Password must be at least 6 characters')
 
@@ -272,12 +264,14 @@ def register():
             return error('Username already exists')
         conn.close()
 
-    return jsonify({
+    resp = jsonify({
         'success': True,
         'api_key': api_key,
         'user_id': user_id,
         'username': username,
     })
+    resp.set_cookie('api_key', api_key, max_age=60*60*24*30, httponly=False, samesite='Lax')
+    return resp
 
 
 @app.route('/api/login', methods=['POST'])
@@ -297,14 +291,23 @@ def login():
 
     if not user or not user['password_hash'] or not check_password_hash(
             user['password_hash'], password):
-        return error('Invalid credentials', 401)
+        return error('Invalid username or password', 401)
 
-    return jsonify({
+    resp = jsonify({
         'success': True,
         'api_key': user['api_key'],
         'user_id': user['id'],
         'username': user['username'],
     })
+    resp.set_cookie('api_key', user['api_key'], max_age=60*60*24*30, httponly=False, samesite='Lax')
+    return resp
+
+
+@app.route('/api/logout', methods=['POST'])
+def logout():
+    resp = jsonify({'success': True, 'message': 'Logged out successfully'})
+    resp.delete_cookie('api_key')
+    return resp
 
 
 @app.route('/api/plans', methods=['GET'])
@@ -525,6 +528,7 @@ def vps_stats(vps_id):
 
 # ============================ WEB TERMINAL / EXECUTION ============================
 @app.route('/api/vps/<vps_id>/exec', methods=['POST'])
+@app.route('/api/vps/<vps_id>/terminal/exec', methods=['POST'])
 @auth_required
 def vps_exec(vps_id):
     row, resp = _own_row(vps_id)
@@ -537,7 +541,10 @@ def vps_exec(vps_id):
     if not command:
         return error('Command is required')
     res = vps_engine.exec_in_vps(vps_id, command)
-    return jsonify({'success': True, 'result': res})
+    stdout = res.get('stdout', '')
+    stderr = res.get('stderr', '')
+    output = stdout if stdout else stderr
+    return jsonify({'success': True, 'result': res, 'output': output, 'stdout': stdout, 'stderr': stderr, 'exit_code': res.get('exit_code', 0)})
 
 
 # ============================ FILE MANAGER ============================
@@ -854,20 +861,33 @@ def get_user():
 
 # ============================ USER & SESSION PERSISTENCE ============================
 @app.route('/api/session', methods=['GET'])
-@auth_required
 def get_session():
+    api_key = request.headers.get('X-API-Key') or request.args.get('api_key') or request.cookies.get('api_key')
+    if not api_key:
+        return jsonify({'success': True, 'authenticated': False, 'user': None})
+
     conn = get_db()
+    row = conn.execute(
+        'SELECT id, username, api_key, created_at FROM users WHERE api_key = ?',
+        (api_key,)
+    ).fetchone()
+    if not row:
+        conn.close()
+        return jsonify({'success': True, 'authenticated': False, 'user': None})
+
     vps_count = conn.execute(
         'SELECT COUNT(*) AS count FROM vps_instances WHERE user_id = ?',
-        (request.user['id'],),
+        (row['id'],),
     ).fetchone()
     conn.close()
+
     return jsonify({
         'success': True,
+        'authenticated': True,
         'user': {
-            'id': request.user['id'],
-            'username': request.user['username'],
-            'api_key': request.user['api_key'],
+            'id': row['id'],
+            'username': row['username'],
+            'api_key': row['api_key'],
             'vps_count': vps_count['count'] if vps_count else 0,
         }
     })
@@ -901,67 +921,6 @@ def get_services():
         'SELECT * FROM services WHERE user_id = ? ORDER BY created_at DESC',
         (request.user['id'],)
     ).fetchall()
-
-    # If empty, seed initial services so the user immediately experiences Render's dashboard
-    if not rows:
-        service_id1 = 'srv-' + generate_id()
-        service_id2 = 'srv-' + generate_id()
-        service_id3 = 'srv-' + generate_id()
-
-        conn.execute('''
-            INSERT INTO services (id, user_id, name, type, repo_url, branch, build_cmd, start_cmd, status, domain, plan)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (
-            service_id1, request.user['id'], 'cyber-api-gateway', 'web_service',
-            'https://github.com/render-examples/express-hello-world', 'main',
-            'npm install', 'node index.js', 'live',
-            f'cyber-api-gateway-{service_id1[:4]}.cloudvps.app', 'Free Starter'
-        ))
-
-        conn.execute('''
-            INSERT INTO deploys (id, service_id, commit_hash, commit_msg, branch, status, trigger_type, duration_sec, logs)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (
-            'dep-' + generate_id(), service_id1, 'a7f92e1', 'feat: initialize high-speed cyber api endpoints',
-            'main', 'live', 'Git Push (main)', 14,
-            '==> Cloning https://github.com/render-examples/express-hello-world\n==> Checking out commit a7f92e1\n==> Running build command: npm install\nadded 54 packages in 2.1s\n==> Generating container image...\n==> Starting service with: node index.js\n==> Listening on port 3000\n==> Service is live at https://cyber-api-gateway.cloudvps.app'
-        ))
-
-        conn.execute('''
-            INSERT INTO services (id, user_id, name, type, repo_url, branch, build_cmd, start_cmd, status, domain, plan)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (
-            service_id2, request.user['id'], 'neon-react-frontend', 'static_site',
-            'https://github.com/render-examples/vite-react-starter', 'main',
-            'npm run build', 'npx serve dist', 'live',
-            f'neon-react-frontend-{service_id2[:4]}.cloudvps.app', 'Free Static'
-        ))
-
-        conn.execute('''
-            INSERT INTO deploys (id, service_id, commit_hash, commit_msg, branch, status, trigger_type, duration_sec, logs)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (
-            'dep-' + generate_id(), service_id2, '91bc30d', 'style: apply cyberpunk blue theme & glow assets',
-            'main', 'live', 'Git Push (main)', 9,
-            '==> Cloning repository...\n==> Running build command: npm run build\nvite v5.2.0 building for production...\n✓ 42 modules transformed.\ndist/index.html 0.46 kB\ndist/assets/index.js 142.12 kB\n==> Build successful in 4.8s\n==> Deployed to Cloud VPS Global Edge'
-        ))
-
-        conn.execute('''
-            INSERT INTO services (id, user_id, name, type, repo_url, branch, build_cmd, start_cmd, status, domain, plan)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (
-            service_id3, request.user['id'], 'sentinel-discord-bot', 'bot',
-            'https://github.com/discord-bots/sentinel-py', 'main',
-            'pip install -r requirements.txt', 'python bot.py', 'live',
-            f'bot-sentinel-{service_id3[:4]}.internal', '24/7 Always-On Free'
-        ))
-
-        conn.commit()
-        rows = conn.execute(
-            'SELECT * FROM services WHERE user_id = ? ORDER BY created_at DESC',
-            (request.user['id'],)
-        ).fetchall()
-
     services = [dict(r) for r in rows]
     conn.close()
     return jsonify({'success': True, 'services': services})

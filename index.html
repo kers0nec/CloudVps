@@ -744,11 +744,11 @@
     </nav>
 
     <div class="sidebar-footer">
-      <div class="user-pill">
-        <div class="user-avatar" id="sidebar-avatar">C</div>
+      <div class="user-pill" id="sidebar-user-pill" onclick="handleUserPillClick()" style="cursor: pointer;" title="Click to view account or sign in">
+        <div class="user-avatar" id="sidebar-avatar">?</div>
         <div class="user-info">
-          <div class="user-name" id="sidebar-username">cyber_dev</div>
-          <div class="user-meta">100% Free Tier</div>
+          <div class="user-name" id="sidebar-username">Guest Visitor</div>
+          <div class="user-meta" id="sidebar-user-meta">Sign Up to Deploy</div>
         </div>
       </div>
     </div>
@@ -771,17 +771,22 @@
         </div>
       </div>
 
-      <div class="top-actions">
-        <button class="btn btn-secondary btn-sm" onclick="syncData()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-          Sync
-        </button>
-        <button class="btn btn-primary btn-sm" onclick="deployNewVps()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          + Deploy Free VPS
-        </button>
+      <div class="top-actions" id="top-actions-container">
+        <!-- Injected dynamically by updateAuthUI() -->
       </div>
     </header>
+
+    <!-- GUEST WELCOME BANNER (SHOWN WHEN NOT LOGGED IN) -->
+    <div id="guest-banner" style="display: none; background: linear-gradient(90deg, rgba(0, 240, 255, 0.12) 0%, rgba(0, 112, 243, 0.12) 100%); border-bottom: 1px solid var(--border-bright); padding: 12px 24px; align-items: center; justify-content: space-between; gap: 14px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 18px;">⚡</span>
+        <span style="font-size: 13px; color: #fff;"><strong>Guest Mode:</strong> Sign up to deploy real high-performance virtual containers and run 24/7 Discord bots.</span>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn btn-secondary btn-sm" onclick="openAuthModal('login')">Log In</button>
+        <button class="btn btn-primary btn-sm" onclick="openAuthModal('signup')">Sign Up (Free)</button>
+      </div>
+    </div>
 
     <!-- ==================== TAB 1: MY VPS INSTANCES ==================== -->
     <section class="tab-content active" id="tab-vps">
@@ -1025,22 +1030,95 @@
     <!-- ==================== TAB 5: SETTINGS & API ==================== -->
     <section class="tab-content" id="tab-settings">
       <div class="card cyber-glow">
-        <div class="card-title" style="margin-bottom: 16px;">Account, API Keys & SSH Credentials</div>
+        <div class="card-title" style="margin-bottom: 16px;">Account, API Keys & Credentials</div>
+        
         <div class="form-group">
           <label class="form-label">Username</label>
-          <input type="text" id="settings-username" class="form-input" value="cyber_dev">
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="settings-username" class="form-input" placeholder="Your username">
+            <button class="btn btn-secondary btn-sm" onclick="handleUpdateUsername()">Save</button>
+          </div>
         </div>
+
         <div class="form-group">
-          <label class="form-label">API Key (X-API-Key Header)</label>
-          <input type="text" id="settings-apikey" class="form-input" readonly>
+          <label class="form-label">Secret API Key (X-API-Key)</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="settings-apikey" class="form-input" readonly placeholder="Sign in to view your API key">
+            <button class="btn btn-secondary btn-sm" onclick="copyApiKey()">Copy</button>
+          </div>
+          <span style="font-size: 11px; color: var(--text-dim); margin-top: 4px; display: block;">Use this key in headers for automated API queries and CLI management.</span>
         </div>
+
         <div class="form-group">
           <label class="form-label">Public SSH Key (Ed25519)</label>
           <input type="text" class="form-input" value="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICloudVPSProxmoxNodeKey free@cloudvps" readonly>
         </div>
+
+        <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--surface-border); display: flex; align-items: center; justify-content: space-between;">
+          <div>
+            <div style="font-weight: 700; font-size: 13px; color: #fff;">Session Security</div>
+            <div style="font-size: 11px; color: var(--text-dim);">Sign out of your account on this device.</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" style="color: var(--danger); border-color: rgba(244,63,94,0.3);" onclick="handleLogout()">Log Out</button>
+        </div>
       </div>
     </section>
   </main>
+</div>
+
+<!-- AUTH MODAL (SIGN UP & LOG IN) -->
+<div id="auth-modal" style="display: none; position: fixed; inset: 0; background: rgba(2, 6, 18, 0.88); backdrop-filter: blur(8px); z-index: 9999; align-items: center; justify-content: center; padding: 20px;">
+  <div class="card cyber-glow" style="width: 100%; max-width: 440px; margin: 0; background: #04091a; border-color: var(--primary); box-shadow: 0 0 35px rgba(0, 240, 255, 0.25);">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div class="logo-icon" style="width: 28px; height: 28px; font-size: 14px;">⚡</div>
+        <div style="font-weight: 800; font-size: 16px; color: #fff;">CLOUD<span style="color: var(--primary);">VPS</span> ACCESS</div>
+      </div>
+      <button onclick="closeAuthModal()" style="background: transparent; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; padding: 4px;" title="Close dialog">✕</button>
+    </div>
+
+    <!-- Mode Tabs: Signup vs Login -->
+    <div style="display: flex; background: var(--surface); border: 1px solid var(--surface-border); border-radius: var(--radius-sm); padding: 3px; margin-bottom: 18px;">
+      <button id="auth-tab-signup" class="btn btn-sm" style="flex: 1; border-radius: 4px; font-weight: 700; background: var(--primary-gradient); color: #000;" onclick="switchAuthMode('signup')">Create Free Account</button>
+      <button id="auth-tab-login" class="btn btn-sm" style="flex: 1; border-radius: 4px; font-weight: 700; background: transparent; color: var(--text-muted);" onclick="switchAuthMode('login')">Log In</button>
+    </div>
+
+    <!-- Error container -->
+    <div id="auth-error" style="display: none; background: rgba(244, 63, 94, 0.15); border: 1px solid var(--danger); color: #fecdd3; border-radius: var(--radius-sm); padding: 9px 12px; font-size: 12px; margin-bottom: 14px; font-weight: 600;"></div>
+
+    <form id="auth-form" onsubmit="handleAuthSubmit(event)">
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <input type="text" id="auth-username" class="form-input" placeholder="Choose a username" required autocomplete="username">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" id="auth-password" class="form-input" placeholder="At least 6 characters" required autocomplete="current-password">
+      </div>
+
+      <div class="form-group" id="auth-confirm-group">
+        <label class="form-label">Confirm Password</label>
+        <input type="password" id="auth-password-confirm" class="form-input" placeholder="Repeat your password" autocomplete="new-password">
+      </div>
+
+      <button type="submit" id="auth-submit-btn" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 11px; margin-top: 6px;">
+        ⚡ Create Account & Launch VPS
+      </button>
+    </form>
+
+    <div style="margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--surface-border); font-size: 12px; color: var(--text-dim); display: flex; flex-direction: column; gap: 6px;">
+      <div style="color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+        <span style="color: var(--success);">✓</span> 100% Free Tier &bull; Instant root bash container
+      </div>
+      <div style="color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+        <span style="color: var(--success);">✓</span> 24/7 Discord Bot Watchdog Supervisor
+      </div>
+      <div style="color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+        <span style="color: var(--success);">✓</span> Zero payment info or credit card required
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- TOAST CONTAINER -->
@@ -1079,8 +1157,9 @@
   // API CALL HELPER
   async function api(path, options = {}) {
     options.headers = options.headers || {};
-    if (STATE.user && STATE.user.api_key) {
-      options.headers['X-API-Key'] = STATE.user.api_key;
+    const key = (STATE.user && STATE.user.api_key) || localStorage.getItem('cloudvps_key');
+    if (key) {
+      options.headers['X-API-Key'] = key;
     }
     if (options.body && typeof options.body === 'object' && !(options.body instanceof FormData)) {
       options.headers['Content-Type'] = 'application/json';
@@ -1089,9 +1168,217 @@
     try {
       const res = await fetch(path, options);
       const data = await res.json().catch(() => ({}));
+      if (res.status === 401 && path !== '/api/session' && path !== '/api/login' && path !== '/api/register') {
+        STATE.user = null;
+        localStorage.removeItem('cloudvps_key');
+        updateAuthUI();
+        renderVpsList();
+        openAuthModal('signup');
+      }
       return { ok: res.ok, status: res.status, data };
     } catch (e) {
       return { ok: false, status: 0, data: { error: e.message } };
+    }
+  }
+
+  // AUTH MODAL & USER MANAGEMENT
+  let currentAuthMode = 'signup';
+
+  function openAuthModal(mode = 'signup') {
+    currentAuthMode = mode;
+    const modal = document.getElementById('auth-modal');
+    const err = document.getElementById('auth-error');
+    if (err) { err.style.display = 'none'; err.textContent = ''; }
+    switchAuthMode(mode);
+    if (modal) modal.style.display = 'flex';
+  }
+
+  function closeAuthModal() {
+    const modal = document.getElementById('auth-modal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  function switchAuthMode(mode) {
+    currentAuthMode = mode;
+    const btnSignup = document.getElementById('auth-tab-signup');
+    const btnLogin = document.getElementById('auth-tab-login');
+    const confirmGroup = document.getElementById('auth-confirm-group');
+    const submitBtn = document.getElementById('auth-submit-btn');
+    const err = document.getElementById('auth-error');
+    if (err) { err.style.display = 'none'; err.textContent = ''; }
+
+    if (mode === 'signup') {
+      if (btnSignup) { btnSignup.style.background = 'var(--primary-gradient)'; btnSignup.style.color = '#000'; }
+      if (btnLogin) { btnLogin.style.background = 'transparent'; btnLogin.style.color = 'var(--text-muted)'; }
+      if (confirmGroup) confirmGroup.style.display = 'block';
+      if (submitBtn) submitBtn.innerHTML = '⚡ Create Account & Launch VPS';
+    } else {
+      if (btnLogin) { btnLogin.style.background = 'var(--primary-gradient)'; btnLogin.style.color = '#000'; }
+      if (btnSignup) { btnSignup.style.background = 'transparent'; btnSignup.style.color = 'var(--text-muted)'; }
+      if (confirmGroup) confirmGroup.style.display = 'none';
+      if (submitBtn) submitBtn.innerHTML = '🔑 Log In to Control Center';
+    }
+  }
+
+  async function handleAuthSubmit(e) {
+    e.preventDefault();
+    const err = document.getElementById('auth-error');
+    const username = document.getElementById('auth-username').value.trim();
+    const password = document.getElementById('auth-password').value;
+    const confirm = document.getElementById('auth-password-confirm').value;
+
+    if (err) { err.style.display = 'none'; err.textContent = ''; }
+
+    if (!username || username.length < 3) {
+      err.textContent = 'Username must be at least 3 characters.';
+      err.style.display = 'block';
+      return;
+    }
+
+    if (!password || password.length < 6) {
+      err.textContent = 'Password must be at least 6 characters.';
+      err.style.display = 'block';
+      return;
+    }
+
+    if (currentAuthMode === 'signup' && password !== confirm) {
+      err.textContent = 'Passwords do not match. Please verify.';
+      err.style.display = 'block';
+      return;
+    }
+
+    const endpoint = currentAuthMode === 'signup' ? '/api/register' : '/api/login';
+    const res = await api(endpoint, {
+      method: 'POST',
+      body: { username, password }
+    });
+
+    if (res.ok && res.data.success) {
+      localStorage.setItem('cloudvps_key', res.data.api_key);
+      STATE.user = {
+        id: res.data.user_id,
+        username: res.data.username,
+        api_key: res.data.api_key
+      };
+      closeAuthModal();
+      updateAuthUI();
+      showToast(`Welcome ${STATE.user.username}! Free account is live.`);
+      await loadVpsList();
+    } else {
+      err.textContent = res.data.error || 'Authentication failed. Please check details.';
+      err.style.display = 'block';
+    }
+  }
+
+  async function handleLogout() {
+    await api('/api/logout', { method: 'POST' });
+    localStorage.removeItem('cloudvps_key');
+    STATE.user = null;
+    STATE.vpsList = [];
+    STATE.activeVpsId = null;
+    updateAuthUI();
+    renderVpsList();
+    updateBotVpsStatusCard();
+    showToast('Logged out successfully.');
+    openAuthModal('signup');
+  }
+
+  function handleUserPillClick() {
+    if (!STATE.user) {
+      openAuthModal('signup');
+    } else {
+      switchTab('settings');
+    }
+  }
+
+  async function handleUpdateUsername() {
+    if (!STATE.user) {
+      openAuthModal('signup');
+      return;
+    }
+    const newUsername = document.getElementById('settings-username').value.trim();
+    if (!newUsername) {
+      showToast('Username cannot be empty');
+      return;
+    }
+    const res = await api('/api/user/profile', {
+      method: 'POST',
+      body: { username: newUsername }
+    });
+    if (res.ok && res.data.success) {
+      STATE.user.username = newUsername;
+      updateAuthUI();
+      showToast('Username updated successfully');
+    } else {
+      showToast(res.data.error || 'Failed to update username');
+    }
+  }
+
+  function copyApiKey() {
+    const input = document.getElementById('settings-apikey');
+    if (!input || !input.value) {
+      showToast('No API key available. Please sign in.');
+      openAuthModal('signup');
+      return;
+    }
+    navigator.clipboard.writeText(input.value);
+    showToast('API Key copied to clipboard!');
+  }
+
+  function updateAuthUI() {
+    const banner = document.getElementById('guest-banner');
+    const topActions = document.getElementById('top-actions-container');
+    const sidebarUsername = document.getElementById('sidebar-username');
+    const sidebarAvatar = document.getElementById('sidebar-avatar');
+    const sidebarMeta = document.getElementById('sidebar-user-meta');
+
+    if (STATE.user) {
+      if (banner) banner.style.display = 'none';
+      if (sidebarUsername) sidebarUsername.textContent = STATE.user.username;
+      if (sidebarAvatar) sidebarAvatar.textContent = STATE.user.username.charAt(0).toUpperCase();
+      if (sidebarMeta) sidebarMeta.textContent = '100% Free Tier';
+
+      const settingsUsername = document.getElementById('settings-username');
+      const settingsKey = document.getElementById('settings-apikey');
+      if (settingsUsername) settingsUsername.value = STATE.user.username;
+      if (settingsKey) settingsKey.value = STATE.user.api_key;
+
+      if (topActions) {
+        topActions.innerHTML = `
+          <div class="user-pill" style="padding: 4px 10px; background: rgba(0, 240, 255, 0.08); border-color: var(--border-bright);" onclick="switchTab('settings')" title="Account settings">
+            <div class="user-avatar" style="width: 20px; height: 20px; font-size: 10px;">${STATE.user.username.charAt(0).toUpperCase()}</div>
+            <span style="font-size: 12px; font-weight: 700; color: #fff; font-family: var(--mono);">${escapeHtml(STATE.user.username)}</span>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="syncData()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            Sync
+          </button>
+          <button class="btn btn-primary btn-sm" onclick="deployNewVps()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            + Deploy Free VPS
+          </button>
+          <button class="btn btn-secondary btn-sm" style="color: var(--danger); border-color: rgba(244,63,94,0.3);" onclick="handleLogout()">
+            Log Out
+          </button>
+        `;
+      }
+    } else {
+      if (banner) banner.style.display = 'flex';
+      if (sidebarUsername) sidebarUsername.textContent = 'Guest Viewer';
+      if (sidebarAvatar) sidebarAvatar.textContent = '?';
+      if (sidebarMeta) sidebarMeta.textContent = 'Sign Up to Deploy';
+
+      const settingsUsername = document.getElementById('settings-username');
+      const settingsKey = document.getElementById('settings-apikey');
+      if (settingsUsername) settingsUsername.value = '';
+      if (settingsKey) settingsKey.value = '';
+
+      if (topActions) {
+        topActions.innerHTML = `
+          <button class="btn btn-secondary btn-sm" onclick="openAuthModal('login')">Log In</button>
+          <button class="btn btn-primary btn-sm" onclick="openAuthModal('signup')">Sign Up (Free)</button>
+        `;
+      }
     }
   }
 
@@ -1123,10 +1410,16 @@
 
   // VPS MANAGEMENT
   async function loadVpsList() {
+    if (!STATE.user) {
+      renderVpsList();
+      updateBotVpsStatusCard();
+      return;
+    }
     const res = await api('/api/vps');
     if (res.ok && res.data.vps) {
       STATE.vpsList = res.data.vps;
-      document.getElementById('sidebar-vps-count').textContent = STATE.vpsList.length;
+      const countEl = document.getElementById('sidebar-vps-count');
+      if (countEl) countEl.textContent = STATE.vpsList.length;
       if (!STATE.activeVpsId && STATE.vpsList.length > 0) {
         STATE.activeVpsId = STATE.vpsList[0].id;
       }
@@ -1137,6 +1430,25 @@
 
   function renderVpsList() {
     const container = document.getElementById('vps-list-container');
+    if (!container) return;
+
+    if (!STATE.user) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 48px 24px; color: var(--text-muted); background: var(--bg-subtle); border-radius: var(--radius-sm); border: 1px dashed var(--surface-border);">
+          <div style="font-size: 40px; margin-bottom: 12px;">⚡</div>
+          <div style="font-size: 18px; font-weight: 800; color: #fff; margin-bottom: 6px;">Sign Up to Launch Real VPS Containers</div>
+          <div style="font-size: 13px; max-width: 500px; margin: 0 auto 20px; line-height: 1.6;">
+            Cloud-VPS is a 100% free hosting platform. Create an account in seconds to deploy isolated root containers, upload bot code, and keep Discord bots alive 24/7.
+          </div>
+          <div style="display: flex; justify-content: center; gap: 10px;">
+            <button class="btn btn-secondary" onclick="openAuthModal('login')">Log In</button>
+            <button class="btn btn-primary" onclick="openAuthModal('signup')">⚡ Sign Up & Deploy Free VPS</button>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
     if (STATE.vpsList.length === 0) {
       container.innerHTML = `
         <div style="text-align: center; padding: 40px 20px; color: var(--text-muted); background: var(--bg-subtle); border-radius: var(--radius-sm); border: 1px dashed var(--surface-border);">
@@ -1198,6 +1510,11 @@
   }
 
   async function deployNewVps() {
+    if (!STATE.user) {
+      showToast('Please sign up or log in to deploy a VPS container');
+      openAuthModal('signup');
+      return;
+    }
     const name = `vps-${Math.random().toString(36).substring(2, 7)}`;
     showToast(`Deploying isolated container ${name}...`);
     const res = await api('/api/vps', {
@@ -1209,6 +1526,8 @@
       showToast(`VPS ${name} is live and ready!`);
       await loadVpsList();
       updateBotVpsStatusCard();
+    } else {
+      showToast(res.data.error || 'Failed to deploy VPS');
     }
   }
 
@@ -1290,9 +1609,16 @@
   }
 
   async function uploadBotFiles(files) {
+    if (!STATE.user) {
+      showToast('Please sign up or log in first');
+      openAuthModal('signup');
+      return;
+    }
+
     if (!STATE.activeVpsId) {
       showToast('Please deploy a free VPS first!');
       await deployNewVps();
+      if (!STATE.activeVpsId) return;
     }
 
     showToast(`Uploading ${files.length} file(s) to bot workspace...`);
@@ -1417,9 +1743,16 @@
   }
 
   async function startBotSupervisor() {
+    if (!STATE.user) {
+      showToast('Please sign up or log in to launch a bot');
+      openAuthModal('signup');
+      return;
+    }
+
     if (!STATE.activeVpsId) {
       showToast('Deploying a free VPS container first...');
       await deployNewVps();
+      if (!STATE.activeVpsId) return;
     }
 
     const token = document.getElementById('bot-token-input').value.trim();
@@ -1481,6 +1814,12 @@
 
       if (cmd === 'clear') {
         body.innerHTML = '';
+        return;
+      }
+
+      if (!STATE.user) {
+        body.innerHTML += `<div style="color: var(--warning);">Please create a free account or log in to execute terminal commands.</div>`;
+        openAuthModal('signup');
         return;
       }
 
@@ -1574,13 +1913,20 @@
   // INITIALIZATION
   async function init() {
     const res = await api('/api/session');
-    if (res.ok && res.data.user) {
+    if (res.ok && res.data.authenticated && res.data.user) {
       STATE.user = res.data.user;
-      document.getElementById('sidebar-username').textContent = STATE.user.username;
-      document.getElementById('settings-username').value = STATE.user.username;
-      document.getElementById('settings-apikey').value = STATE.user.api_key;
+      localStorage.setItem('cloudvps_key', STATE.user.api_key);
+      updateAuthUI();
+      await loadVpsList();
+    } else {
+      STATE.user = null;
+      localStorage.removeItem('cloudvps_key');
+      updateAuthUI();
+      renderVpsList();
+      updateBotVpsStatusCard();
+      // Allow viewers to signup right when viewing
+      openAuthModal('signup');
     }
-    await loadVpsList();
   }
 
   init();
