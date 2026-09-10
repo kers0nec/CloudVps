@@ -1,0 +1,50 @@
+{
+  "users": {
+    "usr_free_user": {
+      "id": "usr_free_user",
+      "username": "cloud_user",
+      "password_hash": "0f46640e3ed3579d57bb2393d132da5a0cf00420695edf4db0c4b7acedae6ee4",
+      "api_key": "cvps_live_free_key_777",
+      "created_at": "2026-09-10T18:10:39.242Z"
+    }
+  },
+  "vps": {
+    "vps-free-01": {
+      "id": "vps-free-01",
+      "user_id": "usr_free_user",
+      "name": "Discord-Bot-VPS-01",
+      "plan": "performance",
+      "status": "running",
+      "cpu": "4.0 Cores",
+      "memory": "4GB RAM",
+      "storage": "80GB NVMe",
+      "ip": "172.20.0.12",
+      "container_id": "c-free-01",
+      "engine": "native_sandbox",
+      "created_at": "2026-09-10T18:10:39.242Z"
+    }
+  },
+  "bots": {
+    "vps-free-01": {
+      "status": "running",
+      "running": true,
+      "pid": 4102,
+      "filename": "bot.py",
+      "runtime": "python",
+      "token": "",
+      "restarts": 0,
+      "started_at": 1789063479243,
+      "logs": [
+        "[CloudVPS 24/7 Watchdog] Initializing container runtime (python 3.11)...",
+        "[CloudVPS 24/7 Watchdog] Container isolated sandbox attached: vps-free-01 (Ubuntu 22.04)",
+        "[CloudVPS 24/7 Watchdog] Environment loaded from /root/.env",
+        "[CloudVPS 24/7 Watchdog] Process started (PID: 4102) -> entrypoint: bot.py",
+        "[CloudVPS 24/7 Supervisor] Bot is online and monitoring Discord events 🟢",
+        "[Bot Log] Logged in as CloudBot#2026 (ID: 108923849102)",
+        "[Bot Log] Synchronized 3 slash commands across 14 guilds.",
+        "[CloudVPS Watchdog] Heartbeat ping OK - CPU: 0.8% | RAM: 48MB | Ping: 12ms"
+      ]
+    }
+  },
+  "services": {}
+}

@@ -1462,11 +1462,7 @@
       const res = await fetch(path, options);
       const data = await res.json().catch(() => ({}));
       if (res.status === 401 && path !== '/api/session' && path !== '/api/login' && path !== '/api/register') {
-        STATE.user = null;
-        localStorage.removeItem('cloudvps_key');
-        updateAuthUI();
-        renderVpsList();
-        openAuthModal('signup');
+        console.warn('[CloudVPS API 401]:', path);
       }
       return { ok: res.ok, status: res.status, data };
     } catch (e) {
@@ -1699,7 +1695,10 @@
 
     if (tabId === 'vps') loadVpsList();
     if (tabId === 'bot') updateBotTabUi();
-    if (tabId === 'files') fetchFilesTree();
+    if (tabId === 'files') {
+      const cur = document.getElementById('file-code-editor')?.dataset?.currentFile;
+      fetchFilesTree(cur);
+    }
     if (tabId === 'ssh') updateBotVpsStatusCard();
   }
 
@@ -2029,7 +2028,8 @@
 
   function handleBotFilesSelect(e) {
     const files = e.target.files;
-    if (files.length) uploadBotFiles(files);
+    if (files && files.length) uploadBotFiles(files);
+    e.target.value = '';
   }
 
   async function uploadBotFiles(files) {
@@ -2057,14 +2057,16 @@
         headers: { 'X-API-Key': STATE.user?.api_key || '' },
         body: formData
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (res.ok && data.success) {
         showToast(data.message || 'Bot files uploaded successfully!');
         if (data.detected_entry) {
-          document.getElementById('bot-script-file').value = data.detected_entry;
+          const scriptInput = document.getElementById('bot-script-file');
+          if (scriptInput) scriptInput.value = data.detected_entry;
         }
         if (data.detected_runtime) {
-          document.getElementById('bot-runtime-select').value = data.detected_runtime;
+          const rtSelect = document.getElementById('bot-runtime-select');
+          if (rtSelect) rtSelect.value = data.detected_runtime;
         }
         await fetchBotFiles();
       } else {
@@ -2086,7 +2088,10 @@
 
   function renderBotFilesTable() {
     const tbody = document.getElementById('bot-files-table-body');
-    document.getElementById('bot-files-count').textContent = STATE.botFiles.length;
+    const countEl = document.getElementById('bot-files-count');
+    if (countEl) countEl.textContent = STATE.botFiles.length;
+
+    if (!tbody) return;
 
     if (STATE.botFiles.length === 0) {
       tbody.innerHTML = `
@@ -2100,6 +2105,7 @@
     }
 
     tbody.innerHTML = STATE.botFiles.map(f => {
+      const encName = encodeURIComponent(f.name);
       let badge = '<span style="color: var(--text-dim);">File</span>';
       if (f.name === 'bot.py' || f.name === 'main.py') {
         badge = '<span class="badge-cyber" style="color: var(--success); border-color: var(--success);">ENTRYPOINT (Python)</span>';
@@ -2111,6 +2117,7 @@
         badge = '<span class="badge-cyber" style="color: var(--warning); border-color: var(--warning);">CONFIG</span>';
       }
 
+      const isRunnable = f.name.endsWith('.py') || f.name.endsWith('.js') || f.name.endsWith('.sh');
       return `
         <tr>
           <td style="font-family: var(--mono); font-weight: 700; color: #fff;">
@@ -2121,13 +2128,13 @@
           </td>
           <td>${badge}</td>
           <td style="text-align: right; display: flex; gap: 6px; justify-content: flex-end; align-items: center;">
-            ${(f.name.endsWith('.py') || f.name.endsWith('.js') || f.name.endsWith('.sh')) ? `
-              <button class="btn btn-primary btn-sm" style="background: #10b981; border-color: #34d399; font-weight: 700;" onclick="runScriptFile('${escapeHtml(f.name)}')">
+            ${isRunnable ? `
+              <button class="btn btn-primary btn-sm" style="background: #10b981; border-color: #34d399; font-weight: 700;" data-filename="${encName}" onclick="runScriptFile(decodeURIComponent(this.dataset.filename))">
                 ▶ Start Bot
               </button>
             ` : ''}
-            <button class="btn btn-secondary btn-sm" onclick="editBotFile('${escapeHtml(f.name)}')">Edit</button>
-            <button class="btn btn-secondary btn-sm" style="color: var(--danger);" onclick="deleteBotFile('${escapeHtml(f.name)}')">Delete</button>
+            <button class="btn btn-secondary btn-sm" data-filename="${encName}" onclick="editBotFile(decodeURIComponent(this.dataset.filename))">Edit</button>
+            <button class="btn btn-secondary btn-sm" style="color: var(--danger);" data-filename="${encName}" onclick="deleteBotFile(decodeURIComponent(this.dataset.filename))">Delete</button>
           </td>
         </tr>
       `;
@@ -2135,11 +2142,16 @@
   }
 
   function runScriptFile(filename) {
-    document.getElementById('bot-script-file').value = filename;
-    if (filename.endsWith('.js')) {
-      document.getElementById('bot-runtime-select').value = 'node';
-    } else if (filename.endsWith('.py')) {
-      document.getElementById('bot-runtime-select').value = 'python';
+    if (!filename) return;
+    const scriptInput = document.getElementById('bot-script-file');
+    const runtimeSelect = document.getElementById('bot-runtime-select');
+    if (scriptInput) scriptInput.value = filename;
+    if (runtimeSelect) {
+      if (filename.endsWith('.js')) {
+        runtimeSelect.value = 'node';
+      } else if (filename.endsWith('.py')) {
+        runtimeSelect.value = 'python';
+      }
     }
     showToast(`Selected ${filename}. Launching 24/7 Bot...`);
     switchTab('bot');
@@ -2147,11 +2159,14 @@
   }
 
   function editBotFile(filename) {
+    if (!filename) return;
     switchTab('files');
+    fetchFilesTree(filename);
     loadFileContent(filename);
   }
 
   async function deleteBotFile(filename) {
+    if (!filename) return;
     if (!confirm(`Delete ${filename}?`)) return;
     const res = await api(`/api/vps/${STATE.activeVpsId}/file?path=${encodeURIComponent(filename)}`, {
       method: 'DELETE'
@@ -2159,6 +2174,7 @@
     if (res.ok) {
       showToast(`Deleted ${filename}`);
       fetchBotFiles();
+      fetchFilesTree();
     }
   }
 
@@ -2558,58 +2574,108 @@
   // =========================================================================
   // FILES & EDITOR
   // =========================================================================
-  async function fetchFilesTree() {
+  async function fetchFilesTree(targetFilename) {
     if (!STATE.activeVpsId && STATE.vpsList.length > 0) {
       STATE.activeVpsId = STATE.vpsList[0].id;
     }
     if (!STATE.activeVpsId) return;
 
-    const res = await api(`/api/vps/${STATE.activeVpsId}/files`);
-    if (res.ok && res.data.files) {
-      const tree = document.getElementById('files-tree-list');
-      tree.innerHTML = res.data.files.map(f => `
-        <div style="padding: 7px 10px; border-radius: 4px; font-family: var(--mono); font-size: 12px; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; gap: 6px;" onmouseover="this.style.background='var(--surface-hover)'" onmouseout="this.style.background='transparent'" onclick="loadFileContent('${escapeHtml(f.name)}')">
-          <span>📄</span>
-          <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(f.name)}</span>
-        </div>
-      `).join('');
+    try {
+      const res = await api(`/api/vps/${STATE.activeVpsId}/files`);
+      if (res.ok && res.data && Array.isArray(res.data.files)) {
+        const tree = document.getElementById('files-tree-list');
+        if (tree) {
+          tree.innerHTML = res.data.files.map(f => {
+            const encName = encodeURIComponent(f.name);
+            return `
+              <div style="padding: 7px 10px; border-radius: 4px; font-family: var(--mono); font-size: 12px; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; gap: 6px;" onmouseover="this.style.background='var(--surface-hover)'" onmouseout="this.style.background='transparent'" data-filename="${encName}" onclick="loadFileContent(decodeURIComponent(this.dataset.filename))">
+                <span>📄</span>
+                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(f.name)}</span>
+              </div>
+            `;
+          }).join('');
+        }
 
-      if (res.data.files.length > 0) {
-        loadFileContent(res.data.files[0].name);
+        const editorEl = document.getElementById('file-code-editor');
+        const currentOpen = targetFilename || (editorEl && editorEl.dataset.currentFile);
+        if (currentOpen && res.data.files.some(f => f.name === currentOpen)) {
+          loadFileContent(currentOpen);
+        } else if (res.data.files.length > 0) {
+          loadFileContent(res.data.files[0].name);
+        }
       }
+    } catch (e) {
+      console.warn('[Files Tree Error]:', e);
     }
   }
 
   async function loadFileContent(filename) {
-    if (!STATE.activeVpsId) return;
-    const res = await api(`/api/vps/${STATE.activeVpsId}/file?path=${encodeURIComponent(filename)}`);
-    if (res.ok && res.data.content !== undefined) {
-      document.getElementById('file-code-editor').value = res.data.content;
-      document.getElementById('file-code-editor').dataset.currentFile = filename;
-      document.getElementById('editor-active-filename').textContent = filename;
+    if (!STATE.activeVpsId || !filename) return;
+    try {
+      const res = await api(`/api/vps/${STATE.activeVpsId}/file?path=${encodeURIComponent(filename)}`);
+      const editor = document.getElementById('file-code-editor');
+      const filenameEl = document.getElementById('editor-active-filename');
+      if (editor) {
+        editor.value = (res.ok && res.data && res.data.content !== undefined) ? res.data.content : '';
+        editor.dataset.currentFile = filename;
+      }
+      if (filenameEl) {
+        filenameEl.textContent = filename;
+      }
+    } catch (err) {
+      console.warn('[File Load Error]:', err);
     }
   }
 
   async function saveActiveFile() {
-    const filename = document.getElementById('file-code-editor').dataset.currentFile || 'bot.py';
-    const content = document.getElementById('file-code-editor').value;
-    if (!STATE.activeVpsId) return;
+    const editor = document.getElementById('file-code-editor');
+    if (!editor) return;
+    const filename = editor.dataset.currentFile || 'bot.py';
+    const content = editor.value;
+    if (!STATE.activeVpsId) {
+      showToast('No active VPS selected');
+      return;
+    }
 
-    const res = await api(`/api/vps/${STATE.activeVpsId}/file`, {
-      method: 'POST',
-      body: { path: filename, content }
-    });
-    if (res.ok) {
-      showToast(`Saved ${filename}`);
-      fetchBotFiles();
+    try {
+      const res = await api(`/api/vps/${STATE.activeVpsId}/file`, {
+        method: 'POST',
+        body: { path: filename, content }
+      });
+      if (res.ok) {
+        showToast(`Saved ${filename} 💾`);
+        fetchBotFiles();
+        fetchFilesTree(filename);
+      } else {
+        showToast(`Failed to save: ${res.data.error || 'Server error'}`);
+      }
+    } catch (err) {
+      showToast(`Error saving file: ${err.message}`);
     }
   }
 
   async function saveAndStartBot() {
     await saveActiveFile();
-    const filename = document.getElementById('file-code-editor').dataset.currentFile || 'bot.py';
+    const editor = document.getElementById('file-code-editor');
+    const filename = (editor && editor.dataset.currentFile) || 'bot.py';
     runScriptFile(filename);
   }
+
+  // Bind Tab key in editor to indent with 2 spaces instead of losing focus
+  window.addEventListener('DOMContentLoaded', () => {
+    const editor = document.getElementById('file-code-editor');
+    if (editor) {
+      editor.addEventListener('keydown', function(e) {
+        if (e.key === 'Tab') {
+          e.preventDefault();
+          const start = this.selectionStart;
+          const end = this.selectionEnd;
+          this.value = this.value.substring(0, start) + '  ' + this.value.substring(end);
+          this.selectionStart = this.selectionEnd = start + 2;
+        }
+      });
+    }
+  });
 
   function escapeHtml(str) {
     return (str || '').replace(/[&<>'"]/g, tag => ({

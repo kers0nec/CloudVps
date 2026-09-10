@@ -1,6 +1,0 @@
-Flask==3.0.0
-Flask-CORS==4.0.0
-Werkzeug==3.0.1
-# 7.1.0+ is required for compatibility with modern `requests`
-# (7.0.0 breaks with "Not supported URL scheme http+docker").
-docker==7.1.0
