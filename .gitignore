@@ -16,6 +16,8 @@ yarn-error.log*
 vps.db
 vps.db-journal
 vps_instances/
+data/
+*.json.bak
 
 # Environments
 .env

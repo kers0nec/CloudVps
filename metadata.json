@@ -1,6 +1,6 @@
 {
   "name": "Cloud VPS",
-  "description": "100% Forever Free 24/7 Discord bot, root SSH terminal, and cloud container hosting with Termux mobile access and auto-restart watchdog.",
+  "description": "100% Forever Free 24/7 Discord bot, root SSH terminal, AppOnFly Remote PC controller, and cloud container hosting with Lune Luau runtime and auto-restart watchdog.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

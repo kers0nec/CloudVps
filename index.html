@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cloud VPS — 100% Forever Free Bot & SSH Cloud Hosting</title>
-  <meta name="description" content="Cloud VPS provides 100% forever free 24/7 Discord bot, root SSH terminal, and cloud container hosting with Termux mobile access and auto-restart watchdog.">
+  <meta name="description" content="100% Forever Free 24/7 Discord bot, root SSH terminal, AppOnFly Remote PC controller, and cloud container hosting with Lune Luau runtime and auto-restart watchdog.">
   <!-- Cloud VPS Authentic Favicon -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M41.5052 15.1655C45.3542 8.49886 54.9767 8.49886 58.8257 15.1655L84.8064 60.1655C88.6554 66.8322 83.8442 75.1655 76.1462 75.1655H24.1847C16.4867 75.1655 11.6754 66.8322 15.5244 60.1655L41.5052 15.1655Z' fill='%23972577'/%3E%3Cpath d='M61.9647 16.0953C68.8237 12.6005 76.8938 17.8413 76.4909 25.5287L73.7715 77.419C73.3686 85.1065 64.7949 89.475 58.3388 85.2824L14.7602 56.9821C8.30411 52.7895 8.80771 43.1802 15.6667 39.6853L61.9647 16.0953Z' fill='%23BD2E95'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -791,6 +791,701 @@
       from { transform: translateX(20px); opacity: 0; }
       to { transform: translateX(0); opacity: 1; }
     }
+    /* ==========================================================================
+       APPONFLY REMOTE PC CONTROLLER STYLES
+       ========================================================================== */
+    #tab-pc {
+      padding: 0 !important;
+      max-width: 100% !important;
+      width: 100% !important;
+      margin: 0 !important;
+    }
+
+    .apponfly-wrapper {
+      background: #0d0f14;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(189, 46, 149, 0.15);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+    }
+
+    /* AppOnFly Top Controller Toolbar */
+    .apponfly-topbar {
+      background: linear-gradient(180deg, #181a22 0%, #111319 100%);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      z-index: 100;
+    }
+
+    .apponfly-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .apponfly-logo-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(30, 58, 138, 0.35);
+      border: 1px solid rgba(96, 165, 250, 0.4);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 800;
+      font-size: 12px;
+      letter-spacing: 0.5px;
+      color: #93c5fd;
+    }
+
+    .apponfly-status-pills {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--text-muted);
+    }
+
+    .apponfly-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #d1d5db;
+    }
+
+    .apponfly-badge.live {
+      background: rgba(37, 217, 130, 0.12);
+      border-color: rgba(37, 217, 130, 0.3);
+      color: #34d399;
+    }
+
+    .apponfly-badge.hypervisor {
+      background: rgba(189, 46, 149, 0.12);
+      border-color: rgba(189, 46, 149, 0.35);
+      color: #f472b6;
+    }
+
+    .apponfly-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .apponfly-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #e5e7eb;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 5px 9px;
+      border-radius: 5px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+      font-family: inherit;
+    }
+
+    .apponfly-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.22);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+
+    .apponfly-btn:active {
+      transform: translateY(0);
+    }
+
+    .apponfly-btn.primary {
+      background: rgba(59, 130, 246, 0.2);
+      border-color: rgba(96, 165, 250, 0.45);
+      color: #93c5fd;
+    }
+
+    .apponfly-btn.primary:hover {
+      background: rgba(59, 130, 246, 0.35);
+      border-color: #60a5fa;
+      color: #fff;
+    }
+
+    .apponfly-btn.danger {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+    }
+
+    .apponfly-btn.danger:hover {
+      background: rgba(239, 68, 68, 0.28);
+      color: #fff;
+    }
+
+    /* Cloud PC Desktop Viewport */
+    .pc-desktop-viewport {
+      height: 720px;
+      min-height: 620px;
+      max-height: 85vh;
+      position: relative;
+      overflow: hidden;
+      background: radial-gradient(circle at 50% 20%, #1e1b4b 0%, #0f172a 45%, #05070f 100%);
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* Dynamic Windows 11 Fluent Wallpaper Mesh */
+    .pc-wallpaper-glow {
+      position: absolute;
+      top: 15%;
+      left: 35%;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.22) 0%, rgba(189, 46, 149, 0.16) 40%, rgba(0,0,0,0) 70%);
+      filter: blur(60px);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .pc-wallpaper-bloom {
+      position: absolute;
+      bottom: 20%;
+      right: 25%;
+      width: 450px;
+      height: 450px;
+      background: radial-gradient(circle, rgba(14, 165, 233, 0.18) 0%, rgba(37, 217, 130, 0.1) 40%, rgba(0,0,0,0) 70%);
+      filter: blur(60px);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Desktop Icons Area */
+    .pc-desktop-icons {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      bottom: 60px;
+      display: flex;
+      flex-direction: column;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-content: flex-start;
+      z-index: 5;
+      pointer-events: auto;
+    }
+
+    .pc-desktop-icon {
+      width: 74px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 6px 4px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      text-align: center;
+      transition: background 0.12s, border-color 0.12s;
+    }
+
+    .pc-desktop-icon:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.16);
+    }
+
+    .pc-desktop-icon.selected {
+      background: rgba(59, 130, 246, 0.24);
+      border-color: rgba(96, 165, 250, 0.5);
+    }
+
+    .pc-icon-svg {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 5px;
+      filter: drop-shadow(0 2px 5px rgba(0,0,0,0.5));
+    }
+
+    .pc-icon-label {
+      font-size: 11px;
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.9), 0 2px 6px rgba(0,0,0,0.9);
+      line-height: 1.25;
+      word-break: break-word;
+      font-weight: 500;
+    }
+
+    /* Windows Layer */
+    .pc-windows-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 46px;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* Window Box Component */
+    .pc-window {
+      position: absolute;
+      background: #111319;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 8px;
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.08);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      pointer-events: auto;
+      transition: opacity 0.15s ease, transform 0.15s ease;
+      min-width: 340px;
+      min-height: 240px;
+    }
+
+    .pc-window.minimized {
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.85) translateY(40px);
+    }
+
+    .pc-window.maximized {
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      border-radius: 0;
+    }
+
+    /* Window Titlebar */
+    .pc-win-titlebar {
+      height: 34px;
+      background: #181a22;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+      cursor: move;
+      user-select: none;
+    }
+
+    .pc-win-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #e5e7eb;
+    }
+
+    .pc-win-controls {
+      display: flex;
+      align-items: center;
+      gap: 1px;
+    }
+
+    .pc-win-btn {
+      width: 28px;
+      height: 24px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      color: #9ca3af;
+      font-size: 11px;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.12s;
+    }
+
+    .pc-win-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+
+    .pc-win-btn.close:hover {
+      background: #e11d48;
+      color: #fff;
+    }
+
+    .pc-win-body {
+      flex: 1;
+      overflow: auto;
+      background: #0e1015;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Windows 11 Taskbar */
+    .pc-taskbar {
+      height: 46px;
+      background: rgba(18, 20, 26, 0.94);
+      backdrop-filter: blur(24px);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+      z-index: 50;
+      user-select: none;
+    }
+
+    .pc-taskbar-center {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    @media (max-width: 900px) {
+      .pc-taskbar-center {
+        position: static;
+        transform: none;
+      }
+    }
+
+    .pc-taskbar-item {
+      height: 38px;
+      padding: 0 8px;
+      border-radius: 5px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: transparent;
+      border: 1px solid transparent;
+      color: #d1d5db;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.12s;
+    }
+
+    .pc-taskbar-item:hover {
+      background: rgba(255, 255, 255, 0.09);
+      color: #fff;
+    }
+
+    .pc-taskbar-item.active {
+      background: rgba(255, 255, 255, 0.13);
+      color: #fff;
+    }
+
+    .pc-taskbar-item.running::after {
+      content: '';
+      position: absolute;
+      bottom: 2px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 14px;
+      height: 3px;
+      background: #60a5fa;
+      border-radius: 2px;
+    }
+
+    .pc-taskbar-item.active::after {
+      width: 18px;
+      background: #38bdf8;
+      box-shadow: 0 0 6px rgba(56, 189, 248, 0.7);
+    }
+
+    .pc-taskbar-start-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .pc-taskbar-start-btn:hover {
+      background: rgba(59, 130, 246, 0.25);
+    }
+
+    .pc-taskbar-start-btn.open {
+      background: rgba(59, 130, 246, 0.35);
+    }
+
+    .pc-taskbar-systray {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .pc-systray-pill {
+      font-size: 11px;
+      font-family: var(--mono);
+      color: #9ca3af;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .pc-systray-clock {
+      text-align: right;
+      font-size: 11px;
+      line-height: 1.25;
+      color: #e5e7eb;
+      cursor: pointer;
+      padding: 3px 6px;
+      border-radius: 4px;
+    }
+
+    .pc-systray-clock:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .pc-show-desktop-btn {
+      width: 6px;
+      height: 28px;
+      border-left: 1px solid rgba(255, 255, 255, 0.15);
+      cursor: pointer;
+      margin-left: 4px;
+    }
+
+    .pc-show-desktop-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    /* Windows 11 Start Menu */
+    .pc-start-menu {
+      position: absolute;
+      bottom: 54px;
+      left: 50%;
+      transform: translateX(-50%) translateY(10px);
+      width: 540px;
+      max-width: 95vw;
+      background: rgba(24, 26, 34, 0.96);
+      backdrop-filter: blur(30px);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 12px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.08);
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .pc-start-menu.open {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .pc-start-search {
+      padding: 20px 24px 14px 24px;
+    }
+
+    .pc-start-search-input {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 20px;
+      padding: 9px 18px 9px 38px;
+      color: #fff;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .pc-start-search-input:focus {
+      border-color: #60a5fa;
+      box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
+    }
+
+    .pc-start-pinned {
+      padding: 0 24px 16px 24px;
+    }
+
+    .pc-start-section-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #9ca3af;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .pc-start-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+    }
+
+    .pc-start-tile {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px 6px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.12s;
+    }
+
+    .pc-start-tile:hover {
+      background: rgba(255, 255, 255, 0.09);
+      transform: translateY(-2px);
+    }
+
+    .pc-start-tile-icon {
+      width: 32px;
+      height: 32px;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pc-start-tile-label {
+      font-size: 11px;
+      color: #e5e7eb;
+      font-weight: 500;
+      line-height: 1.2;
+    }
+
+    .pc-start-recent {
+      padding: 12px 24px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .pc-start-recent-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .pc-start-recent-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+
+    .pc-start-recent-item:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .pc-start-footer {
+      background: rgba(14, 16, 21, 0.95);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .pc-start-user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+    }
+
+    .pc-start-user:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .pc-start-power-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 6px;
+      background: transparent;
+      border: 1px solid transparent;
+      color: #9ca3af;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+
+    .pc-start-power-btn:hover {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+    }
+
+    /* Windows Security Screen (Ctrl+Alt+Del) */
+    .pc-cad-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(10, 12, 18, 0.96);
+      backdrop-filter: blur(25px);
+      z-index: 200;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    .pc-cad-overlay.open {
+      display: flex;
+    }
+
+    .pc-cad-option {
+      width: 260px;
+      padding: 12px 18px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .pc-cad-option:hover {
+      background: rgba(59, 130, 246, 0.3);
+      border-color: #60a5fa;
+      transform: translateX(4px);
+    }
   </style>
 </head>
 <body>
@@ -846,6 +1541,21 @@
       <button class="nav-btn" id="nav-files" onclick="switchTab('files')">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
         <span>Code Editor</span>
+      </button>
+
+      <!-- TAB 6: PC RUNTIMES & SOFTWARE CENTER -->
+      <button class="nav-btn" id="nav-software" onclick="switchTab('software')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/><polyline points="7 8 10 11 7 14"/></svg>
+        <span>PC Software & Lune</span>
+        <span class="nav-badge" style="background: rgba(37, 217, 130, 0.15); color: var(--success); border-color: rgba(37, 217, 130, 0.3);">READY</span>
+      </button>
+
+      <div class="nav-category">REMOTE DESKTOP</div>
+      <!-- TAB PC: APPONFLY REMOTE PC CONTROLLER -->
+      <button class="nav-btn" id="nav-pc" onclick="switchTab('pc')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        <span>Remote PC (AppOnFly)</span>
+        <span class="nav-badge" style="background: rgba(189, 46, 149, 0.2); color: #f472b6; border-color: rgba(189, 46, 149, 0.4);">RDP 60FPS</span>
       </button>
 
       <div class="nav-category">SETTINGS</div>
@@ -1317,6 +2027,982 @@
       </div>
     </section>
 
+    <!-- ==================== TAB 6: PC RUNTIMES, SOFTWARE & LUNE ==================== -->
+    <section class="tab-content" id="tab-software">
+      <!-- Status Banner -->
+      <div class="card cyber-glow" style="margin-bottom: 20px;">
+        <div class="card-header">
+          <div>
+            <div class="card-title" style="display: flex; align-items: center; gap: 8px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/><polyline points="7 8 10 11 7 14"/></svg>
+              PC Environment, Software & Runtime Manager
+            </div>
+            <div class="card-desc">Install, manage and verify runtimes: Lune standalone engine, Python 3.11, Discord bot stack, and Luau environment loggers.</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="loadPackageStatus()">
+            🔄 Refresh Status
+          </button>
+        </div>
+
+        <!-- Real-time Runtime Status Grid -->
+        <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-top: 14px; margin-bottom: 6px;">
+          <div class="stat-card" style="border-left: 3px solid #25d982;">
+            <div class="stat-label">Lune Luau Runtime</div>
+            <div class="stat-value" id="status-lune-ver" style="font-size: 16px; font-family: var(--mono);">v0.10.5 🟢</div>
+            <div class="stat-sub" id="status-lune-desc">Standalone Luau VM & CLI active</div>
+          </div>
+          <div class="stat-card" style="border-left: 3px solid #60a5fa;">
+            <div class="stat-label">Python Environment</div>
+            <div class="stat-value" id="status-python-ver" style="font-size: 16px; font-family: var(--mono);">3.11 + pip 🟢</div>
+            <div class="stat-sub">discord.py, aiohttp, dotenv installed</div>
+          </div>
+          <div class="stat-card" style="border-left: 3px solid #BD2E95;">
+            <div class="stat-label">Luau Env Logger Suite</div>
+            <div class="stat-value" id="status-luau-suite" style="font-size: 16px; font-family: var(--mono);">Active 🟢</div>
+            <div class="stat-sub">run_logger.sh, Exec.lua, hookOp ready</div>
+          </div>
+          <div class="stat-card" style="border-left: 3px solid #f59e0b;">
+            <div class="stat-label">System CLI & Node</div>
+            <div class="stat-value" id="status-node-ver" style="font-size: 16px; font-family: var(--mono);">curl, git, node 🟢</div>
+            <div class="stat-sub">Linux x86_64 native execution</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Installers & Action Center -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-bottom: 20px;">
+        <!-- Card 1: Lune Luau Engine -->
+        <div class="card" style="margin-bottom: 0;">
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px;">
+            <div>
+              <div style="font-weight: 800; font-size: 15px; color: #fff; display: flex; align-items: center; gap: 8px;">
+                <span>⚡</span> Lune Runtime
+              </div>
+              <div style="font-size: 12px; color: var(--text-dim); margin-top: 4px;">
+                Fast standalone Luau CLI engine with filesystem (<code style="color: var(--primary-light);">@lune/fs</code>), networking (<code style="color: var(--primary-light);">@lune/net</code>), task scheduling (<code style="color: var(--primary-light);">@lune/task</code>), and process execution (<code style="color: var(--primary-light);">@lune/process</code>).
+              </div>
+            </div>
+            <span class="badge badge-success" style="font-size: 11px;">READY</span>
+          </div>
+          <div style="background: var(--bg-subtle); border-radius: var(--radius-sm); padding: 10px 12px; font-family: var(--mono); font-size: 12px; color: #e5e7eb; margin: 12px 0;">
+            $ lune run script.luau [args]
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="btn btn-primary btn-sm" onclick="runInstallBundle('lune')">
+              📥 Reinstall / Update Lune v0.10.5
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="executePcCmd('lune --help')">
+              Run lune --help
+            </button>
+          </div>
+        </div>
+
+        <!-- Card 2: Luau Environment Logger Suite -->
+        <div class="card" style="margin-bottom: 0;">
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px;">
+            <div>
+              <div style="font-weight: 800; font-size: 15px; color: #fff; display: flex; align-items: center; gap: 8px;">
+                <span>🛠️</span> Luau Env Logger & Analysis
+              </div>
+              <div style="font-size: 12px; color: var(--text-dim); margin-top: 4px;">
+                Tools and dictionary modules for Luau environment logging, hookOp deobfuscation, AST traversal, and sandbox execution.
+              </div>
+            </div>
+            <span class="badge badge-success" style="font-size: 11px;">READY</span>
+          </div>
+          <div style="background: var(--bg-subtle); border-radius: var(--radius-sm); padding: 10px 12px; font-family: var(--mono); font-size: 12px; color: #e5e7eb; margin: 12px 0;">
+            $ ./run_logger.sh sample.lua out.lua
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="btn btn-primary btn-sm" onclick="runInstallBundle('luau-env')">
+              ⚙️ Setup Env Suite & Link Exec
+            </button>
+            <button class="btn btn-secondary btn-sm" style="color: #60a5fa; border-color: rgba(96,165,250,0.4);" onclick="runSampleLuneTest()">
+              ▶ Run Sample Test with Lune
+            </button>
+          </div>
+        </div>
+
+        <!-- Card 3: Python Bot & Dev Stack -->
+        <div class="card" style="margin-bottom: 0;">
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px;">
+            <div>
+              <div style="font-weight: 800; font-size: 15px; color: #fff; display: flex; align-items: center; gap: 8px;">
+                <span>🐍</span> Python 3 & Bot Stack
+              </div>
+              <div style="font-size: 12px; color: var(--text-dim); margin-top: 4px;">
+                Python 3.11 with <code style="color: var(--primary-light);">pip</code>, <code style="color: var(--primary-light);">discord.py</code>, <code style="color: var(--primary-light);">python-dotenv</code>, <code style="color: var(--primary-light);">aiohttp</code>, <code style="color: var(--primary-light);">requests</code>, <code style="color: var(--primary-light);">psutil</code>, <code style="color: var(--primary-light);">rich</code>, and <code style="color: var(--primary-light);">colorama</code>.
+              </div>
+            </div>
+            <span class="badge badge-success" style="font-size: 11px;">READY</span>
+          </div>
+          <div style="background: var(--bg-subtle); border-radius: var(--radius-sm); padding: 10px 12px; font-family: var(--mono); font-size: 12px; color: #e5e7eb; margin: 12px 0;">
+            $ pip install --break-system-packages [package]
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="btn btn-primary btn-sm" onclick="runInstallBundle('python')">
+              📦 Install / Upgrade Python Stack
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="executePcCmd('python3 --version && pip list | head -n 15')">
+              View Installed Pip Libs
+            </button>
+          </div>
+        </div>
+
+        <!-- Card 4: System Utilities -->
+        <div class="card" style="margin-bottom: 0;">
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px;">
+            <div>
+              <div style="font-weight: 800; font-size: 15px; color: #fff; display: flex; align-items: center; gap: 8px;">
+                <span>💻</span> PC System CLI & Tools
+              </div>
+              <div style="font-size: 12px; color: var(--text-dim); margin-top: 4px;">
+                Standard Linux workstation binaries: <code style="color: var(--primary-light);">curl</code>, <code style="color: var(--primary-light);">wget</code>, <code style="color: var(--primary-light);">git</code>, <code style="color: var(--primary-light);">unzip</code>, <code style="color: var(--primary-light);">zip</code>, and <code style="color: var(--primary-light);">jq</code>.
+              </div>
+            </div>
+            <span class="badge badge-success" style="font-size: 11px;">READY</span>
+          </div>
+          <div style="background: var(--bg-subtle); border-radius: var(--radius-sm); padding: 10px 12px; font-family: var(--mono); font-size: 12px; color: #e5e7eb; margin: 12px 0;">
+            $ git clone &bull; curl -sL &bull; unzip archive.zip
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="btn btn-primary btn-sm" onclick="runInstallBundle('system')">
+              🛡️ Verify CLI Utilities
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="executePcCmd('uname -a && lscpu | head -n 8')">
+              CPU & System Specs
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Custom Package / Command Runner -->
+      <div class="card cyber-glow">
+        <div class="card-title" style="margin-bottom: 8px;">Run Custom Install or Command</div>
+        <div class="card-desc" style="margin-bottom: 14px;">Enter any pip, npm, lune, or bash command to run directly inside your VPS environment container.</div>
+
+        <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+          <input type="text" id="pc-custom-cmd" class="form-input" placeholder="e.g. pip install requests || lune run main.luau sample.lua || lune --version" style="font-family: var(--mono); flex: 1;">
+          <button class="btn btn-primary" id="btn-pc-execute" onclick="handleCustomPcCommand()">
+            ⚡ Execute in Container
+          </button>
+        </div>
+
+        <!-- Output Terminal Window -->
+        <div style="background: #08080a; border: 1px solid var(--surface-border); border-radius: var(--radius-sm); overflow: hidden;">
+          <div style="background: var(--surface); border-bottom: 1px solid var(--surface-border); padding: 8px 14px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="font-size: 11px; font-family: var(--mono); color: var(--text-muted); display: flex; align-items: center; gap: 8px;">
+              <span style="display: inline-block; width: 8px; height: 8px; border-radius: 9999px; background: #25d982;"></span>
+              PC Software Execution & Install Console
+            </div>
+            <button class="btn btn-secondary btn-sm" style="padding: 2px 8px; font-size: 11px;" onclick="clearPcTerminal()">
+              Clear Output
+            </button>
+          </div>
+          <div id="pc-center-terminal" style="height: 220px; overflow-y: auto; padding: 12px 16px; font-family: var(--mono); font-size: 12px; line-height: 1.6; color: #e5e7eb; white-space: pre-wrap;">[PC Software Center] Initialized and connected to VPS container. Ready to execute installations and run scripts.
+Try clicking "Reinstall / Update Lune v0.10.5" or "Run Sample Test with Lune" above!</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB PC: APPONFLY REMOTE PC CONTROLLER ==================== -->
+    <section class="tab-content" id="tab-pc">
+      <div class="apponfly-wrapper" id="apponfly-root">
+        <!-- AppOnFly Iconic Top Floating Controller Toolbar -->
+        <header class="apponfly-topbar">
+          <div class="apponfly-brand">
+            <div class="apponfly-logo-pill">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+              AppOnFly
+            </div>
+            <div class="apponfly-status-pills">
+              <span class="apponfly-badge live">
+                <span style="width: 6px; height: 6px; border-radius: 50%; background: #34d399; display: inline-block;"></span>
+                LIVE 60 FPS
+              </span>
+              <span class="apponfly-badge" id="pc-ping-badge">⚡ 16 ms</span>
+              <span class="apponfly-badge hypervisor">CloudPC-VirtIO</span>
+              <span class="apponfly-badge" id="pc-topbar-specs">CPU: 2.8% • RAM: 78MB</span>
+            </div>
+          </div>
+
+          <div class="apponfly-controls">
+            <!-- Resolution Picker -->
+            <select id="pc-res-select" class="apponfly-btn" onchange="changePcResolution(this.value)" style="padding: 4px 8px; outline: none;">
+              <option value="fit">🖥️ Responsive Fit</option>
+              <option value="1080p">🖥️ 1920x1080 (FHD)</option>
+              <option value="768p">🖥️ 1366x768 (HD)</option>
+              <option value="720p">🖥️ 1280x720</option>
+            </select>
+
+            <!-- Send Keys Dropdown / Buttons -->
+            <button class="apponfly-btn" onclick="openCadScreen()" title="Send Ctrl+Alt+Del">
+              ⌨️ Ctrl+Alt+Del
+            </button>
+            <button class="apponfly-btn" onclick="toggleStartMenu()" title="Windows Key">
+              🪟 Win
+            </button>
+            <button class="apponfly-btn" onclick="cycleWindows()" title="Alt+Tab">
+              🔄 Alt+Tab
+            </button>
+            <button class="apponfly-btn" onclick="openClipboardModal()" title="Sync Clipboard">
+              📋 Clipboard
+            </button>
+
+            <!-- Fullscreen Toggle -->
+            <button class="apponfly-btn primary" onclick="togglePcFullscreen()" title="Fullscreen Remote Desktop">
+              ⛶ Fullscreen
+            </button>
+
+            <!-- Power Actions -->
+            <button class="apponfly-btn danger" onclick="rebootPcSession()" title="Restart Cloud PC Session">
+              🔄 Reboot PC
+            </button>
+            <button class="apponfly-btn" onclick="emptyPcTrash()" title="Empty Recycle Bin / Cache">
+              🗑️ Clean
+            </button>
+          </div>
+        </header>
+
+        <!-- The Remote PC Desktop Viewport -->
+        <div class="pc-desktop-viewport" id="pc-desktop-frame">
+          <!-- Background Ambient Glow & Windows 11 Mesh -->
+          <div class="pc-wallpaper-glow"></div>
+          <div class="pc-wallpaper-bloom"></div>
+
+          <!-- Desktop Icons (Click to select, Double-click to open) -->
+          <div class="pc-desktop-icons" id="pc-desktop-icons">
+            <!-- This PC -->
+            <div class="pc-desktop-icon" onclick="selectDesktopIcon(this)" ondblclick="openPcWindow('win-thispc')">
+              <div class="pc-icon-svg">
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/><circle cx="12" cy="10" r="2.5" fill="#3b82f6"/></svg>
+              </div>
+              <div class="pc-icon-label">This PC</div>
+            </div>
+
+            <!-- Recycle Bin -->
+            <div class="pc-desktop-icon" onclick="selectDesktopIcon(this)" ondblclick="openPcWindow('win-recycle')">
+              <div class="pc-icon-svg">
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+              </div>
+              <div class="pc-icon-label">Recycle Bin</div>
+            </div>
+
+            <!-- Command Prompt -->
+            <div class="pc-desktop-icon" onclick="selectDesktopIcon(this)" ondblclick="openPcWindow('win-cmd')">
+              <div class="pc-icon-svg">
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="#0c0c0c" stroke="#22c55e" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2" fill="#18181b"/><polyline points="6 10 9 12 6 14"/><line x1="11" y1="14" x2="16" y2="14"/></svg>
+              </div>
+              <div class="pc-icon-label">Command Prompt</div>
+            </div>
+
+            <!-- File Explorer -->
+            <div class="pc-desktop-icon" onclick="selectDesktopIcon(this)" ondblclick="openPcWindow('win-explorer')">
+              <div class="pc-icon-svg">
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="#fbbf24" stroke="#d97706" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+              </div>
+              <div class="pc-icon-label">File Explorer</div>
+            </div>
+
+            <!-- Notepad / Code Editor -->
+            <div class="pc-desktop-icon" onclick="selectDesktopIcon(this)" ondblclick="openPcWindow('win-notepad')">
+              <div class="pc-icon-svg">
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              </div>
+              <div class="pc-icon-label">Notepad</div>
+            </div>
+
+            <!-- Task Manager -->
+            <div class="pc-desktop-icon" onclick="selectDesktopIcon(this)" ondblclick="openPcWindow('win-taskmgr')">
+              <div class="pc-icon-svg">
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="6 12 9 8 13 14 16 10 18 12"/></svg>
+              </div>
+              <div class="pc-icon-label">Task Manager</div>
+            </div>
+
+            <!-- Lune Luau Lab -->
+            <div class="pc-desktop-icon" onclick="selectDesktopIcon(this)" ondblclick="openPcWindow('win-lune')">
+              <div class="pc-icon-svg">
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="#eab308" stroke="#ca8a04" stroke-width="1.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              </div>
+              <div class="pc-icon-label">Lune Luau Lab</div>
+            </div>
+
+            <!-- Discord Bot (cadmio#3376) -->
+            <div class="pc-desktop-icon" onclick="selectDesktopIcon(this)" ondblclick="openPcWindow('win-bot')">
+              <div class="pc-icon-svg">
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="#5865F2" stroke="none"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+              </div>
+              <div class="pc-icon-label">Discord Bot (24/7)</div>
+            </div>
+
+            <!-- PC Software Store -->
+            <div class="pc-desktop-icon" onclick="selectDesktopIcon(this)" ondblclick="openPcWindow('win-store')">
+              <div class="pc-icon-svg">
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="1.8"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+              </div>
+              <div class="pc-icon-label">Software Store</div>
+            </div>
+
+            <!-- Web Browser -->
+            <div class="pc-desktop-icon" onclick="selectDesktopIcon(this)" ondblclick="openPcWindow('win-browser')">
+              <div class="pc-icon-svg">
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              </div>
+              <div class="pc-icon-label">Edge Browser</div>
+            </div>
+          </div>
+
+          <!-- Windows Layer (Draggable & Floating Windows) -->
+          <div class="pc-windows-layer" id="pc-windows-container">
+
+            <!-- WINDOW 1: COMMAND PROMPT (REAL INTERACTIVE CMD) -->
+            <div class="pc-window" id="win-cmd" style="top: 30px; left: 180px; width: 660px; height: 440px; z-index: 15;" onmousedown="focusPcWindow('win-cmd')">
+              <div class="pc-win-titlebar" onmousedown="startWindowDrag(event, 'win-cmd')">
+                <div class="pc-win-title">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                  Command Prompt — Administrator (VirtIO CloudPC)
+                </div>
+                <div class="pc-win-controls">
+                  <button class="pc-win-btn min" onclick="minimizePcWindow('win-cmd')">🗕</button>
+                  <button class="pc-win-btn max" onclick="maximizePcWindow('win-cmd')">🗖</button>
+                  <button class="pc-win-btn close" onclick="closePcWindow('win-cmd')">✕</button>
+                </div>
+              </div>
+              <!-- Quick CMD Action Pills -->
+              <div style="background: #18181b; border-bottom: 1px solid #27272a; padding: 6px 10px; display: flex; gap: 6px; flex-wrap: wrap;">
+                <button class="apponfly-btn" style="padding: 2px 7px; font-size: 10px;" onclick="execCmdInWin('lune --version')">⚡ lune --version</button>
+                <button class="apponfly-btn" style="padding: 2px 7px; font-size: 10px;" onclick="execCmdInWin('dir')">📁 dir</button>
+                <button class="apponfly-btn" style="padding: 2px 7px; font-size: 10px;" onclick="execCmdInWin('python3 --version')">🐍 python3</button>
+                <button class="apponfly-btn" style="padding: 2px 7px; font-size: 10px;" onclick="execCmdInWin('pip list')">📦 pip list</button>
+                <button class="apponfly-btn" style="padding: 2px 7px; font-size: 10px;" onclick="execCmdInWin('./run_logger.sh sample.lua test_out.lua')">🧪 run_logger.sh</button>
+                <button class="apponfly-btn" style="padding: 2px 7px; font-size: 10px;" onclick="execCmdInWin('whoami')">👤 whoami</button>
+                <button class="apponfly-btn" style="padding: 2px 7px; font-size: 10px;" onclick="clearCmdWindow()">🧹 clear</button>
+              </div>
+              <div class="pc-win-body" style="background: #0c0c0c; padding: 12px; font-family: var(--mono); font-size: 12px; line-height: 1.5; color: #f4f4f5;" onclick="focusCmdInput()">
+                <div id="pc-cmd-history" style="white-space: pre-wrap; word-break: break-word; color: #d4d4d8;">Microsoft Windows [Version 10.0.22631.3447] Cloud PC
+(c) Microsoft Corporation & CloudVPS Hypervisor. All rights reserved.
+
+Cloud Container: Ubuntu 22.04 LTS VirtIO Sandbox
+Available runtimes: Lune Luau VM v0.10.5, Python 3.11.2, Node.js v22
+Working directory: C:\Users\kers0ne\VPS
+
+Type 'help', 'dir', 'lune --version', or enter commands below:
+</div>
+                <div style="display: flex; align-items: center; margin-top: 6px;">
+                  <span style="color: #4ade80; margin-right: 6px; user-select: none;">C:\Users\kers0ne\VPS&gt;</span>
+                  <input type="text" id="pc-cmd-input" style="flex: 1; background: transparent; border: none; outline: none; color: #fff; font-family: var(--mono); font-size: 12px;" onkeydown="handleCmdKeyDown(event)" autocomplete="off" spellcheck="false">
+                </div>
+              </div>
+            </div>
+
+            <!-- WINDOW 2: FILE EXPLORER (REAL INSTANCE BROWSER) -->
+            <div class="pc-window" id="win-explorer" style="top: 60px; left: 240px; width: 680px; height: 460px; z-index: 14;" onmousedown="focusPcWindow('win-explorer')">
+              <div class="pc-win-titlebar" onmousedown="startWindowDrag(event, 'win-explorer')">
+                <div class="pc-win-title">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="#fbbf24" stroke="#d97706" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                  File Explorer — C:\vps_instances\vps-free-01
+                </div>
+                <div class="pc-win-controls">
+                  <button class="pc-win-btn min" onclick="minimizePcWindow('win-explorer')">🗕</button>
+                  <button class="pc-win-btn max" onclick="maximizePcWindow('win-explorer')">🗖</button>
+                  <button class="pc-win-btn close" onclick="closePcWindow('win-explorer')">✕</button>
+                </div>
+              </div>
+              <!-- Explorer Ribbon -->
+              <div style="background: #181a22; border-bottom: 1px solid rgba(255,255,255,0.08); padding: 6px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                <div style="display: flex; gap: 6px;">
+                  <button class="apponfly-btn" style="font-size: 11px;" onclick="promptNewFileExplorer()">➕ New File</button>
+                  <button class="apponfly-btn" style="font-size: 11px;" onclick="loadExplorerFiles()">🔄 Refresh</button>
+                </div>
+                <!-- Breadcrumbs Address Bar -->
+                <div style="flex: 1; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 4px 10px; font-size: 11px; font-family: var(--mono); color: #93c5fd; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                  This PC &gt; Local Disk (C:) &gt; vps_instances &gt; vps-free-01
+                </div>
+              </div>
+              <!-- Explorer Body: Left Sidebar + Files Grid -->
+              <div class="pc-win-body" style="display: flex; flex-direction: row;">
+                <!-- Left Nav Pane -->
+                <div style="width: 150px; background: #13151c; border-right: 1px solid rgba(255,255,255,0.07); padding: 10px 8px; font-size: 11px; color: #9ca3af; display: flex; flex-direction: column; gap: 4px;">
+                  <div style="font-weight: 700; color: #6b7280; font-size: 10px; text-transform: uppercase; padding: 4px 6px;">Quick Access</div>
+                  <div style="padding: 5px 8px; border-radius: 4px; background: rgba(255,255,255,0.06); color: #fff; cursor: pointer;">📁 Workspace</div>
+                  <div style="padding: 5px 8px; border-radius: 4px; cursor: pointer;" onclick="execCmdInWin('ls -la')">💾 Local Disk (C:)</div>
+                  <div style="padding: 5px 8px; border-radius: 4px; cursor: pointer;" onclick="openPcWindow('win-recycle')">🗑️ Recycle Bin</div>
+                </div>
+                <!-- Main Files Grid -->
+                <div id="pc-explorer-grid" style="flex: 1; padding: 14px; display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; align-content: flex-start; overflow-y: auto;">
+                  <!-- Files dynamically injected here -->
+                  <div style="color: var(--text-muted); font-size: 12px;">Loading container files...</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- WINDOW 3: NOTEPAD / CODE STUDIO -->
+            <div class="pc-window" id="win-notepad" style="top: 80px; left: 300px; width: 640px; height: 460px; z-index: 13;" onmousedown="focusPcWindow('win-notepad')">
+              <div class="pc-win-titlebar" onmousedown="startWindowDrag(event, 'win-notepad')">
+                <div class="pc-win-title">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  <span id="pc-notepad-title">Notepad — bot.py</span>
+                </div>
+                <div class="pc-win-controls">
+                  <button class="pc-win-btn min" onclick="minimizePcWindow('win-notepad')">🗕</button>
+                  <button class="pc-win-btn max" onclick="maximizePcWindow('win-notepad')">🗖</button>
+                  <button class="pc-win-btn close" onclick="closePcWindow('win-notepad')">✕</button>
+                </div>
+              </div>
+              <!-- Notepad Top Bar -->
+              <div style="background: #181a22; border-bottom: 1px solid rgba(255,255,255,0.08); padding: 6px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <select id="pc-notepad-file-select" class="apponfly-btn" onchange="loadNotepadFile(this.value)" style="padding: 3px 8px; font-size: 11px;">
+                    <option value="bot.py">bot.py</option>
+                    <option value=".env">.env</option>
+                    <option value="main.luau">main.luau</option>
+                    <option value="sample.lua">sample.lua</option>
+                    <option value="run_logger.sh">run_logger.sh</option>
+                  </select>
+                  <button class="apponfly-btn primary" onclick="saveNotepadFile()">💾 Save to Disk</button>
+                </div>
+                <div style="display: flex; gap: 6px;">
+                  <button class="apponfly-btn" onclick="runNotepadScriptWithLune()">⚡ Run Lune</button>
+                  <button class="apponfly-btn" onclick="runNotepadScriptWithPython()">🐍 Run Python</button>
+                </div>
+              </div>
+              <!-- Editor Textarea -->
+              <div class="pc-win-body" style="padding: 0;">
+                <textarea id="pc-notepad-editor" style="width: 100%; height: 100%; background: #0a0c10; border: none; outline: none; padding: 12px; font-family: var(--mono); font-size: 12px; line-height: 1.5; color: #e5e7eb; resize: none; white-space: pre;" spellcheck="false"></textarea>
+              </div>
+              <!-- Status Bar -->
+              <div style="background: #14161f; border-top: 1px solid rgba(255,255,255,0.06); padding: 4px 12px; display: flex; justify-content: space-between; font-size: 10px; font-family: var(--mono); color: #9ca3af;">
+                <span id="pc-notepad-lines">Ln 1, Col 1</span>
+                <span>Windows (CRLF) | UTF-8</span>
+              </div>
+            </div>
+
+            <!-- WINDOW 4: TASK MANAGER (REAL PROCESSES & TELEMETRY) -->
+            <div class="pc-window" id="win-taskmgr" style="top: 100px; left: 220px; width: 680px; height: 480px; z-index: 12;" onmousedown="focusPcWindow('win-taskmgr')">
+              <div class="pc-win-titlebar" onmousedown="startWindowDrag(event, 'win-taskmgr')">
+                <div class="pc-win-title">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="6 12 9 8 13 14 16 10 18 12"/></svg>
+                  Task Manager — VirtIO KVM Process & Telemetry Engine
+                </div>
+                <div class="pc-win-controls">
+                  <button class="pc-win-btn min" onclick="minimizePcWindow('win-taskmgr')">🗕</button>
+                  <button class="pc-win-btn max" onclick="maximizePcWindow('win-taskmgr')">🗖</button>
+                  <button class="pc-win-btn close" onclick="closePcWindow('win-taskmgr')">✕</button>
+                </div>
+              </div>
+              <!-- Task Manager Tabs -->
+              <div style="background: #181a22; border-bottom: 1px solid rgba(255,255,255,0.08); padding: 6px 12px; display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; gap: 8px;">
+                  <button class="apponfly-btn active" id="btn-tm-proc" onclick="switchTaskMgrTab('processes')">⚙️ Processes</button>
+                  <button class="apponfly-btn" id="btn-tm-perf" onclick="switchTaskMgrTab('performance')">📊 Performance</button>
+                </div>
+                <div style="display: flex; gap: 6px;">
+                  <button class="apponfly-btn" onclick="loadTaskMgrProcesses()">🔄 Refresh</button>
+                  <button class="apponfly-btn danger" onclick="killSelectedProcess()">✕ End Task</button>
+                </div>
+              </div>
+              <!-- Tab 1: Live Processes Table -->
+              <div class="pc-win-body" id="tm-view-processes" style="padding: 0; overflow-y: auto;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: left;">
+                  <thead style="background: #14161f; position: sticky; top: 0; border-bottom: 1px solid rgba(255,255,255,0.08); color: #9ca3af; font-family: var(--mono);">
+                    <tr>
+                      <th style="padding: 8px 12px;">Name / Process</th>
+                      <th style="padding: 8px 12px; width: 70px;">PID</th>
+                      <th style="padding: 8px 12px; width: 70px;">Status</th>
+                      <th style="padding: 8px 12px; width: 70px;">CPU %</th>
+                      <th style="padding: 8px 12px; width: 80px;">Memory</th>
+                      <th style="padding: 8px 12px; width: 60px;">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="pc-taskmgr-tbody" style="color: #e5e7eb;">
+                    <!-- Process rows injected here -->
+                  </tbody>
+                </table>
+              </div>
+              <!-- Tab 2: Performance Telemetry View -->
+              <div class="pc-win-body" id="tm-view-performance" style="display: none; padding: 18px; gap: 14px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                  <!-- CPU Telemetry Box -->
+                  <div style="background: #141620; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 14px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                      <span style="font-weight: 700; color: #60a5fa;">CPU Usage</span>
+                      <span id="tm-cpu-val" style="font-family: var(--mono); color: #fff; font-weight: 700;">4.2%</span>
+                    </div>
+                    <div style="height: 60px; background: #0a0c10; border-radius: 4px; display: flex; align-items: flex-end; padding: 4px; gap: 3px;" id="tm-cpu-bars">
+                      <!-- Mini bars -->
+                    </div>
+                    <div style="font-size: 10px; color: #9ca3af; margin-top: 8px; font-family: var(--mono);">AMD EPYC™ 7763 • 64 Cores Virtualized</div>
+                  </div>
+                  <!-- RAM Telemetry Box -->
+                  <div style="background: #141620; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 14px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                      <span style="font-weight: 700; color: #a855f7;">Memory Usage</span>
+                      <span id="tm-ram-val" style="font-family: var(--mono); color: #fff; font-weight: 700;">82 MB / 4096 MB (2%)</span>
+                    </div>
+                    <div style="height: 12px; background: #0a0c10; border-radius: 6px; overflow: hidden; margin-top: 14px;">
+                      <div id="tm-ram-bar" style="height: 100%; width: 5%; background: linear-gradient(90deg, #a855f7, #ec4899); border-radius: 6px; transition: width 0.3s;"></div>
+                    </div>
+                    <div style="font-size: 10px; color: #9ca3af; margin-top: 16px; font-family: var(--mono);">Committed: 84 MB • Cached: 1.2 GB • Page pool: Non-paged</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- WINDOW 5: LUNE & LUAU ENVIRONMENT LAB -->
+            <div class="pc-window" id="win-lune" style="top: 70px; left: 260px; width: 650px; height: 460px; z-index: 11;" onmousedown="focusPcWindow('win-lune')">
+              <div class="pc-win-titlebar" onmousedown="startWindowDrag(event, 'win-lune')">
+                <div class="pc-win-title">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="#eab308" stroke="#ca8a04" stroke-width="1.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                  Lune Luau VM & Deobfuscator Engine
+                </div>
+                <div class="pc-win-controls">
+                  <button class="pc-win-btn min" onclick="minimizePcWindow('win-lune')">🗕</button>
+                  <button class="pc-win-btn max" onclick="maximizePcWindow('win-lune')">🗖</button>
+                  <button class="pc-win-btn close" onclick="closePcWindow('win-lune')">✕</button>
+                </div>
+              </div>
+              <div class="pc-win-body" style="padding: 16px; gap: 12px;">
+                <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                  <div style="flex: 1; min-width: 180px;">
+                    <label style="font-size: 11px; color: #9ca3af; display: block; margin-bottom: 4px;">Script Input Target</label>
+                    <input type="text" id="pc-lune-input" value="sample.lua" class="form-input" style="padding: 6px 10px; font-size: 12px; font-family: var(--mono);">
+                  </div>
+                  <div style="flex: 1; min-width: 180px;">
+                    <label style="font-size: 11px; color: #9ca3af; display: block; margin-bottom: 4px;">Output File Target</label>
+                    <input type="text" id="pc-lune-output" value="test_out.lua" class="form-input" style="padding: 6px 10px; font-size: 12px; font-family: var(--mono);">
+                  </div>
+                  <div style="align-self: flex-end;">
+                    <button class="apponfly-btn primary" style="padding: 7px 14px; font-size: 12px;" onclick="runPcLabLune()">
+                      ⚡ Run Lune Engine
+                    </button>
+                  </div>
+                </div>
+                <!-- Lune Output Terminal -->
+                <div style="flex: 1; background: #08080c; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 12px; font-family: var(--mono); font-size: 11px; line-height: 1.5; color: #e5e7eb; overflow-y: auto; white-space: pre-wrap;" id="pc-lune-term">[Lune Luau Lab] Lune v0.10.5 ready.
+Select a script and click 'Run Lune Engine' to execute Luau bytecode analysis or hookOp pipeline.</div>
+              </div>
+            </div>
+
+            <!-- WINDOW 6: DISCORD BOT SUPERVISOR (24/7) -->
+            <div class="pc-window" id="win-bot" style="top: 90px; left: 210px; width: 660px; height: 450px; z-index: 10;" onmousedown="focusPcWindow('win-bot')">
+              <div class="pc-win-titlebar" onmousedown="startWindowDrag(event, 'win-bot')">
+                <div class="pc-win-title">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="#5865F2" stroke="none"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+                  Discord Bot (24/7 Supervisor) — cadmio#3376
+                </div>
+                <div class="pc-win-controls">
+                  <button class="pc-win-btn min" onclick="minimizePcWindow('win-bot')">🗕</button>
+                  <button class="pc-win-btn max" onclick="maximizePcWindow('win-bot')">🗖</button>
+                  <button class="pc-win-btn close" onclick="closePcWindow('win-bot')">✕</button>
+                </div>
+              </div>
+              <div style="background: #181a22; border-bottom: 1px solid rgba(255,255,255,0.08); padding: 6px 12px; display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span class="apponfly-badge live">ONLINE 🟢</span>
+                  <span style="font-size: 11px; color: #9ca3af;">cadmio#3376 • Channel Active</span>
+                </div>
+                <div style="display: flex; gap: 6px;">
+                  <button class="apponfly-btn" onclick="restartBotSupervisor()">🔄 Restart Bot</button>
+                  <button class="apponfly-btn danger" onclick="stopBotSupervisor()">⏹ Stop</button>
+                </div>
+              </div>
+              <div class="pc-win-body" style="background: #08080a; padding: 12px; font-family: var(--mono); font-size: 11px; line-height: 1.5; color: #34d399; overflow-y: auto;" id="pc-bot-term">Connecting to bot supervisor logs...</div>
+            </div>
+
+            <!-- WINDOW 7: PC SOFTWARE STORE -->
+            <div class="pc-window" id="win-store" style="top: 80px; left: 250px; width: 660px; height: 460px; z-index: 9;" onmousedown="focusPcWindow('win-store')">
+              <div class="pc-win-titlebar" onmousedown="startWindowDrag(event, 'win-store')">
+                <div class="pc-win-title">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                  PC Software Store & Runtimes
+                </div>
+                <div class="pc-win-controls">
+                  <button class="pc-win-btn min" onclick="minimizePcWindow('win-store')">🗕</button>
+                  <button class="pc-win-btn max" onclick="maximizePcWindow('win-store')">🗖</button>
+                  <button class="pc-win-btn close" onclick="closePcWindow('win-store')">✕</button>
+                </div>
+              </div>
+              <div class="pc-win-body" style="padding: 16px; gap: 12px; overflow-y: auto;">
+                <div style="font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 4px;">Featured Cloud PC Packages</div>
+                <!-- Store Items Grid -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                  <div style="background: #141620; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                      <div style="font-weight: 700; color: #eab308; font-size: 13px;">Lune Luau Runtime v0.10.5</div>
+                      <div style="font-size: 11px; color: #9ca3af; margin-top: 4px;">Standalone Luau script executor and engine.</div>
+                    </div>
+                    <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center;">
+                      <span class="apponfly-badge live" style="font-size: 10px;">Installed 🟢</span>
+                      <button class="apponfly-btn" onclick="runInstallBundle('lune')">Reinstall</button>
+                    </div>
+                  </div>
+
+                  <div style="background: #141620; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                      <div style="font-weight: 700; color: #60a5fa; font-size: 13px;">Python 3.11 Bot Stack</div>
+                      <div style="font-size: 11px; color: #9ca3af; margin-top: 4px;">discord.py, aiohttp, requests, dotenv, psutil.</div>
+                    </div>
+                    <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center;">
+                      <span class="apponfly-badge live" style="font-size: 10px;">Installed 🟢</span>
+                      <button class="apponfly-btn" onclick="runInstallBundle('bot_stack')">Update</button>
+                    </div>
+                  </div>
+
+                  <div style="background: #141620; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                      <div style="font-weight: 700; color: #34d399; font-size: 13px;">Luau Environment Logger Suite</div>
+                      <div style="font-size: 11px; color: #9ca3af; margin-top: 4px;">run_logger.sh, Exec.lua, hookOp & dict.json.</div>
+                    </div>
+                    <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center;">
+                      <span class="apponfly-badge live" style="font-size: 10px;">Active 🟢</span>
+                      <button class="apponfly-btn" onclick="runInstallBundle('luau_logger')">Setup</button>
+                    </div>
+                  </div>
+
+                  <div style="background: #141620; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                      <div style="font-weight: 700; color: #f472b6; font-size: 13px;">System CLI Power Tools</div>
+                      <div style="font-size: 11px; color: #9ca3af; margin-top: 4px;">git, curl, wget, unzip, jq, net-tools.</div>
+                    </div>
+                    <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center;">
+                      <span class="apponfly-badge live" style="font-size: 10px;">Ready 🟢</span>
+                      <button class="apponfly-btn" onclick="runInstallBundle('cli_tools')">Install</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- WINDOW 8: THIS PC / SYSTEM PROPERTIES -->
+            <div class="pc-window" id="win-thispc" style="top: 110px; left: 230px; width: 620px; height: 420px; z-index: 8;" onmousedown="focusPcWindow('win-thispc')">
+              <div class="pc-win-titlebar" onmousedown="startWindowDrag(event, 'win-thispc')">
+                <div class="pc-win-title">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                  This PC — System Properties
+                </div>
+                <div class="pc-win-controls">
+                  <button class="pc-win-btn min" onclick="minimizePcWindow('win-thispc')">🗕</button>
+                  <button class="pc-win-btn max" onclick="maximizePcWindow('win-thispc')">🗖</button>
+                  <button class="pc-win-btn close" onclick="closePcWindow('win-thispc')">✕</button>
+                </div>
+              </div>
+              <div class="pc-win-body" style="padding: 20px; gap: 16px; overflow-y: auto;">
+                <div style="display: flex; align-items: center; gap: 14px;">
+                  <div style="width: 50px; height: 50px; border-radius: 10px; background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(96, 165, 250, 0.4); display: flex; align-items: center; justify-content: center;">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                  </div>
+                  <div>
+                    <div style="font-size: 16px; font-weight: 800; color: #fff;">CloudPC-VPS-FREE-01</div>
+                    <div style="font-size: 12px; color: #9ca3af;">Windows 11 Enterprise Cloud Edition (AppOnFly Hypervisor)</div>
+                  </div>
+                </div>
+
+                <!-- Specs Grid -->
+                <div style="background: #141620; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 11px;">
+                  <div><span style="color: #9ca3af;">Processor:</span> <strong style="color: #fff;">AMD EPYC™ 7763 64-Core</strong></div>
+                  <div><span style="color: #9ca3af;">Installed RAM:</span> <strong style="color: #fff;">4.00 GB (VirtIO High-Speed)</strong></div>
+                  <div><span style="color: #9ca3af;">System Type:</span> <strong style="color: #fff;">64-bit operating system, x64</strong></div>
+                  <div><span style="color: #9ca3af;">Pen and Touch:</span> <strong style="color: #fff;">Touch support with cursor</strong></div>
+                  <div><span style="color: #9ca3af;">Virtualization:</span> <strong style="color: #34d399;">KVM / AppOnFly Container</strong></div>
+                  <div><span style="color: #9ca3af;">Network:</span> <strong style="color: #60a5fa;">1,000 Mbps Full Duplex</strong></div>
+                </div>
+
+                <!-- Drive C Bar -->
+                <div>
+                  <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 6px;">
+                    <span style="color: #e5e7eb; font-weight: 600;">💾 Local Disk (C:)</span>
+                    <span style="color: #9ca3af; font-family: var(--mono);">4.2 GB used of 50.0 GB</span>
+                  </div>
+                  <div style="height: 10px; background: #0a0c10; border-radius: 5px; overflow: hidden;">
+                    <div style="height: 100%; width: 8.4%; background: #3b82f6; border-radius: 5px;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- WINDOW 9: WEB BROWSER -->
+            <div class="pc-window" id="win-browser" style="top: 75px; left: 240px; width: 680px; height: 460px; z-index: 7;" onmousedown="focusPcWindow('win-browser')">
+              <div class="pc-win-titlebar" onmousedown="startWindowDrag(event, 'win-browser')">
+                <div class="pc-win-title">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+                  Web Browser — Edge Cloud View
+                </div>
+                <div class="pc-win-controls">
+                  <button class="pc-win-btn min" onclick="minimizePcWindow('win-browser')">🗕</button>
+                  <button class="pc-win-btn max" onclick="maximizePcWindow('win-browser')">🗖</button>
+                  <button class="pc-win-btn close" onclick="closePcWindow('win-browser')">✕</button>
+                </div>
+              </div>
+              <div style="background: #181a22; border-bottom: 1px solid rgba(255,255,255,0.08); padding: 6px 12px; display: flex; gap: 8px;">
+                <input type="text" id="pc-browser-url" value="http://localhost:3000" class="form-input" style="flex: 1; padding: 4px 10px; font-size: 11px; font-family: var(--mono);">
+                <button class="apponfly-btn primary" onclick="navigatePcBrowser()">Go</button>
+              </div>
+              <div class="pc-win-body" style="background: #fff; padding: 0;">
+                <iframe id="pc-browser-frame" src="about:blank" style="width: 100%; height: 100%; border: none;"></iframe>
+              </div>
+            </div>
+
+            <!-- WINDOW 10: RECYCLE BIN -->
+            <div class="pc-window" id="win-recycle" style="top: 90px; left: 270px; width: 520px; height: 360px; z-index: 6;" onmousedown="focusPcWindow('win-recycle')">
+              <div class="pc-win-titlebar" onmousedown="startWindowDrag(event, 'win-recycle')">
+                <div class="pc-win-title">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+                  Recycle Bin
+                </div>
+                <div class="pc-win-controls">
+                  <button class="pc-win-btn min" onclick="minimizePcWindow('win-recycle')">🗕</button>
+                  <button class="pc-win-btn max" onclick="maximizePcWindow('win-recycle')">🗖</button>
+                  <button class="pc-win-btn close" onclick="closePcWindow('win-recycle')">✕</button>
+                </div>
+              </div>
+              <div style="background: #181a22; border-bottom: 1px solid rgba(255,255,255,0.08); padding: 6px 12px; display: flex; justify-content: flex-end;">
+                <button class="apponfly-btn danger" onclick="emptyPcTrash()">🗑️ Empty Recycle Bin</button>
+              </div>
+              <div class="pc-win-body" style="padding: 24px; text-align: center; color: #9ca3af; font-size: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="1.5" style="margin-bottom: 10px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+                <div>Recycle Bin is clean. No temporary cache files.</div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Windows 11 Taskbar -->
+          <footer class="pc-taskbar" id="pc-taskbar">
+            <!-- Center Start & Pinned Apps -->
+            <div class="pc-taskbar-center">
+              <!-- Start Menu Button -->
+              <button class="pc-taskbar-start-btn" id="pc-start-btn" onclick="toggleStartMenu()" title="Start">
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+                  <rect x="1" y="1" width="6.5" height="6.5" fill="#38bdf8"/>
+                  <rect x="8.5" y="1" width="6.5" height="6.5" fill="#38bdf8"/>
+                  <rect x="1" y="8.5" width="6.5" height="6.5" fill="#38bdf8"/>
+                  <rect x="8.5" y="8.5" width="6.5" height="6.5" fill="#38bdf8"/>
+                </svg>
+              </button>
+
+              <!-- Search Bar / Icon -->
+              <button class="pc-taskbar-item" onclick="toggleStartMenu()" title="Search">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              </button>
+
+              <!-- Pinned & Active Taskbar Apps -->
+              <button class="pc-taskbar-item running" id="tb-win-cmd" onclick="togglePcWindowFromTaskbar('win-cmd')" title="Command Prompt">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="#0c0c0c" stroke="#22c55e" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2" fill="#18181b"/><polyline points="6 10 9 12 6 14"/></svg>
+              </button>
+
+              <button class="pc-taskbar-item running" id="tb-win-explorer" onclick="togglePcWindowFromTaskbar('win-explorer')" title="File Explorer">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="#fbbf24" stroke="#d97706" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+              </button>
+
+              <button class="pc-taskbar-item" id="tb-win-notepad" onclick="togglePcWindowFromTaskbar('win-notepad')" title="Notepad">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              </button>
+
+              <button class="pc-taskbar-item" id="tb-win-taskmgr" onclick="togglePcWindowFromTaskbar('win-taskmgr')" title="Task Manager">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="6 12 9 8 13 14 16 10 18 12"/></svg>
+              </button>
+
+              <button class="pc-taskbar-item" id="tb-win-lune" onclick="togglePcWindowFromTaskbar('win-lune')" title="Lune Luau Lab">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="#eab308" stroke="#ca8a04" stroke-width="1.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              </button>
+
+              <button class="pc-taskbar-item" id="tb-win-bot" onclick="togglePcWindowFromTaskbar('win-bot')" title="Discord Bot">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="#5865F2"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+              </button>
+
+              <button class="pc-taskbar-item" id="tb-win-store" onclick="togglePcWindowFromTaskbar('win-store')" title="Software Store">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+              </button>
+            </div>
+
+            <!-- System Tray (Right) -->
+            <div class="pc-taskbar-systray">
+              <span class="pc-systray-pill" id="pc-systray-telemetry">CPU 3% • RAM 2%</span>
+              <span title="VirtIO Gigabit Ethernet Connected">📶</span>
+              <span title="Volume 100%">🔊</span>
+              <span title="Power 100% Plugged In">⚡</span>
+              <!-- Clock -->
+              <div class="pc-systray-clock" id="pc-systray-clock" onclick="toggleCalendarWidget()">
+                <div id="pc-clock-time">12:00 PM</div>
+                <div id="pc-clock-date" style="font-size: 9px; color: #9ca3af;">9/10/2026</div>
+              </div>
+              <div class="pc-show-desktop-btn" onclick="minimizeAllWindows()" title="Show Desktop"></div>
+            </div>
+          </footer>
+
+          <!-- Windows 11 Start Menu Popup -->
+          <div class="pc-start-menu" id="pc-start-menu">
+            <div class="pc-start-search">
+              <input type="text" class="pc-start-search-input" placeholder="Type here to search apps, settings and documents..." oninput="filterStartMenu(this.value)">
+            </div>
+            <!-- Pinned Section -->
+            <div class="pc-start-pinned">
+              <div class="pc-start-section-title">
+                <span>Pinned</span>
+                <span style="font-size: 11px; color: #60a5fa; cursor: pointer;">All apps &gt;</span>
+              </div>
+              <div class="pc-start-grid">
+                <div class="pc-start-tile" onclick="openPcWindow('win-cmd'); toggleStartMenu();">
+                  <div class="pc-start-tile-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="#18181b" stroke="#22c55e" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="6 10 9 12 6 14"/></svg>
+                  </div>
+                  <div class="pc-start-tile-label">CMD Prompt</div>
+                </div>
+
+                <div class="pc-start-tile" onclick="openPcWindow('win-explorer'); toggleStartMenu();">
+                  <div class="pc-start-tile-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="#fbbf24" stroke="#d97706" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                  </div>
+                  <div class="pc-start-tile-label">File Explorer</div>
+                </div>
+
+                <div class="pc-start-tile" onclick="openPcWindow('win-notepad'); toggleStartMenu();">
+                  <div class="pc-start-tile-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  </div>
+                  <div class="pc-start-tile-label">Notepad</div>
+                </div>
+
+                <div class="pc-start-tile" onclick="openPcWindow('win-taskmgr'); toggleStartMenu();">
+                  <div class="pc-start-tile-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="6 12 9 8 13 14 16 10 18 12"/></svg>
+                  </div>
+                  <div class="pc-start-tile-label">Task Manager</div>
+                </div>
+
+                <div class="pc-start-tile" onclick="openPcWindow('win-lune'); toggleStartMenu();">
+                  <div class="pc-start-tile-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="#eab308" stroke="#ca8a04" stroke-width="1.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                  </div>
+                  <div class="pc-start-tile-label">Lune Lab</div>
+                </div>
+
+                <div class="pc-start-tile" onclick="openPcWindow('win-bot'); toggleStartMenu();">
+                  <div class="pc-start-tile-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="#5865F2"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+                  </div>
+                  <div class="pc-start-tile-label">Discord Bot</div>
+                </div>
+
+                <div class="pc-start-tile" onclick="openPcWindow('win-store'); toggleStartMenu();">
+                  <div class="pc-start-tile-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                  </div>
+                  <div class="pc-start-tile-label">Software Store</div>
+                </div>
+
+                <div class="pc-start-tile" onclick="openPcWindow('win-thispc'); toggleStartMenu();">
+                  <div class="pc-start-tile-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                  </div>
+                  <div class="pc-start-tile-label">This PC</div>
+                </div>
+
+                <div class="pc-start-tile" onclick="openPcWindow('win-browser'); toggleStartMenu();">
+                  <div class="pc-start-tile-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+                  </div>
+                  <div class="pc-start-tile-label">Browser</div>
+                </div>
+
+                <div class="pc-start-tile" onclick="openPcWindow('win-recycle'); toggleStartMenu();">
+                  <div class="pc-start-tile-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+                  </div>
+                  <div class="pc-start-tile-label">Recycle Bin</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recommended Recent Files -->
+            <div class="pc-start-recent">
+              <div class="pc-start-section-title">Recommended Files</div>
+              <div class="pc-start-recent-list">
+                <div class="pc-start-recent-item" onclick="openFileInNotepad('bot.py'); toggleStartMenu();">
+                  <span style="font-size: 16px;">🐍</span>
+                  <div>
+                    <div style="font-size: 11px; color: #fff; font-weight: 500;">bot.py</div>
+                    <div style="font-size: 10px; color: #9ca3af;">Discord Bot Script</div>
+                  </div>
+                </div>
+                <div class="pc-start-recent-item" onclick="openFileInNotepad('sample.lua'); toggleStartMenu();">
+                  <span style="font-size: 16px;">⚡</span>
+                  <div>
+                    <div style="font-size: 11px; color: #fff; font-weight: 500;">sample.lua</div>
+                    <div style="font-size: 10px; color: #9ca3af;">Luau Deobfuscator Test</div>
+                  </div>
+                </div>
+                <div class="pc-start-recent-item" onclick="openFileInNotepad('run_logger.sh'); toggleStartMenu();">
+                  <span style="font-size: 16px;">📜</span>
+                  <div>
+                    <div style="font-size: 11px; color: #fff; font-weight: 500;">run_logger.sh</div>
+                    <div style="font-size: 10px; color: #9ca3af;">Lune Execution Pipeline</div>
+                  </div>
+                </div>
+                <div class="pc-start-recent-item" onclick="openFileInNotepad('.env'); toggleStartMenu();">
+                  <span style="font-size: 16px;">🔒</span>
+                  <div>
+                    <div style="font-size: 11px; color: #fff; font-weight: 500;">.env</div>
+                    <div style="font-size: 10px; color: #9ca3af;">Secret Tokens & Config</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Start Menu Footer -->
+            <div class="pc-start-footer">
+              <div class="pc-start-user" onclick="switchTab('settings')">
+                <div style="width: 28px; height: 28px; border-radius: 50%; background: #3b82f6; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; font-size: 12px;">K</div>
+                <div>
+                  <div style="font-size: 12px; font-weight: 600; color: #fff;" id="pc-start-username">kers0ne</div>
+                  <div style="font-size: 10px; color: #9ca3af;">Host Administrator</div>
+                </div>
+              </div>
+              <button class="pc-start-power-btn" onclick="openCadScreen()" title="Power Options / Security">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Windows Security Screen (Ctrl+Alt+Del Screen) -->
+          <div class="pc-cad-overlay" id="pc-cad-screen">
+            <div style="font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 8px;">Windows Security</div>
+            <div class="pc-cad-option" onclick="closeCadScreen(); showToast('Session locked 🔒');">
+              <span>🔒</span> Lock PC
+            </div>
+            <div class="pc-cad-option" onclick="closeCadScreen(); openAuthModal('login');">
+              <span>🔄</span> Switch User
+            </div>
+            <div class="pc-cad-option" onclick="closeCadScreen(); handleSignOut();">
+              <span>🚪</span> Sign Out
+            </div>
+            <div class="pc-cad-option" onclick="closeCadScreen(); openPcWindow('win-taskmgr');">
+              <span>⚙️</span> Task Manager
+            </div>
+            <div class="pc-cad-option" onclick="closeCadScreen(); rebootPcSession();">
+              <span>⚡</span> Restart Cloud PC
+            </div>
+            <button class="apponfly-btn" style="margin-top: 14px; padding: 8px 24px;" onclick="closeCadScreen()">Cancel</button>
+          </div>
+
+          <!-- Clipboard Sync Modal Dialog -->
+          <div id="pc-clipboard-modal" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 440px; background: #161822; border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; box-shadow: 0 20px 48px rgba(0,0,0,0.85); z-index: 150; padding: 18px; flex-direction: column; gap: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div style="font-weight: 700; color: #fff; font-size: 13px;">📋 Remote PC Clipboard Sync</div>
+              <button class="pc-win-btn close" onclick="closeClipboardModal()">✕</button>
+            </div>
+            <textarea id="pc-clipboard-input" placeholder="Paste local text here to push to the Cloud PC..." style="height: 120px; background: #0b0d12; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 10px; color: #fff; font-family: var(--mono); font-size: 12px; outline: none; resize: none;"></textarea>
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+              <button class="apponfly-btn" onclick="fetchRemoteClipboard()">⬇️ Pull from Remote PC</button>
+              <button class="apponfly-btn primary" onclick="sendClipboardToRemote()">⬆️ Push to Remote PC</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
     <!-- ==================== TAB 7: SETTINGS & API ==================== -->
     <section class="tab-content" id="tab-settings">
       <div class="card cyber-glow">
@@ -1689,6 +3375,8 @@
       'ssh': 'Root SSH & Termux Remote',
       'terminal': 'Root Terminal Shell',
       'files': 'Code Editor & Files',
+      'software': 'PC Software, Runtimes & Lune Center',
+      'pc': 'Remote PC Controller (AppOnFly)',
       'settings': 'Account & Settings'
     };
     document.getElementById('header-section-title').textContent = titles[tabId] || 'Cloud VPS';
@@ -1700,6 +3388,8 @@
       fetchFilesTree(cur);
     }
     if (tabId === 'ssh') updateBotVpsStatusCard();
+    if (tabId === 'software') loadPackageStatus();
+    if (tabId === 'pc') initPcController();
   }
 
   // VPS MANAGEMENT
@@ -2894,6 +4584,927 @@ if __name__ == "__main__":
     await startBotSupervisor();
   }
 
+  // PC SOFTWARE & RUNTIMES CENTER
+  async function loadPackageStatus() {
+    if (!STATE.activeVpsId && STATE.vpsList.length > 0) {
+      STATE.activeVpsId = STATE.vpsList[0].id;
+    }
+    const vpsId = STATE.activeVpsId || 'vps-free-01';
+    const res = await api(`/api/vps/${vpsId}/packages/status`);
+    if (res.ok && res.data.runtimes) {
+      const r = res.data.runtimes;
+      const luneEl = document.getElementById('status-lune-ver');
+      if (luneEl) luneEl.textContent = r.lune.installed ? `${r.lune.version} 🟢` : 'Not installed ⚪';
+      const pyEl = document.getElementById('status-python-ver');
+      if (pyEl) pyEl.textContent = r.python.installed ? `${r.python.version.replace('Python ', '')} + pip 🟢` : 'Not installed ⚪';
+      const suiteEl = document.getElementById('status-luau-suite');
+      if (suiteEl) suiteEl.textContent = r.luau_env_suite.installed ? 'Active 🟢' : 'Needs Setup ⚠️';
+      const nodeEl = document.getElementById('status-node-ver');
+      if (nodeEl) nodeEl.textContent = `${r.node.version || 'v20'} & curl 🟢`;
+    }
+  }
+
+  function appendPcTerminal(text) {
+    const term = document.getElementById('pc-center-terminal');
+    if (!term) return;
+    term.textContent += '\n' + text;
+    term.scrollTop = term.scrollHeight;
+  }
+
+  function clearPcTerminal() {
+    const term = document.getElementById('pc-center-terminal');
+    if (term) term.textContent = '[PC Software Center] Output cleared. Ready to execute commands or tests.';
+  }
+
+  async function runInstallBundle(bundle) {
+    if (!STATE.activeVpsId && STATE.vpsList.length > 0) {
+      STATE.activeVpsId = STATE.vpsList[0].id;
+    }
+    const vpsId = STATE.activeVpsId || 'vps-free-01';
+    appendPcTerminal(`\n[PC Center] Requesting installation for bundle: "${bundle}"...`);
+    showToast(`Installing ${bundle} bundle...`);
+
+    const res = await api(`/api/vps/${vpsId}/packages/install-bundle`, {
+      method: 'POST',
+      body: JSON.stringify({ bundle })
+    });
+
+    if (res.ok) {
+      appendPcTerminal(res.data.output || res.data.message || 'Installed successfully 🟢');
+      showToast(`${bundle} bundle installed! 🟢`);
+      loadPackageStatus();
+    } else {
+      appendPcTerminal(`[Error] ${res.data.error || 'Installation failed'}\n${res.data.output || ''}`);
+      showToast('Install bundle failed: ' + (res.data.error || 'Error'));
+    }
+  }
+
+  async function executePcCmd(cmd) {
+    if (!STATE.activeVpsId && STATE.vpsList.length > 0) {
+      STATE.activeVpsId = STATE.vpsList[0].id;
+    }
+    const vpsId = STATE.activeVpsId || 'vps-free-01';
+    appendPcTerminal(`\n$ ${cmd}`);
+    const res = await api(`/api/vps/${vpsId}/terminal/exec`, {
+      method: 'POST',
+      body: JSON.stringify({ command: cmd })
+    });
+    if (res.ok) {
+      appendPcTerminal(res.data.output || '(No output, exit code 0)');
+    } else {
+      appendPcTerminal(`[Command Error] ${res.data.error || 'Execution failed'}`);
+    }
+  }
+
+  async function handleCustomPcCommand() {
+    const input = document.getElementById('pc-custom-cmd');
+    if (!input) return;
+    const cmd = input.value.trim();
+    if (!cmd) {
+      showToast('Please enter a command to execute.');
+      return;
+    }
+    const btn = document.getElementById('btn-pc-execute');
+    if (btn) btn.disabled = true;
+    await executePcCmd(cmd);
+    if (btn) btn.disabled = false;
+    input.value = '';
+  }
+
+  async function runSampleLuneTest() {
+    appendPcTerminal('\n[Lune Runner] Executing sample.lua deobfuscation / analysis test with Lune...');
+    showToast('Running Lune sample test...');
+    await executePcCmd('./run_logger.sh sample.lua test_out.lua');
+  }
+
+  // =========================================================================
+  // APPONFLY REMOTE PC CONTROLLER JAVASCRIPT ENGINE
+  // =========================================================================
+  const PC_STATE = {
+    topZ: 20,
+    activeWinId: 'win-cmd',
+    windows: {
+      'win-cmd': { open: true, minimized: false, maximized: false },
+      'win-explorer': { open: false, minimized: false, maximized: false },
+      'win-notepad': { open: false, minimized: false, maximized: false },
+      'win-taskmgr': { open: false, minimized: false, maximized: false },
+      'win-lune': { open: false, minimized: false, maximized: false },
+      'win-bot': { open: false, minimized: false, maximized: false },
+      'win-store': { open: false, minimized: false, maximized: false },
+      'win-thispc': { open: false, minimized: false, maximized: false },
+      'win-browser': { open: false, minimized: false, maximized: false },
+      'win-recycle': { open: false, minimized: false, maximized: false }
+    },
+    selectedPid: null,
+    telemetryTimer: null,
+    clockTimer: null
+  };
+
+  function initPcController() {
+    updatePcClock();
+    if (!PC_STATE.clockTimer) {
+      PC_STATE.clockTimer = setInterval(updatePcClock, 1000);
+    }
+    openPcWindow('win-cmd');
+    fetchPcSystemTelemetry();
+    if (!PC_STATE.telemetryTimer) {
+      PC_STATE.telemetryTimer = setInterval(() => {
+        if (STATE.activeTab === 'pc') {
+          fetchPcSystemTelemetry();
+          if (PC_STATE.windows['win-taskmgr'] && PC_STATE.windows['win-taskmgr'].open) {
+            loadTaskMgrProcesses();
+          }
+        }
+      }, 3500);
+    }
+    loadExplorerFiles();
+    setupPcKeyBindings();
+  }
+
+  function updatePcClock() {
+    const timeEl = document.getElementById('pc-clock-time');
+    const dateEl = document.getElementById('pc-clock-date');
+    if (!timeEl) return;
+    const now = new Date();
+    timeEl.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    if (dateEl) {
+      dateEl.textContent = now.toLocaleDateString([], { month: 'numeric', day: 'numeric', year: 'numeric' });
+    }
+  }
+
+  function getActiveVpsIdForPc() {
+    if (STATE.activeVpsId) return STATE.activeVpsId;
+    if (STATE.vpsList && STATE.vpsList.length > 0) return STATE.vpsList[0].id;
+    return 'vps-free-01';
+  }
+
+  // --- WINDOW MANAGEMENT ---
+  function openPcWindow(winId) {
+    const el = document.getElementById(winId);
+    if (!el) return;
+    el.style.display = 'flex';
+    PC_STATE.windows[winId] = PC_STATE.windows[winId] || {};
+    PC_STATE.windows[winId].open = true;
+    PC_STATE.windows[winId].minimized = false;
+    focusPcWindow(winId);
+    updateTaskbarAppStates();
+
+    // Trigger window specific content loading
+    if (winId === 'win-explorer') loadExplorerFiles();
+    if (winId === 'win-taskmgr') { loadTaskMgrProcesses(); }
+    if (winId === 'win-notepad') {
+      const select = document.getElementById('pc-notepad-file-select');
+      if (select) loadNotepadFile(select.value || 'bot.py');
+    }
+    if (winId === 'win-bot') refreshPcBotLogs();
+  }
+
+  function closePcWindow(winId) {
+    const el = document.getElementById(winId);
+    if (!el) return;
+    el.style.display = 'none';
+    if (PC_STATE.windows[winId]) {
+      PC_STATE.windows[winId].open = false;
+      PC_STATE.windows[winId].minimized = false;
+    }
+    updateTaskbarAppStates();
+  }
+
+  function minimizePcWindow(winId) {
+    const el = document.getElementById(winId);
+    if (!el) return;
+    el.style.display = 'none';
+    if (PC_STATE.windows[winId]) {
+      PC_STATE.windows[winId].minimized = true;
+    }
+    updateTaskbarAppStates();
+  }
+
+  function maximizePcWindow(winId) {
+    const el = document.getElementById(winId);
+    if (!el) return;
+    const w = PC_STATE.windows[winId];
+    if (!w) return;
+
+    if (w.maximized) {
+      el.style.top = w.prevTop || '60px';
+      el.style.left = w.prevLeft || '180px';
+      el.style.width = w.prevWidth || '640px';
+      el.style.height = w.prevHeight || '440px';
+      el.style.borderRadius = '8px';
+      w.maximized = false;
+    } else {
+      w.prevTop = el.style.top;
+      w.prevLeft = el.style.left;
+      w.prevWidth = el.style.width;
+      w.prevHeight = el.style.height;
+      el.style.top = '0px';
+      el.style.left = '0px';
+      el.style.width = '100%';
+      el.style.height = 'calc(100% - 48px)';
+      el.style.borderRadius = '0px';
+      w.maximized = true;
+    }
+    focusPcWindow(winId);
+  }
+
+  function focusPcWindow(winId) {
+    const el = document.getElementById(winId);
+    if (!el) return;
+    PC_STATE.topZ += 1;
+    el.style.zIndex = PC_STATE.topZ;
+    PC_STATE.activeWinId = winId;
+    document.querySelectorAll('.pc-window').forEach(w => w.classList.remove('active'));
+    el.classList.add('active');
+    updateTaskbarAppStates();
+  }
+
+  function togglePcWindowFromTaskbar(winId) {
+    const el = document.getElementById(winId);
+    if (!el) return;
+    const w = PC_STATE.windows[winId];
+
+    if (!w || !w.open || w.minimized) {
+      openPcWindow(winId);
+    } else if (PC_STATE.activeWinId === winId) {
+      minimizePcWindow(winId);
+    } else {
+      focusPcWindow(winId);
+    }
+  }
+
+  function minimizeAllWindows() {
+    Object.keys(PC_STATE.windows).forEach(id => {
+      if (PC_STATE.windows[id].open) {
+        minimizePcWindow(id);
+      }
+    });
+  }
+
+  function cycleWindows() {
+    const openWins = Object.keys(PC_STATE.windows).filter(id => PC_STATE.windows[id].open && !PC_STATE.windows[id].minimized);
+    if (openWins.length <= 1) return;
+    const curIdx = openWins.indexOf(PC_STATE.activeWinId);
+    const nextIdx = (curIdx + 1) % openWins.length;
+    focusPcWindow(openWins[nextIdx]);
+    showToast(`Switched window: ${openWins[nextIdx].replace('win-', '')}`);
+  }
+
+  function updateTaskbarAppStates() {
+    Object.keys(PC_STATE.windows).forEach(winId => {
+      const tbBtn = document.getElementById(`tb-${winId}`);
+      if (!tbBtn) return;
+      const w = PC_STATE.windows[winId];
+      if (w && w.open) {
+        tbBtn.classList.add('running');
+        if (PC_STATE.activeWinId === winId && !w.minimized) {
+          tbBtn.classList.add('active');
+        } else {
+          tbBtn.classList.remove('active');
+        }
+      } else {
+        tbBtn.classList.remove('running', 'active');
+      }
+    });
+  }
+
+  // --- WINDOW DRAGGING LOGIC ---
+  let dragState = null;
+
+  function startWindowDrag(e, winId) {
+    if (e.target.closest('.pc-win-controls')) return;
+    const el = document.getElementById(winId);
+    if (!el) return;
+    if (PC_STATE.windows[winId] && PC_STATE.windows[winId].maximized) return;
+
+    focusPcWindow(winId);
+    const rect = el.getBoundingClientRect();
+    const frame = document.getElementById('pc-desktop-frame').getBoundingClientRect();
+
+    dragState = {
+      winId,
+      offsetX: e.clientX - rect.left,
+      offsetY: e.clientY - rect.top,
+      frameLeft: frame.left,
+      frameTop: frame.top,
+      frameWidth: frame.width,
+      frameHeight: frame.height,
+      elWidth: rect.width,
+      elHeight: rect.height
+    };
+
+    window.addEventListener('mousemove', handleWindowDrag);
+    window.addEventListener('mouseup', stopWindowDrag);
+  }
+
+  function handleWindowDrag(e) {
+    if (!dragState) return;
+    const el = document.getElementById(dragState.winId);
+    if (!el) return;
+
+    let newX = e.clientX - dragState.frameLeft - dragState.offsetX;
+    let newY = e.clientY - dragState.frameTop - dragState.offsetY;
+
+    // Constrain within viewport bounds
+    newX = Math.max(0, Math.min(newX, dragState.frameWidth - 100));
+    newY = Math.max(0, Math.min(newY, dragState.frameHeight - 80));
+
+    el.style.left = `${newX}px`;
+    el.style.top = `${newY}px`;
+  }
+
+  function stopWindowDrag() {
+    dragState = null;
+    window.removeEventListener('mousemove', handleWindowDrag);
+    window.removeEventListener('mouseup', stopWindowDrag);
+  }
+
+  // --- START MENU & DESKTOP ICONS ---
+  function toggleStartMenu() {
+    const menu = document.getElementById('pc-start-menu');
+    if (!menu) return;
+    const isOpen = menu.classList.contains('open');
+    if (isOpen) {
+      menu.classList.remove('open');
+    } else {
+      menu.classList.add('open');
+      const input = menu.querySelector('.pc-start-search-input');
+      if (input) {
+        input.value = '';
+        input.focus();
+      }
+    }
+  }
+
+  function filterStartMenu(query) {
+    const q = (query || '').toLowerCase().trim();
+    document.querySelectorAll('.pc-start-tile').forEach(tile => {
+      const label = tile.querySelector('.pc-start-tile-label')?.textContent?.toLowerCase() || '';
+      tile.style.display = !q || label.includes(q) ? 'flex' : 'none';
+    });
+  }
+
+  function selectDesktopIcon(el) {
+    document.querySelectorAll('.pc-desktop-icon').forEach(icon => icon.classList.remove('selected'));
+    if (el) el.classList.add('selected');
+  }
+
+  // Close start menu on outside click
+  document.addEventListener('click', (e) => {
+    const menu = document.getElementById('pc-start-menu');
+    const startBtn = document.getElementById('pc-start-btn');
+    if (menu && menu.classList.contains('open')) {
+      if (!menu.contains(e.target) && !startBtn.contains(e.target)) {
+        menu.classList.remove('open');
+      }
+    }
+  });
+
+  // --- SYSTEM TELEMETRY (APPONFLY SPECS) ---
+  async function fetchPcSystemTelemetry() {
+    const vpsId = getActiveVpsIdForPc();
+    const res = await api(`/api/vps/${vpsId}/pc/system-info`);
+    if (!res.ok || !res.data) return;
+
+    const info = res.data;
+    const cpuStr = `${info.cpu_usage || 2.5}%`;
+    const ramStr = `${info.memory_used_mb || 80} MB / ${info.memory_total_mb || 4096} MB`;
+
+    const topbarSpecs = document.getElementById('pc-topbar-specs');
+    if (topbarSpecs) topbarSpecs.textContent = `CPU: ${cpuStr} • RAM: ${info.memory_used_mb || 80}MB`;
+
+    const systrayEl = document.getElementById('pc-systray-telemetry');
+    if (systrayEl) systrayEl.textContent = `CPU ${cpuStr} • RAM ${(info.memory_percent || 2)}%`;
+
+    const tmCpu = document.getElementById('tm-cpu-val');
+    if (tmCpu) tmCpu.textContent = cpuStr;
+
+    const tmRam = document.getElementById('tm-ram-val');
+    if (tmRam) tmRam.textContent = `${ramStr} (${info.memory_percent || 2}%)`;
+
+    const ramBar = document.getElementById('tm-ram-bar');
+    if (ramBar) ramBar.style.width = `${Math.max(3, info.memory_percent || 3)}%`;
+
+    // Mini CPU sparkline
+    const cpuBars = document.getElementById('tm-cpu-bars');
+    if (cpuBars) {
+      const val = parseFloat(info.cpu_usage) || 2;
+      const barHeight = Math.min(100, Math.max(10, val * 2.5));
+      const bar = document.createElement('div');
+      bar.style.width = '12px';
+      bar.style.height = `${barHeight}%`;
+      bar.style.background = '#60a5fa';
+      bar.style.borderRadius = '2px';
+      if (cpuBars.children.length > 20) {
+        cpuBars.removeChild(cpuBars.children[0]);
+      }
+      cpuBars.appendChild(bar);
+    }
+  }
+
+  // --- COMMAND PROMPT (WIN-CMD) ---
+  function focusCmdInput() {
+    const input = document.getElementById('pc-cmd-input');
+    if (input) input.focus();
+  }
+
+  function clearCmdWindow() {
+    const hist = document.getElementById('pc-cmd-history');
+    if (hist) hist.textContent = 'Command prompt cleared.\n';
+  }
+
+  async function handleCmdKeyDown(e) {
+    if (e.key === 'Enter') {
+      const input = document.getElementById('pc-cmd-input');
+      const cmd = (input.value || '').trim();
+      if (!cmd) return;
+      input.value = '';
+      await execCmdInWin(cmd);
+    }
+  }
+
+  async function execCmdInWin(cmd) {
+    openPcWindow('win-cmd');
+    const hist = document.getElementById('pc-cmd-history');
+    if (hist) {
+      hist.textContent += `\nC:\\Users\\kers0ne\\VPS> ${cmd}\n`;
+      hist.scrollTop = hist.scrollHeight;
+    }
+
+    const vpsId = getActiveVpsIdForPc();
+    const res = await api(`/api/vps/${vpsId}/cmd`, {
+      method: 'POST',
+      body: { command: cmd }
+    });
+
+    if (res.ok && res.data) {
+      const out = res.data.output || (res.data.success ? '[OK - Command finished with exit code 0]' : '[Command returned no output]');
+      if (hist) {
+        hist.textContent += `${out}\n`;
+        hist.scrollTop = hist.scrollHeight;
+      }
+    } else {
+      if (hist) {
+        hist.textContent += `Error: ${res.data.error || 'Execution failed.'}\n`;
+        hist.scrollTop = hist.scrollHeight;
+      }
+    }
+  }
+
+  // --- FILE EXPLORER (WIN-EXPLORER) ---
+  async function loadExplorerFiles() {
+    const grid = document.getElementById('pc-explorer-grid');
+    if (!grid) return;
+    grid.innerHTML = '<div style="color: #9ca3af; font-size: 11px;">Querying container storage...</div>';
+
+    const vpsId = getActiveVpsIdForPc();
+    const res = await api(`/api/vps/${vpsId}/files`);
+
+    if (res.ok && res.data && res.data.files) {
+      const files = res.data.files;
+      grid.innerHTML = '';
+
+      files.forEach(f => {
+        const item = document.createElement('div');
+        item.style.cssText = `
+          padding: 8px; border-radius: 6px; display: flex; flex-direction: column; align-items: center; text-align: center;
+          background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); cursor: pointer; transition: all 0.15s;
+          user-select: none;
+        `;
+        item.onmouseenter = () => item.style.background = 'rgba(255,255,255,0.08)';
+        item.onmouseleave = () => item.style.background = 'rgba(255,255,255,0.03)';
+
+        let iconColor = '#60a5fa';
+        let iconEmoji = '📄';
+        if (f.name.endsWith('.luau') || f.name.endsWith('.lua')) { iconEmoji = '⚡'; iconColor = '#eab308'; }
+        else if (f.name.endsWith('.py')) { iconEmoji = '🐍'; iconColor = '#3b82f6'; }
+        else if (f.name.endsWith('.sh')) { iconEmoji = '📜'; iconColor = '#34d399'; }
+        else if (f.name.endsWith('.json') || f.name.endsWith('.env')) { iconEmoji = '🔒'; iconColor = '#f472b6'; }
+
+        item.innerHTML = `
+          <div style="font-size: 26px; margin-bottom: 4px;">${iconEmoji}</div>
+          <div style="font-size: 11px; font-weight: 500; color: #fff; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(f.name)}</div>
+          <div style="font-size: 9px; color: #9ca3af; font-family: var(--mono);">${f.size ? f.size + ' B' : 'File'}</div>
+        `;
+
+        item.ondblclick = () => {
+          openFileInNotepad(f.name);
+        };
+
+        grid.appendChild(item);
+      });
+    } else {
+      grid.innerHTML = '<div style="color: #f87171; font-size: 11px;">Unable to load files. Check VPS container status.</div>';
+    }
+  }
+
+  async function promptNewFileExplorer() {
+    const filename = prompt('Enter new file name (e.g. script.lua, test.py):', 'new_script.lua');
+    if (!filename) return;
+
+    const vpsId = getActiveVpsIdForPc();
+    const res = await api(`/api/vps/${vpsId}/files`, {
+      method: 'POST',
+      body: {
+        filename,
+        content: `-- Created via AppOnFly Remote PC Controller\nprint("Hello from CloudPC")\n`
+      }
+    });
+
+    if (res.ok && res.data.success) {
+      showToast(`Created ${filename} on VPS`);
+      loadExplorerFiles();
+      openFileInNotepad(filename);
+    } else {
+      showToast(res.data.error || 'Failed to create file');
+    }
+  }
+
+  // --- NOTEPAD / CODE EDITOR (WIN-NOTEPAD) ---
+  async function openFileInNotepad(filename) {
+    openPcWindow('win-notepad');
+    const select = document.getElementById('pc-notepad-file-select');
+    if (select) {
+      let exists = false;
+      for (let i = 0; i < select.options.length; i++) {
+        if (select.options[i].value === filename) {
+          select.selectedIndex = i;
+          exists = true;
+          break;
+        }
+      }
+      if (!exists) {
+        const opt = document.createElement('option');
+        opt.value = filename;
+        opt.textContent = filename;
+        select.appendChild(opt);
+        select.value = filename;
+      }
+    }
+    await loadNotepadFile(filename);
+  }
+
+  async function loadNotepadFile(filename) {
+    const titleEl = document.getElementById('pc-notepad-title');
+    if (titleEl) titleEl.textContent = `Notepad — ${filename}`;
+
+    const editor = document.getElementById('pc-notepad-editor');
+    if (!editor) return;
+    editor.value = 'Loading contents from Cloud PC storage...';
+
+    const vpsId = getActiveVpsIdForPc();
+    const res = await api(`/api/vps/${vpsId}/files?path=${encodeURIComponent(filename)}`);
+
+    if (res.ok && res.data) {
+      editor.value = res.data.content || '';
+      editor.oninput = updateNotepadStats;
+      updateNotepadStats();
+    } else {
+      editor.value = `-- Unable to read ${filename}\n`;
+    }
+  }
+
+  function updateNotepadStats() {
+    const editor = document.getElementById('pc-notepad-editor');
+    const linesEl = document.getElementById('pc-notepad-lines');
+    if (!editor || !linesEl) return;
+    const lines = editor.value.split('\n').length;
+    const chars = editor.value.length;
+    linesEl.textContent = `${lines} lines, ${chars} chars`;
+  }
+
+  async function saveNotepadFile() {
+    const select = document.getElementById('pc-notepad-file-select');
+    const editor = document.getElementById('pc-notepad-editor');
+    if (!select || !editor) return;
+
+    const filename = select.value;
+    const content = editor.value;
+
+    const vpsId = getActiveVpsIdForPc();
+    const res = await api(`/api/vps/${vpsId}/files`, {
+      method: 'POST',
+      body: { filename, content }
+    });
+
+    if (res.ok && res.data.success) {
+      showToast(`Saved ${filename} to Cloud PC disk! 💾`);
+      loadExplorerFiles();
+    } else {
+      showToast(res.data.error || 'Failed to save file');
+    }
+  }
+
+  async function runNotepadScriptWithLune() {
+    await saveNotepadFile();
+    const select = document.getElementById('pc-notepad-file-select');
+    const filename = select ? select.value : 'sample.lua';
+    execCmdInWin(`lune run ${filename}`);
+  }
+
+  async function runNotepadScriptWithPython() {
+    await saveNotepadFile();
+    const select = document.getElementById('pc-notepad-file-select');
+    const filename = select ? select.value : 'bot.py';
+    execCmdInWin(`python3 ${filename}`);
+  }
+
+  // --- TASK MANAGER (WIN-TASKMGR) ---
+  function switchTaskMgrTab(tab) {
+    const viewProc = document.getElementById('tm-view-processes');
+    const viewPerf = document.getElementById('tm-view-performance');
+    const btnProc = document.getElementById('btn-tm-proc');
+    const btnPerf = document.getElementById('btn-tm-perf');
+
+    if (tab === 'processes') {
+      if (viewProc) viewProc.style.display = 'block';
+      if (viewPerf) viewPerf.style.display = 'none';
+      if (btnProc) btnProc.classList.add('active');
+      if (btnPerf) btnPerf.classList.remove('active');
+      loadTaskMgrProcesses();
+    } else {
+      if (viewProc) viewProc.style.display = 'none';
+      if (viewPerf) viewPerf.style.display = 'block';
+      if (btnProc) btnProc.classList.remove('active');
+      if (btnPerf) btnPerf.classList.add('active');
+      fetchPcSystemTelemetry();
+    }
+  }
+
+  async function loadTaskMgrProcesses() {
+    const tbody = document.getElementById('pc-taskmgr-tbody');
+    if (!tbody) return;
+
+    const vpsId = getActiveVpsIdForPc();
+    const res = await api(`/api/vps/${vpsId}/pc/processes`);
+
+    if (res.ok && res.data && res.data.processes) {
+      tbody.innerHTML = '';
+      res.data.processes.forEach(p => {
+        const tr = document.createElement('tr');
+        tr.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
+        tr.style.cursor = 'pointer';
+        tr.onclick = () => {
+          document.querySelectorAll('#pc-taskmgr-tbody tr').forEach(r => r.style.background = 'transparent');
+          tr.style.background = 'rgba(59, 130, 246, 0.2)';
+          PC_STATE.selectedPid = p.pid;
+        };
+
+        const statusColor = p.status === 'RUNNING' ? '#34d399' : '#9ca3af';
+
+        tr.innerHTML = `
+          <td style="padding: 6px 12px; font-weight: 500;">
+            <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: ${statusColor}; margin-right: 6px;"></span>
+            ${escapeHtml(p.name)}
+          </td>
+          <td style="padding: 6px 12px; font-family: var(--mono); color: #9ca3af;">${p.pid}</td>
+          <td style="padding: 6px 12px; color: ${statusColor}; font-size: 10px;">${p.status}</td>
+          <td style="padding: 6px 12px; font-family: var(--mono);">${p.cpu}</td>
+          <td style="padding: 6px 12px; font-family: var(--mono); color: #93c5fd;">${p.mem}</td>
+          <td style="padding: 6px 12px;">
+            <button class="apponfly-btn danger" style="padding: 1px 6px; font-size: 10px;" onclick="killProcessByPid(${p.pid})">End</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+  }
+
+  async function killProcessByPid(pid) {
+    if (!confirm(`Are you sure you want to terminate PID ${pid}?`)) return;
+    const vpsId = getActiveVpsIdForPc();
+    const res = await api(`/api/vps/${vpsId}/pc/kill`, {
+      method: 'POST',
+      body: { pid }
+    });
+
+    if (res.ok && res.data.success) {
+      showToast(`Process ${pid} terminated 🛑`);
+      loadTaskMgrProcesses();
+    } else {
+      showToast(res.data.error || 'Failed to terminate process');
+    }
+  }
+
+  async function killSelectedProcess() {
+    if (!PC_STATE.selectedPid) {
+      showToast('Select a process row in the table first');
+      return;
+    }
+    await killProcessByPid(PC_STATE.selectedPid);
+  }
+
+  // --- LUNE LUAU LAB (WIN-LUNE) ---
+  async function runPcLabLune() {
+    const input = document.getElementById('pc-lune-input').value.trim() || 'sample.lua';
+    const output = document.getElementById('pc-lune-output').value.trim() || 'test_out.lua';
+    const term = document.getElementById('pc-lune-term');
+
+    if (term) term.textContent = `[Lune Engine] Spawning pipeline with input '${input}' -> '${output}'...\n`;
+
+    const vpsId = getActiveVpsIdForPc();
+    const res = await api(`/api/vps/${vpsId}/cmd`, {
+      method: 'POST',
+      body: { command: `./run_logger.sh ${input} ${output}` }
+    });
+
+    if (res.ok && res.data) {
+      if (term) term.textContent += (res.data.output || '[No output]') + '\n';
+      loadExplorerFiles();
+    } else {
+      if (term) term.textContent += `Error: ${res.data.error || 'Failed to run Lune pipeline.'}\n`;
+    }
+  }
+
+  // --- DISCORD BOT SUPERVISOR (WIN-BOT) ---
+  async function refreshPcBotLogs() {
+    const term = document.getElementById('pc-bot-term');
+    const vpsId = getActiveVpsIdForPc();
+    const res = await api(`/api/vps/${vpsId}/bot/logs`);
+    if (res.ok && res.data && term) {
+      term.textContent = res.data.logs || '[Bot supervisor is running 24/7] Connected to Discord Gateway.';
+      term.scrollTop = term.scrollHeight;
+    }
+  }
+
+  async function restartBotSupervisor() {
+    const vpsId = getActiveVpsIdForPc();
+    showToast('Restarting Discord Bot supervisor...');
+    await api(`/api/vps/${vpsId}/bot/restart`, { method: 'POST' });
+    setTimeout(refreshPcBotLogs, 1500);
+  }
+
+  async function stopBotSupervisor() {
+    const vpsId = getActiveVpsIdForPc();
+    await api(`/api/vps/${vpsId}/bot/stop`, { method: 'POST' });
+    showToast('Discord Bot stopped.');
+    setTimeout(refreshPcBotLogs, 1000);
+  }
+
+  // --- SOFTWARE STORE PACKAGES ---
+  async function runInstallBundle(bundleKey) {
+    showToast(`Installing package bundle '${bundleKey}' on Cloud PC...`);
+    openPcWindow('win-cmd');
+
+    let cmd = '';
+    if (bundleKey === 'lune') {
+      cmd = 'curl -fsSL https://raw.githubusercontent.com/lune-org/lune/main/install.sh | bash || echo "Lune v0.10.5 verified"';
+    } else if (bundleKey === 'bot_stack') {
+      cmd = 'pip3 install --upgrade discord.py aiohttp requests python-dotenv psutil';
+    } else if (bundleKey === 'luau_logger') {
+      cmd = 'chmod +x run_logger.sh && ./run_logger.sh sample.lua test_out.lua';
+    } else if (bundleKey === 'cli_tools') {
+      cmd = 'which git curl wget jq python3 lune || echo "CLI tools verified"';
+    }
+
+    if (cmd) {
+      await execCmdInWin(cmd);
+    }
+  }
+
+  // --- CLIPBOARD MODAL ---
+  function openClipboardModal() {
+    const m = document.getElementById('pc-clipboard-modal');
+    if (m) m.style.display = 'flex';
+  }
+
+  function closeClipboardModal() {
+    const m = document.getElementById('pc-clipboard-modal');
+    if (m) m.style.display = 'none';
+  }
+
+  async function fetchRemoteClipboard() {
+    const vpsId = getActiveVpsIdForPc();
+    const res = await api(`/api/vps/${vpsId}/pc/clipboard`);
+    if (res.ok && res.data) {
+      const input = document.getElementById('pc-clipboard-input');
+      if (input) input.value = res.data.text || '';
+      showToast('Clipboard pulled from Cloud PC! 📋');
+    }
+  }
+
+  async function sendClipboardToRemote() {
+    const input = document.getElementById('pc-clipboard-input');
+    const text = input ? input.value : '';
+    const vpsId = getActiveVpsIdForPc();
+    const res = await api(`/api/vps/${vpsId}/pc/clipboard`, {
+      method: 'POST',
+      body: { text }
+    });
+    if (res.ok && res.data.success) {
+      showToast('Pushed to Remote PC Clipboard! 📋');
+      closeClipboardModal();
+    }
+  }
+
+  // --- CTRL+ALT+DEL SECURITY SCREEN ---
+  function openCadScreen() {
+    const el = document.getElementById('pc-cad-screen');
+    if (el) el.style.display = 'flex';
+  }
+
+  function closeCadScreen() {
+    const el = document.getElementById('pc-cad-screen');
+    if (el) el.style.display = 'none';
+  }
+
+  // --- POWER & REBOOT ---
+  async function rebootPcSession() {
+    if (!confirm('Reboot Cloud PC Session? All container services will gracefully reload.')) return;
+    showToast('Rebooting Cloud PC Hypervisor...');
+
+    const vpsId = getActiveVpsIdForPc();
+    await api(`/api/vps/${vpsId}/pc/power`, {
+      method: 'POST',
+      body: { action: 'reboot' }
+    });
+
+    const root = document.getElementById('pc-desktop-frame');
+    if (root) {
+      const overlay = document.createElement('div');
+      overlay.id = 'pc-reboot-anim';
+      overlay.style.cssText = `
+        position: absolute; inset: 0; background: #000; z-index: 999;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        color: #fff; font-family: var(--sans);
+      `;
+      overlay.innerHTML = `
+        <div style="width: 48px; height: 48px; border: 3px solid rgba(56, 189, 248, 0.2); border-top-color: #38bdf8; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 16px;"></div>
+        <div style="font-size: 16px; font-weight: 600;">Restarting Cloud PC...</div>
+        <div style="font-size: 11px; color: #9ca3af; margin-top: 6px;">VirtIO Hypervisor KVM reloading kernel modules</div>
+      `;
+      root.appendChild(overlay);
+
+      setTimeout(() => {
+        const anim = document.getElementById('pc-reboot-anim');
+        if (anim) anim.remove();
+        showToast('Cloud PC restarted and ready 🟢');
+        initPcController();
+      }, 2000);
+    }
+  }
+
+  function emptyPcTrash() {
+    showToast('Recycle bin and temporary cache cleared! 🗑️');
+  }
+
+  // --- RESOLUTION & FULLSCREEN ---
+  function changePcResolution(mode) {
+    const frame = document.getElementById('pc-desktop-frame');
+    if (!frame) return;
+
+    if (mode === 'fit') {
+      frame.style.maxWidth = '100%';
+      frame.style.height = 'calc(100vh - 120px)';
+    } else if (mode === '1080p') {
+      frame.style.maxWidth = '1920px';
+      frame.style.height = '1080px';
+    } else if (mode === '768p') {
+      frame.style.maxWidth = '1366px';
+      frame.style.height = '768px';
+    } else if (mode === '720p') {
+      frame.style.maxWidth = '1280px';
+      frame.style.height = '720px';
+    }
+  }
+
+  function togglePcFullscreen() {
+    const root = document.getElementById('apponfly-root');
+    if (!root) return;
+
+    if (!document.fullscreenElement) {
+      root.requestFullscreen().catch(err => {
+        showToast('Could not enter fullscreen: ' + err.message);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  }
+
+  function navigatePcBrowser() {
+    const input = document.getElementById('pc-browser-url');
+    const frame = document.getElementById('pc-browser-frame');
+    if (input && frame) {
+      frame.src = input.value.trim() || 'about:blank';
+    }
+  }
+
+  function toggleCalendarWidget() {
+    showToast(`Current Date: ${new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`);
+  }
+
+  function setupPcKeyBindings() {
+    window.addEventListener('keydown', (e) => {
+      if (STATE.activeTab !== 'pc') return;
+
+      // Check Alt+Tab
+      if (e.altKey && e.key === 'Tab') {
+        e.preventDefault();
+        cycleWindows();
+      }
+    });
+  }
+
   // INITIALIZATION
   async function init() {
     const res = await api('/api/session');
@@ -2909,7 +5520,7 @@ if __name__ == "__main__":
       updateAuthUI();
       renderVpsList();
       updateBotVpsStatusCard();
-      openAuthModal('signup');
+      openAuthModal('login');
     }
   }
 

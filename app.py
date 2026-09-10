@@ -104,16 +104,20 @@ def load_db():
         except Exception:
             pass
 
-    # Ensure default user
-    def_user = "usr_free_user"
+    # Ensure kers0ne default user
+    def_user = "usr_kers0ne"
     if def_user not in db["users"]:
         db["users"][def_user] = {
             "id": def_user,
-            "username": "cloud_user",
+            "username": "kers0ne",
             "password_hash": hash_password("free123"),
             "api_key": "cvps_live_free_key_777",
             "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ")
         }
+    else:
+        db["users"][def_user]["username"] = "kers0ne"
+
+    db["users"]["usr_free_user"] = {**db["users"][def_user], "id": "usr_free_user", "username": "kers0ne"}
 
     # Ensure default VPS
     def_vps = "vps-free-01"
@@ -121,17 +125,21 @@ def load_db():
         db["vps"][def_vps] = {
             "id": def_vps,
             "user_id": def_user,
-            "name": "Discord-Bot-VPS-01",
-            "plan": "performance",
+            "name": "kers0ne-VPS-01",
+            "plan": "ultra",
             "status": "running",
-            "cpu": "4.0 Cores",
-            "memory": "4GB RAM",
-            "storage": "80GB NVMe",
+            "cpu": "8.0 Cores",
+            "memory": "8GB RAM",
+            "storage": "160GB NVMe",
             "ip": "172.20.0.12",
             "container_id": "c-free-01",
             "engine": "native_sandbox",
             "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ")
         }
+    else:
+        db["vps"][def_vps]["user_id"] = def_user
+        if db["vps"][def_vps].get("name") == "Discord-Bot-VPS-01":
+            db["vps"][def_vps]["name"] = "kers0ne-VPS-01"
 
     init_workspace(def_vps)
 
@@ -171,8 +179,7 @@ def get_user():
         for u in db["users"].values():
             if u.get("api_key") == key:
                 return u
-    # Return default user for seamless usage
-    return next(iter(db["users"].values()), None)
+    return None
 
 # ----------------- ROUTES -----------------
 
@@ -272,7 +279,9 @@ def api_logout():
 @app.route("/api/vps", methods=["GET"])
 def api_vps_list():
     user = get_user()
-    vps_list = [v for v in db["vps"].values() if v.get("user_id") == user["id"]] if user else list(db["vps"].values())
+    if not user:
+        return jsonify({"success": False, "error": "Authentication required"}), 401
+    vps_list = [v for v in db["vps"].values() if v.get("user_id") == user["id"]]
     return jsonify({"success": True, "vps": vps_list})
 
 @app.route("/api/vps", methods=["POST"])
@@ -430,45 +439,181 @@ def api_vps_bot_upload(vps_id):
         "detected_runtime": detected_runtime
     })
 
+# Active python processes
+import threading
+
+active_proc_threads = {}
+
+def append_py_log(vps_id: str, text: str):
+    b = db["bots"].setdefault(vps_id, {"logs": []})
+    logs = b.setdefault("logs", [])
+    for line in text.split("\n"):
+        line = line.strip()
+        if line:
+            logs.append(line)
+    if len(logs) > 600:
+        b["logs"] = logs[-600:]
+    save_db()
+
+def stream_pipe(pipe, vps_id):
+    try:
+        for line in iter(pipe.readline, ''):
+            if not line:
+                break
+            append_py_log(vps_id, line)
+    except Exception:
+        pass
+    finally:
+        pipe.close()
+
+def start_py_bot(vps_id: str, filename: str = None, runtime: str = None):
+    stop_py_bot(vps_id)
+    ws_dir = (INSTANCES_DIR / vps_id).resolve()
+    init_workspace(vps_id)
+
+    target = filename or "bot.py"
+    if not (ws_dir / target).exists():
+        for candidate in ["bot.py", "main.py", "index.js", "bot.js"]:
+            if (ws_dir / candidate).exists():
+                target = candidate
+                break
+
+    rt = runtime or ("node" if target.endswith(".js") else "python")
+    cmd = ["node", target] if rt == "node" else ["python3", "-u", target]
+
+    env = os.environ.copy()
+    env["PYTHONUNBUFFERED"] = "1"
+    env_file = ws_dir / ".env"
+    if env_file.exists():
+        for line in env_file.read_text(encoding="utf-8").splitlines():
+            if "=" in line and not line.strip().startswith("#"):
+                k, v = line.split("=", 1)
+                env[k.strip()] = v.strip().strip("'\"")
+
+    if vps_id in db["bots"] and db["bots"][vps_id].get("token"):
+        env["DISCORD_BOT_TOKEN"] = db["bots"][vps_id]["token"]
+        env["TOKEN"] = db["bots"][vps_id]["token"]
+
+    append_py_log(vps_id, f"[{time.strftime('%H:%M:%S')}] [24/7 Watchdog] Spawning real process: {' '.join(cmd)}...")
+
+    try:
+        proc = subprocess.Popen(
+            cmd,
+            cwd=str(ws_dir),
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            bufsize=1
+        )
+    except Exception as e:
+        append_py_log(vps_id, f"[Error] Failed to spawn process: {e}")
+        return None
+
+    active_proc_threads[vps_id] = proc
+
+    b = db["bots"].setdefault(vps_id, {"logs": []})
+    b["status"] = "running"
+    b["running"] = True
+    b["pid"] = proc.pid
+    b["filename"] = target
+    b["runtime"] = rt
+    b["started_at"] = int(time.time())
+    save_db()
+
+    append_py_log(vps_id, f"[{time.strftime('%H:%M:%S')}] [24/7 Watchdog] Bot PID {proc.pid} active and connected to host 🟢")
+
+    t_out = threading.Thread(target=stream_pipe, args=(proc.stdout, vps_id), daemon=True)
+    t_err = threading.Thread(target=stream_pipe, args=(proc.stderr, vps_id), daemon=True)
+    t_out.start()
+    t_err.start()
+
+    return proc
+
+def stop_py_bot(vps_id: str):
+    proc = active_proc_threads.pop(vps_id, None)
+    if proc:
+        try:
+            proc.terminate()
+            proc.wait(timeout=1.5)
+        except Exception:
+            try:
+                proc.kill()
+            except Exception:
+                pass
+    b = db["bots"].setdefault(vps_id, {"logs": []})
+    b["status"] = "stopped"
+    b["running"] = False
+    b["pid"] = None
+    save_db()
+
 @app.route("/api/vps/<vps_id>/bot", methods=["GET"])
 def api_vps_bot_get(vps_id):
     init_workspace(vps_id)
     b = db["bots"].get(vps_id, {})
-    return jsonify({"success": True, "bot": b})
+    proc = active_proc_threads.get(vps_id)
+    is_running = bool(proc and proc.poll() is None)
+    return jsonify({"success": True, "bot": {**b, "running": is_running, "status": "running" if is_running else "stopped"}})
 
 @app.route("/api/vps/<vps_id>/bot/start", methods=["POST"])
 def api_vps_bot_start(vps_id):
-    b = db["bots"].setdefault(vps_id, {"logs": []})
-    b["status"] = "running"
-    b["running"] = True
-    b["started_at"] = int(time.time())
-    b.setdefault("logs", []).append(f"[{time.strftime('%H:%M:%S')}] [24/7 Watchdog] Bot started 🟢")
-    save_db()
-    return jsonify({"success": True, "message": "Bot started", "bot_status": b})
+    data = request.get_json(silent=True) or {}
+    filename = data.get("filename")
+    runtime = data.get("runtime")
+    proc = start_py_bot(vps_id, filename, runtime)
+    b = db["bots"].get(vps_id, {})
+    return jsonify({"success": True, "message": "Bot process started on live host! 🟢", "bot_status": b})
 
 @app.route("/api/vps/<vps_id>/bot/stop", methods=["POST"])
 def api_vps_bot_stop(vps_id):
-    b = db["bots"].setdefault(vps_id, {"logs": []})
-    b["status"] = "stopped"
-    b["running"] = False
-    b.setdefault("logs", []).append(f"[{time.strftime('%H:%M:%S')}] [24/7 Watchdog] Bot stopped.")
-    save_db()
+    stop_py_bot(vps_id)
+    append_py_log(vps_id, f"[{time.strftime('%H:%M:%S')}] [24/7 Watchdog] Bot stopped by user.")
     return jsonify({"success": True, "message": "Bot stopped"})
 
 @app.route("/api/vps/<vps_id>/bot/restart", methods=["POST"])
 def api_vps_bot_restart(vps_id):
-    b = db["bots"].setdefault(vps_id, {"logs": []})
-    b["status"] = "running"
-    b["running"] = True
-    b["restarts"] = b.get("restarts", 0) + 1
-    b.setdefault("logs", []).append(f"[{time.strftime('%H:%M:%S')}] [24/7 Watchdog] Bot restarted (Restart #{b['restarts']}) 🟢")
-    save_db()
-    return jsonify({"success": True, "message": "Bot restarted", "bot_status": b})
+    data = request.get_json(silent=True) or {}
+    cur = db["bots"].get(vps_id, {})
+    filename = data.get("filename") or cur.get("filename")
+    runtime = data.get("runtime") or cur.get("runtime")
+    start_py_bot(vps_id, filename, runtime)
+    b = db["bots"].get(vps_id, {})
+    return jsonify({"success": True, "message": "Bot restarted on live host 🟢", "bot_status": b})
 
 @app.route("/api/vps/<vps_id>/bot/logs", methods=["GET"])
 def api_vps_bot_logs(vps_id):
     b = db["bots"].get(vps_id, {})
-    return jsonify({"success": True, "logs": b.get("logs", []), "status": b})
+    proc = active_proc_threads.get(vps_id)
+    is_running = bool(proc and proc.poll() is None)
+    return jsonify({
+        "success": True,
+        "logs": b.get("logs", []),
+        "status": {
+            "status": "running" if is_running else "stopped",
+            "running": is_running,
+            "pid": proc.pid if is_running else None,
+            "restarts": b.get("restarts", 0),
+            "uptime_seconds": (int(time.time()) - b.get("started_at", int(time.time()))) if is_running else 0
+        }
+    })
+
+@app.route("/api/vps/<vps_id>/bot/packages/install", methods=["POST"])
+def api_vps_bot_packages(vps_id):
+    data = request.get_json(silent=True) or {}
+    pkgs = (data.get("packages") or "").strip()
+    rt = data.get("runtime")
+    if not pkgs:
+        return jsonify({"error": "No packages specified"}), 400
+    ws_dir = str(INSTANCES_DIR / vps_id)
+    cmd = f"npm install {pkgs}" if rt == "node" else f"pip install --break-system-packages {pkgs}"
+    append_py_log(vps_id, f"[{time.strftime('%H:%M:%S')}] [Package Installer] Executing: {cmd}...")
+    try:
+        res = subprocess.run(cmd, shell=True, cwd=ws_dir, capture_output=True, text=True, timeout=60)
+        append_py_log(vps_id, res.stdout + res.stderr)
+        return jsonify({"success": True, "message": f"Installed {pkgs}"})
+    except Exception as e:
+        append_py_log(vps_id, f"[Error] {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route("/api/vps/<vps_id>/bot/token", methods=["POST"])
 def api_vps_bot_token(vps_id):
