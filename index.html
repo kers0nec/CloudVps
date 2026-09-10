@@ -1219,8 +1219,8 @@
           </div>
           <div class="stat-card">
             <div class="stat-label">DEFAULT PASSWORD</div>
-            <div class="stat-value" id="ssh-password-display" style="font-size: 15px; font-family: var(--mono); color: #fff;">1LuhhCrim!</div>
-            <div class="stat-sub"><a href="javascript:void(0)" onclick="copyTextToClipboard('1LuhhCrim!', 'Password copied!')" style="color: var(--primary-light); text-decoration: none;">📋 Copy Password</a></div>
+            <div class="stat-value" id="ssh-password-display" style="font-size: 15px; font-family: var(--mono); color: #fff;">cloudvps-root</div>
+            <div class="stat-sub"><a href="javascript:void(0)" onclick="copyTextToClipboard('cloudvps-root', 'Password copied!')" style="color: var(--primary-light); text-decoration: none;">📋 Copy Password</a></div>
           </div>
         </div>
 
@@ -1398,17 +1398,6 @@
       <button type="submit" id="auth-submit-btn" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 11px; margin-top: 6px;">
         ⚡ Create Account & Launch VPS
       </button>
-
-      <!-- Quick Preset Login for kers0ne -->
-      <div style="margin-top: 14px; padding: 10px 14px; background: rgba(189, 46, 149, 0.06); border: 1px dashed rgba(189, 46, 149, 0.3); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-        <div>
-          <div style="font-size: 11px; font-weight: 700; color: #fff;">Saved Account Credentials</div>
-          <div style="font-size: 10.5px; color: var(--text-dim); font-family: var(--mono);">kers0ne &bull; 1LuhhCrim!</div>
-        </div>
-        <button type="button" class="btn btn-secondary btn-sm" style="color: var(--primary-light); border-color: rgba(189, 46, 149, 0.4); font-weight: 700;" onclick="quickLoginKers0ne()">
-          ⚡ Quick Login
-        </button>
-      </div>
     </form>
 
     <div style="margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--surface-border); font-size: 12px; color: var(--text-dim); display: flex; flex-direction: column; gap: 6px;">
@@ -2638,32 +2627,6 @@
     showToast('Cloud-VPS Synchronized 🟢');
   }
 
-  // QUICK LOGIN FOR PRESET USER
-  async function quickLoginKers0ne() {
-    switchAuthMode('login');
-    document.getElementById('auth-username').value = 'kers0ne';
-    document.getElementById('auth-password').value = '1LuhhCrim!';
-    showToast('Logging in as kers0ne...');
-    const res = await api('/api/login', {
-      method: 'POST',
-      body: { username: 'kers0ne', password: '1LuhhCrim!' }
-    });
-    if (res.ok && res.data.success) {
-      STATE.user = {
-        id: res.data.user_id,
-        username: res.data.username,
-        api_key: res.data.api_key
-      };
-      localStorage.setItem('cloudvps_key', res.data.api_key);
-      closeAuthModal();
-      updateAuthUI();
-      showToast('Welcome back, kers0ne! ⚡ Session active');
-      await loadVpsList();
-    } else {
-      showToast(res.data.error || 'Login failed');
-    }
-  }
-
   // 1-CLICK BOT STARTER TEMPLATES
   const BOT_TEMPLATES = {
     discord_py: {
@@ -2867,18 +2830,7 @@ if __name__ == "__main__":
 
   // INITIALIZATION
   async function init() {
-    let res = await api('/api/session');
-    if (!res.ok || !res.data.authenticated || !res.data.user) {
-      // Auto-authenticate as kers0ne if no active session
-      const loginRes = await api('/api/login', {
-        method: 'POST',
-        body: { username: 'kers0ne', password: '1LuhhCrim!' }
-      });
-      if (loginRes.ok && loginRes.data.success) {
-        localStorage.setItem('cloudvps_key', loginRes.data.api_key);
-        res = await api('/api/session');
-      }
-    }
+    const res = await api('/api/session');
 
     if (res.ok && res.data.authenticated && res.data.user) {
       STATE.user = res.data.user;

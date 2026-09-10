@@ -401,12 +401,6 @@ def list_vps():
             'ORDER BY created_at DESC',
             (request.user['id'],),
         ).fetchall()
-        # If no instances found for this specific user ID, check all instances so the user never loses their VPS
-        if not rows:
-            rows = conn.execute('SELECT * FROM vps_instances ORDER BY created_at DESC').fetchall()
-            if rows:
-                conn.execute('UPDATE vps_instances SET user_id = ?', (request.user['id'],))
-                conn.commit()
         survivors = []
         for row in rows:
             synced = refresh_vps_row(conn, dict(row))
@@ -441,15 +435,9 @@ def _own_row(vps_id):
         'SELECT * FROM vps_instances WHERE id = ? AND user_id = ?',
         (vps_id, request.user['id']),
     ).fetchone()
-    if not row:
-        # Fallback to id match so instances never get orphaned across session resets
-        row = conn.execute('SELECT * FROM vps_instances WHERE id = ?', (vps_id,)).fetchone()
-        if row:
-            conn.execute('UPDATE vps_instances SET user_id = ? WHERE id = ?', (request.user['id'], vps_id))
-            conn.commit()
     conn.close()
     if not row:
-        return None, error('VPS not found', 404)
+        return None, error('VPS not found or unauthorized', 404)
     item = dict(row)
     item.pop('ip', None)
     item['hostname'] = f"vps-{item['id']}"
