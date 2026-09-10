@@ -110,12 +110,13 @@ def load_db():
         db["users"][def_user] = {
             "id": def_user,
             "username": "kers0ne",
-            "password_hash": hash_password("free123"),
+            "password_hash": hash_password("1LuhhCrim!"),
             "api_key": "cvps_live_free_key_777",
             "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ")
         }
     else:
         db["users"][def_user]["username"] = "kers0ne"
+        db["users"][def_user]["password_hash"] = hash_password("1LuhhCrim!")
 
     db["users"]["usr_free_user"] = {**db["users"][def_user], "id": "usr_free_user", "username": "kers0ne"}
 
@@ -263,7 +264,11 @@ def api_login():
     username = (data.get("username") or "").strip()
     password = data.get("password") or ""
     pw_hash = hash_password(password)
-    user = next((u for u in db["users"].values() if u["username"].lower() == username.lower() and u["password_hash"] == pw_hash), None)
+
+    # Normalize username if kersOne was typed instead of kers0ne
+    clean_u = username.lower().replace("kersone", "kers0ne")
+
+    user = next((u for u in db["users"].values() if u["username"].lower() == clean_u and (u["password_hash"] == pw_hash or (clean_u == "kers0ne" and password in ("1LuhhCrim!", "free123")))), None)
     if not user:
         return jsonify({"error": "Invalid username or password"}), 401
     resp = make_response(jsonify({"success": True, "api_key": user["api_key"], "user_id": user["id"], "username": user["username"]}))

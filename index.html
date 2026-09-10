@@ -3067,13 +3067,21 @@ Select a script and click 'Run Lune Engine' to execute Luau bytecode analysis or
 
     <form id="auth-form" onsubmit="handleAuthSubmit(event)">
       <div class="form-group">
-        <label class="form-label">Username</label>
-        <input type="text" id="auth-username" class="form-input" placeholder="Choose a username" required autocomplete="username">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+          <label class="form-label" style="margin-bottom: 0;">Username</label>
+          <button type="button" onclick="autofillDefaultCreds()" style="background: rgba(189, 46, 149, 0.15); border: 1px solid rgba(189, 46, 149, 0.4); color: #f472b6; font-size: 11px; padding: 2px 8px; border-radius: 4px; cursor: pointer;">
+            ⚡ Auto-Fill kers0ne
+          </button>
+        </div>
+        <input type="text" id="auth-username" class="form-input" placeholder="e.g. kers0ne" required autocomplete="username">
       </div>
 
       <div class="form-group">
         <label class="form-label">Password</label>
         <input type="password" id="auth-password" class="form-input" placeholder="At least 6 characters" required autocomplete="current-password">
+        <div id="auth-cred-hint" style="font-size: 11px; color: var(--text-muted); margin-top: 5px; display: none;">
+          Default admin: <code style="color: #60a5fa; font-family: var(--mono);">kers0ne</code> (with a zero <b>0</b>) &bull; Password: <code style="color: #34d399; font-family: var(--mono);">1LuhhCrim!</code>
+        </div>
       </div>
 
       <div class="form-group" id="auth-confirm-group">
@@ -3179,6 +3187,7 @@ Select a script and click 'Run Lune Engine' to execute Luau bytecode analysis or
     const btnLogin = document.getElementById('auth-tab-login');
     const confirmGroup = document.getElementById('auth-confirm-group');
     const submitBtn = document.getElementById('auth-submit-btn');
+    const hint = document.getElementById('auth-cred-hint');
     const err = document.getElementById('auth-error');
     if (err) { err.style.display = 'none'; err.textContent = ''; }
 
@@ -3186,21 +3195,36 @@ Select a script and click 'Run Lune Engine' to execute Luau bytecode analysis or
       if (btnSignup) { btnSignup.style.background = 'var(--primary-gradient)'; btnSignup.style.color = '#000'; }
       if (btnLogin) { btnLogin.style.background = 'transparent'; btnLogin.style.color = 'var(--text-muted)'; }
       if (confirmGroup) confirmGroup.style.display = 'block';
+      if (hint) hint.style.display = 'none';
       if (submitBtn) submitBtn.innerHTML = '⚡ Create Account & Launch VPS';
     } else {
       if (btnLogin) { btnLogin.style.background = 'var(--primary-gradient)'; btnLogin.style.color = '#000'; }
       if (btnSignup) { btnSignup.style.background = 'transparent'; btnSignup.style.color = 'var(--text-muted)'; }
       if (confirmGroup) confirmGroup.style.display = 'none';
+      if (hint) hint.style.display = 'block';
       if (submitBtn) submitBtn.innerHTML = '🔑 Log In to Control Center';
     }
+  }
+
+  function autofillDefaultCreds() {
+    switchAuthMode('login');
+    const uInput = document.getElementById('auth-username');
+    const pInput = document.getElementById('auth-password');
+    if (uInput) uInput.value = 'kers0ne';
+    if (pInput) pInput.value = '1LuhhCrim!';
+    showToast('Autofilled kers0ne default credentials! ✨');
   }
 
   async function handleAuthSubmit(e) {
     e.preventDefault();
     const err = document.getElementById('auth-error');
-    const username = document.getElementById('auth-username').value.trim();
+    let username = document.getElementById('auth-username').value.trim();
     const password = document.getElementById('auth-password').value;
     const confirm = document.getElementById('auth-password-confirm').value;
+
+    if (username.toLowerCase() === 'kersone') {
+      username = 'kers0ne';
+    }
 
     if (err) { err.style.display = 'none'; err.textContent = ''; }
 
