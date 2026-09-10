@@ -1,0 +1,6 @@
+{
+  "name": "Cloud-VPS",
+  "description": "Render-style free cloud platform with bare-metal hypervisor, GitHub deployments, 24/7 Discord bots, web hosting, and cyberpunk blue control center.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

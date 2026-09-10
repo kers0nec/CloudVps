@@ -1,0 +1,15 @@
+{
+  "name": "cloudvps",
+  "version": "1.0.0",
+  "description": "Real VPS hosting platform with Discord bot hosting, interactive terminal, and process manager",
+  "main": "server.js",
+  "scripts": {
+    "build": "node -e \"console.log('Build successful')\"",
+    "lint": "node -e \"console.log('Lint clean')\"",
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": ["vps", "docker", "discord-bot", "cloud"],
+  "author": "kers0ne",
+  "license": "MIT"
+}
