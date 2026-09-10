@@ -38,6 +38,44 @@ python app.py          # listens on :5000 (override with PORT env var)
 ```
 Then open <http://localhost:5000>.
 
+## Running the Docker daemon
+
+On a normal host, install Docker and the app works as-is. In the offline
+sandbox this project is developed in (no Debian mirrors, no Docker download
+server, no container registries are reachable — only `github.com`,
+`pypi.org` and `registry.npmjs.org`), the daemon is provisioned like this:
+
+1. **Build the engine from source** using a Go toolchain installed from PyPI
+   (`pip install go-bin`), since GitHub release asset CDNs are blocked but
+   `git clone` from `github.com` works. All three projects vendor their Go
+   dependencies, so no module proxy is needed:
+   - `github.com/moby/moby` → `dockerd`
+     (`go build ./cmd/dockerd` with
+     `DOCKER_BUILDTAGS="exclude_graphdriver_devicemapper exclude_graphdriver_btrfs"`,
+     the C headers for those drivers are not available either),
+   - `github.com/containerd/containerd` → `containerd`,
+     `containerd-shim-runc-v2`,
+   - `github.com/opencontainers/runc` → `runc`
+     (`make RUNC_BUILDTAGS='-seccomp -libpathrs'` — libseccomp headers are
+     not available; harmless here because the sandbox kernel has seccomp
+     disabled).
+2. **Start it** with `scripts/start-dockerd.sh`, which launches `dockerd`
+   with the flags that fit the sandbox: no iptables binary exists, so
+   `--iptables=false --ip-forward=false --ip-masq=false
+   --userland-proxy=false`; containers still get real CPU/memory limits and
+   a real IPv4 address on the default `docker0` bridge. The socket is
+   `chmod 666`-ed afterwards so the app (non-root) can connect.
+3. **Seed the base image**: `docker_utils.VPS_IMAGE` is `ubuntu:22.04`, but
+   no image registry is reachable, so the image is seeded locally:
+   `docker import` of a trimmed tarball of the sandbox's own Debian 12
+   rootfs, tagged `ubuntu:22.04`. In other words, in this environment the
+   container labelled `ubuntu:22.04` actually contains Debian 12 — a real
+   Ubuntu image will be pulled normally on any host with registry access.
+
+```bash
+scripts/start-dockerd.sh && python app.py
+```
+
 ## API
 | Method | Path                      | Auth | Description                |
 |--------|---------------------------|------|----------------------------|
