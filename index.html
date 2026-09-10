@@ -1161,8 +1161,17 @@
     async function checkBackend() {
       setSysPill('checking', 'Checking…');
       try {
-        const { ok, data } = await api('/api/health', { auth: false });
-        if (ok && data.docker === false) {
+        const { ok, status, data } = await api('/api/health', { auth: false });
+        if (!ok || data.error) {
+          // A failed health request must never be shown as operational.  This
+          // is especially important when a reverse proxy turns a backend
+          // exception into a 5xx response without a `docker` field.
+          backendDetail.textContent = data.error
+            ? `Backend says: ${data.error}`
+            : `Health check failed (HTTP ${status}).`;
+          backendBanner.classList.remove('hidden');
+          setSysPill('down', 'Backend unavailable');
+        } else if (data.docker === false) {
           backendDetail.textContent =
             'The Docker daemon is not reachable, so VPS operations will fail. ' +
             (data.detail ? `Backend says: ${data.detail}` : '');

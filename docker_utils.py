@@ -9,9 +9,12 @@ traffic (and report a clear error) on hosts where the Docker daemon is not
 reachable, instead of crashing at import time.
 """
 
+import os
 import random
 import string
+import threading
 import time
+from urllib.parse import urlsplit, urlunsplit
 
 # ---------------------------------------------------------------------------
 # Plan catalogue. `cpu_shares`/`mem_limit` are applied to the container as real
@@ -30,25 +33,126 @@ PLANS = {
 VPS_IMAGE = 'ubuntu:22.04'
 
 _client = None
+_client_lock = threading.Lock()
+
+
+class DockerUnavailableError(RuntimeError):
+    """Raised when the Docker SDK cannot reach a daemon.
+
+    ``docker.from_env()`` performs API-version negotiation while constructing
+    the client.  That means a missing socket can raise before the caller ever
+    gets a client to ping (the common error is ``Error while fetching server
+    API version``).  Keeping this as a distinct error lets the HTTP layer
+    return a useful 503 instead of leaking an opaque SDK traceback.
+    """
+
+    def __init__(self, cause):
+        self.cause = cause
+        self.endpoint = docker_endpoint()
+        super().__init__(_connection_message(self.endpoint, cause))
+
+
+def docker_endpoint():
+    """Return the configured Docker endpoint without exposing credentials."""
+    raw = (os.environ.get('DOCKER_HOST') or '').strip()
+    if not raw:
+        return 'unix:///var/run/docker.sock'
+
+    # DOCKER_HOST may contain credentials for a TCP/SSH endpoint.  Keep the
+    # diagnostic useful while ensuring those credentials never reach an API
+    # response or the browser.
+    try:
+        parsed = urlsplit(raw)
+        if parsed.username or parsed.password:
+            host = parsed.hostname or ''
+            if parsed.port:
+                host = f'{host}:{parsed.port}'
+            netloc = f'***:***@{host}'
+            return urlunsplit((parsed.scheme, netloc, parsed.path,
+                               parsed.query, parsed.fragment))
+    except ValueError:
+        # A malformed port can make ``parsed.port`` raise.  Do not fall back
+        # to the raw value here because it may contain a password.
+        scheme = raw.split('://', 1)[0] if '://' in raw else 'docker'
+        return f'{scheme}://<redacted>'
+    return raw[:200]
+
+
+def _connection_message(endpoint, cause):
+    """Build an actionable, safe message for a failed Docker connection."""
+    detail = str(cause) or cause.__class__.__name__
+    lowered = detail.lower()
+    if isinstance(cause, ModuleNotFoundError) and getattr(cause, 'name', '') == 'docker':
+        return (
+            'Docker is not available: the Docker SDK is not installed. '
+            'Install requirements.txt before starting the backend.'
+        )
+    if isinstance(cause, FileNotFoundError) or 'filenotfounderror' in lowered:
+        return (
+            f'Docker is not available: no daemon socket was found at {endpoint}. '
+            'Start the Docker daemon or set DOCKER_HOST to a reachable daemon. '
+            f'({detail})'
+        )
+    if 'permission denied' in lowered:
+        return (
+            f'Docker is not available: permission was denied for {endpoint}. '
+            'Add the backend user to the Docker group or grant access to the '
+            f'socket. ({detail})'
+        )
+    if 'connection refused' in lowered or 'cannot connect' in lowered:
+        return (
+            f'Docker is not available: the daemon at {endpoint} refused the '
+            f'connection. Start the daemon and try again. ({detail})'
+        )
+    return f'Docker is not available at {endpoint}: {detail}'
+
+
+def _close_client(client):
+    """Close a partially-created client without masking the original error."""
+    if client is None:
+        return
+    try:
+        client.close()
+    except Exception:  # noqa: BLE001 - cleanup must never mask the cause
+        pass
+
+
+def _connect():
+    """Create and validate a Docker client, translating setup failures."""
+    client = None
+    try:
+        import docker
+        # ``from_env`` may negotiate the API version before returning, so both
+        # construction and ping must be inside this try block.
+        client = docker.from_env()
+        client.ping()
+        return client
+    except Exception as exc:  # noqa: BLE001 - SDK has several error classes
+        _close_client(client)
+        raise DockerUnavailableError(exc) from exc
 
 
 def get_client():
-    """Return a cached Docker client, connecting on first use.
+    """Return a validated, cached Docker client, connecting on first use.
 
-    A failed connection never leaves a half-initialised client behind, so the
-    next call retries cleanly once the daemon is reachable.
+    A failed connection never leaves a half-initialised client behind.  A
+    cached client is pinged before reuse as well, so stopping the daemon and
+    starting it again self-heals on the next request instead of leaving the
+    process stuck with a dead SDK client.
     """
     global _client
-    if _client is None:
-        import docker
-        client = docker.from_env()
-        try:
-            client.ping()
-        except Exception as exc:  # docker not running / not installed
-            client.close()
-            raise RuntimeError(f"Docker is not available: {exc}")
-        _client = client
-    return _client
+    with _client_lock:
+        if _client is not None:
+            try:
+                _client.ping()
+            except Exception as exc:  # noqa: BLE001 - daemon may have stopped
+                stale = _client
+                _client = None
+                _close_client(stale)
+                raise DockerUnavailableError(exc) from exc
+        if _client is None:
+            _client = _connect()
+        return _client
 
 
 def generate_container_suffix():

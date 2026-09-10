@@ -115,15 +115,36 @@ def auth_required(f):
 
 
 def handle_engine(exc):
-    """Translate engine errors into HTTP responses."""
+    """Translate Docker connection failures into actionable HTTP 503s."""
     msg = str(exc)
-    is_docker_error = isinstance(exc, ConnectionError)
+    is_docker_error = isinstance(exc, (ConnectionError, FileNotFoundError, OSError))
+
+    # The engine wraps failures from both ``docker.from_env()`` and ``ping``
+    # in this type.  In particular, docker-py can raise while negotiating the
+    # API version before a client exists, so checking only ``ping`` errors is
+    # not enough.
+    engine_error = getattr(vps_engine, 'DockerUnavailableError', ())
+    if engine_error:
+        is_docker_error = is_docker_error or isinstance(exc, engine_error)
+
     try:
         from docker.errors import DockerException  # base of all docker-py errors
         is_docker_error = is_docker_error or isinstance(exc, DockerException)
     except ImportError:  # docker package not installed at all
         is_docker_error = is_docker_error or 'No module named' in msg
-    if is_docker_error or 'Docker is not available' in msg:
+
+    # Keep compatibility with engine implementations that predate
+    # DockerUnavailableError, while also catching the SDK's version-fetch
+    # wording when it is raised directly.
+    docker_text = msg.lower()
+    is_docker_error = is_docker_error or any(marker in docker_text for marker in (
+        'docker is not available',
+        'error while fetching server api version',
+        'http+docker',
+        'docker daemon',
+    ))
+
+    if is_docker_error:
         return error(
             'VPS backend (Docker) is not reachable. Start the Docker daemon '
             'and ensure this app can talk to it. '
@@ -186,7 +207,9 @@ def health():
         docker_ok = False
         detail = str(exc)
     return jsonify({
-        'status': 'ok',
+        # The HTTP service is still alive while Docker is down, but it is not
+        # fully operational.  Expose that distinction to monitors and the UI.
+        'status': 'ok' if docker_ok else 'degraded',
         'docker': docker_ok,
         'detail': detail,
         'image': vps_engine.VPS_IMAGE,

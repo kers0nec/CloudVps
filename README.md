@@ -76,6 +76,26 @@ server, no container registries are reachable — only `github.com`,
 scripts/start-dockerd.sh && python app.py
 ```
 
+### Troubleshooting Docker connectivity
+
+If the dashboard shows **VPS backend offline** with `Error while fetching server
+API version` and `FileNotFoundError`, the Docker SDK cannot find the configured
+Unix socket; it is not an application API-version problem. Start the daemon
+before starting Flask:
+
+```bash
+scripts/start-dockerd.sh
+python app.py
+```
+
+On a host where Docker is managed by systemd, use `sudo systemctl start docker`
+instead. For a remote or rootless daemon, set `DOCKER_HOST` for the backend
+process (for example, `unix:///run/user/$UID/docker.sock` or a secured TCP
+endpoint) and ensure the process has permission to use it. The backend retries
+connection setup on each request, so restarting the daemon does not require a
+Flask restart. It returns HTTP `503` while Docker is genuinely unavailable;
+it never creates fake VPS records in that state.
+
 ## API
 | Method | Path                      | Auth | Description                |
 |--------|---------------------------|------|----------------------------|
