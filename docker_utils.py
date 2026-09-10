@@ -757,46 +757,141 @@ def _bot_monitor_thread(vps_id, proc, log_file_path):
                 lf.write(line)
                 lf.flush()
         proc.wait()
-    except Exception:
-        pass
+        return_code = proc.returncode
+        with open(log_file_path, 'a', encoding='utf-8') as lf:
+            lf.write(f"[{time.strftime('%H:%M:%S')}] [Supervisor] Bot process terminated (exit code {return_code}).\n")
+    except Exception as e:
+        try:
+            with open(log_file_path, 'a', encoding='utf-8') as lf:
+                lf.write(f"[{time.strftime('%H:%M:%S')}] [Supervisor Error] Stream monitor error: {e}\n")
+        except Exception:
+            pass
     finally:
         with _bot_lock:
             if _bot_processes.get(vps_id) == proc:
                 _bot_processes.pop(vps_id, None)
 
-def _launch_bot_process(vps_id, is_auto_recovery=False):
-    """Internal method to spawn the bot process."""
+def _launch_bot_process(vps_id, is_auto_recovery=False, config=None):
+    """Internal method to spawn the bot process with 24/7 supervisor tracking."""
     ws_dir = _get_workspace_dir(vps_id)
     logs_dir = _get_logs_dir(vps_id)
     meta_path = _get_meta_path(vps_id)
 
+    os.makedirs(ws_dir, exist_ok=True)
+    os.makedirs(logs_dir, exist_ok=True)
+
     if not os.path.exists(meta_path):
-        return {'success': False, 'message': 'VPS metadata not found'}
+        meta = {
+            'id': vps_id,
+            'name': f"vps-{vps_id[:6]}",
+            'status': 'running',
+            'bot': {
+                'runtime': 'python',
+                'script': 'bot.py',
+                'token': '',
+                'status': 'stopped',
+                'auto_restart': True
+            }
+        }
+        with open(meta_path, 'w', encoding='utf-8') as f:
+            json.dump(meta, f, indent=2)
+    else:
+        with open(meta_path, 'r', encoding='utf-8') as f:
+            meta = json.load(f)
 
-    with open(meta_path, 'r', encoding='utf-8') as f:
-        meta = json.load(f)
+    if 'bot' not in meta:
+        meta['bot'] = {}
 
-    bot_cfg = meta.get('bot', {})
+    bot_cfg = meta['bot']
+    if config:
+        if 'token' in config and config['token']:
+            bot_cfg['token'] = config['token'].strip()
+        if 'runtime' in config and config['runtime']:
+            bot_cfg['runtime'] = config['runtime']
+        if 'script' in config and config['script']:
+            bot_cfg['script'] = config['script']
+        elif 'filename' in config and config['filename']:
+            bot_cfg['script'] = config['filename']
+        if 'auto_restart' in config:
+            bot_cfg['auto_restart'] = bool(config['auto_restart'])
+
     runtime = bot_cfg.get('runtime', 'python')
     script = bot_cfg.get('script', 'bot.py')
     token = bot_cfg.get('token', '').strip()
 
-    script_path = os.path.join(ws_dir, script)
+    # Smart script selection: check if requested script exists
+    target_script = script or ('bot.py' if runtime == 'python' else 'bot.js')
+    script_path = os.path.join(ws_dir, target_script)
+
     if not os.path.exists(script_path):
+        # Look for existing user files in workspace so we never overwrite their files
+        existing_files = os.listdir(ws_dir) if os.path.exists(ws_dir) else []
+        candidates = []
         if runtime == 'python':
-            content = DEFAULT_PYTHON_BOT
+            candidates = [f for f in existing_files if f.endswith('.py')]
         elif runtime in ('node', 'javascript', 'js'):
-            content = DEFAULT_NODE_BOT
-        elif runtime == 'lune':
-            content = DEFAULT_LUNE_SCRIPT
-        elif runtime == 'lua':
-            content = DEFAULT_LUA_SCRIPT
-        elif runtime in ('html', 'web'):
-            content = DEFAULT_HTML_PAGE
+            candidates = [f for f in existing_files if f.endswith('.js') or f.endswith('.mjs')]
+
+        priority = ['bot.py', 'main.py', 'app.py', 'index.py', 'bot.js', 'index.js', 'main.js', 'app.js']
+        found = None
+        for p in priority:
+            if p in candidates:
+                found = p
+                break
+        if not found and candidates:
+            found = candidates[0]
+
+        if found:
+            target_script = found
+            script_path = os.path.join(ws_dir, target_script)
+            bot_cfg['script'] = found
+            if found.endswith('.js') or found.endswith('.mjs'):
+                runtime = 'node'
+                bot_cfg['runtime'] = 'node'
+            elif found.endswith('.py'):
+                runtime = 'python'
+                bot_cfg['runtime'] = 'python'
         else:
-            content = DEFAULT_PYTHON_BOT
-        with open(script_path, 'w', encoding='utf-8') as f:
-            f.write(content)
+            # Create starter template only if nothing exists
+            if runtime == 'python':
+                content = DEFAULT_PYTHON_BOT
+            elif runtime in ('node', 'javascript', 'js'):
+                content = DEFAULT_NODE_BOT
+            elif runtime == 'lune':
+                content = DEFAULT_LUNE_SCRIPT
+            elif runtime == 'lua':
+                content = DEFAULT_LUA_SCRIPT
+            elif runtime in ('html', 'web'):
+                content = DEFAULT_HTML_PAGE
+            else:
+                content = DEFAULT_PYTHON_BOT
+            with open(script_path, 'w', encoding='utf-8') as f:
+                f.write(content)
+
+    log_path = os.path.join(logs_dir, 'bot.log')
+    action_label = "24/7 Watchdog Auto-Recovery" if is_auto_recovery else "Manual 24/7 Start"
+    with open(log_path, 'a', encoding='utf-8') as f:
+        f.write(f"\n============================================================\n")
+        f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {action_label}\n")
+        f.write(f"VPS: {vps_id} | Script: {target_script} | Runtime: {runtime}\n")
+        f.write(f"============================================================\n")
+
+    # Auto-install requirements.txt if present
+    req_file = os.path.join(ws_dir, 'requirements.txt')
+    if os.path.exists(req_file) and runtime == 'python':
+        try:
+            with open(log_path, 'a', encoding='utf-8') as f:
+                f.write(f"[{time.strftime('%H:%M:%S')}] [Supervisor] Checking requirements.txt...\n")
+            subprocess.run(
+                [sys.executable, '-m', 'pip', 'install', '--break-system-packages', '-q', '-r', req_file],
+                cwd=ws_dir,
+                capture_output=True,
+                text=True,
+                timeout=45
+            )
+        except Exception as e:
+            with open(log_path, 'a', encoding='utf-8') as f:
+                f.write(f"[{time.strftime('%H:%M:%S')}] [Supervisor Warning] pip install: {e}\n")
 
     env = os.environ.copy()
     env['HOME'] = ws_dir
@@ -804,28 +899,46 @@ def _launch_bot_process(vps_id, is_auto_recovery=False):
     env['VPS_ID'] = vps_id
     env['VPS_NAME'] = meta.get('name', 'CloudVPS')
     env['PYTHONUNBUFFERED'] = '1'
+    env['NODE_PATH'] = f"/usr/local/lib/node_modules:{os.path.join(ws_dir, 'node_modules')}"
+
+    # Load .env file from workspace if present
+    env_file = os.path.join(ws_dir, '.env')
+    if os.path.exists(env_file):
+        try:
+            with open(env_file, 'r', encoding='utf-8') as ef:
+                for line in ef:
+                    line = line.strip()
+                    if line and not line.startswith('#') and '=' in line:
+                        k, v = line.split('=', 1)
+                        k = k.strip()
+                        v = v.strip().strip("'").strip('"')
+                        if k:
+                            env[k] = v
+                            if not token and k in ('DISCORD_BOT_TOKEN', 'DISCORD_TOKEN', 'BOT_TOKEN', 'TOKEN'):
+                                token = v
+        except Exception:
+            pass
+
     if token:
         env['DISCORD_BOT_TOKEN'] = token
+        env['DISCORD_TOKEN'] = token
+        env['BOT_TOKEN'] = token
+        env['TOKEN'] = token
 
     if runtime == 'python':
-        cmd = ['python3', script or 'bot.py']
+        cmd = ['python3', '-u', target_script]
     elif runtime in ('node', 'javascript', 'js'):
-        cmd = ['node', script or 'bot.js']
+        cmd = ['node', target_script]
     elif runtime == 'lune':
-        cmd = ['lune', 'run', script or 'script.luau']
+        cmd = ['lune', 'run', target_script]
     elif runtime == 'lua':
-        cmd = ['lua', script or 'bot.lua']
+        cmd = ['lua', target_script]
     elif runtime in ('html', 'web'):
         cmd = ['python3', '-m', 'http.server', '8080']
     elif runtime == 'bash':
-        cmd = ['bash', script or 'run.sh']
+        cmd = ['bash', target_script]
     else:
-        cmd = ['python3', script or 'bot.py']
-
-    log_path = os.path.join(logs_dir, 'bot.log')
-    action_label = "24/7 Auto-Recovery restart" if is_auto_recovery else "24/7 Launch"
-    with open(log_path, 'a', encoding='utf-8') as f:
-        f.write(f"\n--- [CloudVPS 24/7 Supervisor] {action_label} at {time.strftime('%Y-%m-%d %H:%M:%S')} ---\n")
+        cmd = ['python3', '-u', target_script]
 
     try:
         proc = subprocess.Popen(
@@ -856,22 +969,34 @@ def _launch_bot_process(vps_id, is_auto_recovery=False):
         t.start()
 
         meta['bot']['status'] = 'running'
+        meta['bot']['script'] = target_script
+        meta['bot']['runtime'] = runtime
         with open(meta_path, 'w', encoding='utf-8') as f:
             json.dump(meta, f, indent=2)
 
-        return {'success': True, 'message': 'Bot started 24/7 successfully', 'pid': proc.pid}
+        return {'success': True, 'message': 'Bot started 24/7 successfully', 'pid': proc.pid, 'script': target_script}
     except Exception as e:
+        with open(log_path, 'a', encoding='utf-8') as f:
+            f.write(f"[{time.strftime('%H:%M:%S')}] [Supervisor Fatal Error] Failed to spawn process: {e}\n")
         return {'success': False, 'message': f"Failed to start bot: {str(e)}"}
 
-def start_vps_bot(vps_id):
+def start_vps_bot(vps_id, config=None):
     """Starts the configured Discord Bot in 24/7 High-Availability mode."""
     with _bot_lock:
         existing = _bot_processes.get(vps_id)
         if existing and existing.poll() is None:
-            if vps_id in _bot_supervisor_state:
-                _bot_supervisor_state[vps_id]['desired'] = 'running'
-            return {'success': True, 'message': 'Bot is already running 24/7', 'pid': existing.pid}
-    return _launch_bot_process(vps_id, is_auto_recovery=False)
+            # If bot is already running and no new config was passed, keep running
+            if not config or (not config.get('token') and not config.get('filename') and not config.get('script')):
+                if vps_id in _bot_supervisor_state:
+                    _bot_supervisor_state[vps_id]['desired'] = 'running'
+                return {'success': True, 'message': 'Bot is already running 24/7', 'pid': existing.pid}
+            # Otherwise stop old process to apply new config
+            pass
+
+    # If already running but new config provided, stop first
+    stop_vps_bot(vps_id)
+    time.sleep(0.3)
+    return _launch_bot_process(vps_id, is_auto_recovery=False, config=config)
 
 def stop_vps_bot(vps_id):
     """Stops the Discord Bot process and marks desired state as stopped."""
@@ -997,42 +1122,62 @@ def _watchdog_supervisor_loop():
 _supervisor_thread = threading.Thread(target=_watchdog_supervisor_loop, daemon=True)
 _supervisor_thread.start()
 
-def get_vps_bot_logs(vps_id, max_lines=150):
+def get_vps_bot_logs(vps_id, max_lines=250):
     log_path = os.path.join(_get_logs_dir(vps_id), 'bot.log')
     if not os.path.exists(log_path):
-        return "No bot logs recorded yet. Start the bot to view live output."
+        return [
+            "[24/7 Supervisor] Bot environment ready.",
+            "[Supervisor] Upload your bot files and click 'Start Bot' to launch your 24/7 Discord bot."
+        ]
     try:
         with open(log_path, 'r', encoding='utf-8', errors='replace') as f:
-            lines = f.readlines()
-            return ''.join(lines[-max_lines:])
+            lines = [l.rstrip('\r\n') for l in f.readlines()]
+            return lines[-max_lines:] if lines else ["[Supervisor] Awaiting initial bot output..."]
     except Exception as e:
-        return f"Error reading bot logs: {e}"
+        return [f"[Supervisor Error] Reading bot logs: {e}"]
 
 def update_bot_config(vps_id, data):
     meta_path = _get_meta_path(vps_id)
-    if not os.path.exists(meta_path):
-        return {'success': False, 'message': 'VPS not found'}
+    ws_dir = _get_workspace_dir(vps_id)
+    os.makedirs(ws_dir, exist_ok=True)
 
-    with open(meta_path, 'r', encoding='utf-8') as f:
-        meta = json.load(f)
+    if not os.path.exists(meta_path):
+        meta = {
+            'id': vps_id,
+            'name': f"vps-{vps_id[:6]}",
+            'status': 'running',
+            'bot': {
+                'runtime': 'python',
+                'script': 'bot.py',
+                'token': '',
+                'status': 'stopped',
+                'auto_restart': True
+            }
+        }
+    else:
+        with open(meta_path, 'r', encoding='utf-8') as f:
+            meta = json.load(f)
 
     if 'bot' not in meta:
         meta['bot'] = {}
 
-    if 'token' in data:
-        meta['bot']['token'] = data['token'].strip()
+    if 'token' in data and data['token'] is not None:
+        token_val = data['token'].strip()
+        meta['bot']['token'] = token_val
         # Also update .env file in workspace
-        env_file = os.path.join(_get_workspace_dir(vps_id), '.env')
+        env_file = os.path.join(ws_dir, '.env')
         try:
             with open(env_file, 'w', encoding='utf-8') as ef:
-                ef.write(f"DISCORD_BOT_TOKEN={data['token'].strip()}\nBOT_PREFIX=!\n")
+                ef.write(f"DISCORD_BOT_TOKEN={token_val}\nDISCORD_TOKEN={token_val}\nBOT_TOKEN={token_val}\nBOT_PREFIX=!\n")
         except Exception:
             pass
 
-    if 'runtime' in data:
+    if 'runtime' in data and data['runtime']:
         meta['bot']['runtime'] = data['runtime']
-    if 'script' in data:
+    if 'script' in data and data['script']:
         meta['bot']['script'] = data['script']
+    elif 'filename' in data and data['filename']:
+        meta['bot']['script'] = data['filename']
     if 'auto_restart' in data:
         meta['bot']['auto_restart'] = bool(data['auto_restart'])
 

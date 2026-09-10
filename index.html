@@ -946,34 +946,47 @@
           </div>
         </div>
 
-        <div style="display: flex; gap: 12px; margin-bottom: 24px;">
-          <button class="btn btn-primary" onclick="startBotSupervisor()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            Launch 24/7 Bot
+        <div style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;">
+          <button class="btn btn-primary" id="btn-start-bot" onclick="startBotSupervisor()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-color: #34d399; font-weight: 800; padding: 12px 24px; font-size: 14px; box-shadow: 0 0 16px rgba(16, 185, 129, 0.35);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            ▶ Start Bot
           </button>
-          <button class="btn btn-secondary" onclick="stopBotSupervisor()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="6" y="6" width="12" height="12"/></svg>
-            Stop Bot
+          <button class="btn btn-secondary" id="btn-restart-bot" onclick="restartBotSupervisor()" style="font-weight: 700; padding: 12px 18px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            🔄 Restart Bot
           </button>
+          <button class="btn btn-secondary" id="btn-stop-bot" onclick="stopBotSupervisor()" style="color: var(--danger); border-color: rgba(244,63,94,0.3); font-weight: 700; padding: 12px 18px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12"/></svg>
+            ⏹ Stop Bot
+          </button>
+          <div style="margin-left: auto; display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--text-muted);">
+            <span id="bot-status-detail-text" style="font-family: var(--mono); color: #94a3b8;">Status: Ready to start</span>
+            <span class="badge-cyber" id="bot-live-badge" style="font-size: 12px;">OFFLINE ⚪</span>
+          </div>
         </div>
 
         <!-- 24/7 Watchdog Terminal Output -->
-        <div class="terminal-window">
+        <div class="terminal-window" style="border: 1px solid var(--border-bright);">
           <div class="terminal-topbar">
             <div class="terminal-dots">
               <span class="terminal-dot red"></span>
               <span class="terminal-dot yellow"></span>
               <span class="terminal-dot green"></span>
-              <span class="terminal-title">watchdog-logs — 24/7 process supervisor</span>
+              <span class="terminal-title">watchdog-logs — 24/7 high-availability bot supervisor</span>
             </div>
-            <div style="display: flex; gap: 8px;">
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <span id="bot-log-live-dot" style="display: none; align-items: center; gap: 5px; font-size: 11px; color: var(--success); font-family: var(--mono); margin-right: 6px;">
+                <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
+                LIVE 24/7
+              </span>
+              <button class="btn btn-secondary btn-sm" id="btn-autoscroll-toggle" onclick="toggleAutoScrollLogs()">Auto-Scroll: ON</button>
               <button class="btn btn-secondary btn-sm" onclick="clearBotLogs()">Clear</button>
               <button class="btn btn-secondary btn-sm" onclick="fetchBotLogs()">Refresh</button>
             </div>
           </div>
-          <div class="terminal-body" id="bot-logs-terminal">
+          <div class="terminal-body" id="bot-logs-terminal" style="height: 360px; overflow-y: auto; font-size: 12.5px; line-height: 1.55; scroll-behavior: smooth;">
             <div style="color: var(--primary);">==> Cloud-VPS 24/7 Discord Bot Watchdog Ready</div>
-            <div>[Supervisor] Waiting for bot files and token configuration...</div>
+            <div>[Supervisor] Waiting for bot files and token configuration... Click '▶ Start Bot' to launch.</div>
           </div>
         </div>
       </div>
@@ -1010,7 +1023,12 @@
             <div class="card-title">Files & Code Editor</div>
             <div class="card-desc">View, edit, and save your bot code and configuration files directly inside your VPS.</div>
           </div>
-          <button class="btn btn-primary btn-sm" onclick="saveActiveFile()">Save File</button>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-secondary btn-sm" onclick="saveActiveFile()">Save File</button>
+            <button class="btn btn-primary btn-sm" style="background: #10b981; border-color: #34d399; font-weight: 700;" onclick="saveAndStartBot()">
+              ▶ Save & Run Bot
+            </button>
+          </div>
         </div>
 
         <div style="display: flex; gap: 14px; height: 460px; flex-wrap: wrap;">
@@ -1480,9 +1498,12 @@
               </div>
             </div>
           </div>
-          <div style="display: flex; gap: 8px; align-items: center;">
+          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <button class="btn btn-primary btn-sm" style="background: #10b981; border-color: #34d399; font-weight: 700;" onclick="startBotForVps('${v.id}')">
+              ▶ Start Bot
+            </button>
             <button class="btn btn-secondary btn-sm" onclick="setActiveVps('${v.id}')">
-              ${isSelected ? '✓ Selected' : 'Select'}
+              ${isSelected ? '✓ Active' : 'Select'}
             </button>
             <button class="btn btn-cyan btn-sm" onclick="openTerminalForVps('${v.id}')">
               Terminal
@@ -1501,7 +1522,14 @@
     renderVpsList();
     updateBotVpsStatusCard();
     fetchBotFiles();
+    fetchBotStatus();
     showToast(`Active container set to ${id}`);
+  }
+
+  function startBotForVps(id) {
+    setActiveVps(id);
+    switchTab('bot');
+    startBotSupervisor();
   }
 
   function openTerminalForVps(id) {
@@ -1566,9 +1594,20 @@
       badge.style.color = 'var(--success)';
       subtext.innerHTML = `Target: <strong style="color: #fff;">${escapeHtml(activeVps.name)}</strong> (${activeVps.cpu || '2 Cores'}, ${activeVps.memory || '2GB RAM'}) &bull; Container: ${activeVps.id}`;
       actionContainer.innerHTML = `
-        <button class="btn btn-secondary btn-sm" onclick="switchTab('vps')">
-          Manage VPS
-        </button>
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <button class="btn btn-primary btn-sm" style="background: #10b981; border-color: #34d399; font-weight: 700;" onclick="startBotSupervisor()">
+            ▶ Start Bot
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="restartBotSupervisor()">
+            🔄 Restart
+          </button>
+          <button class="btn btn-secondary btn-sm" style="color: var(--danger);" onclick="stopBotSupervisor()">
+            ⏹ Stop
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="switchTab('vps')">
+            VPS Config
+          </button>
+        </div>
       `;
     }
   }
@@ -1696,13 +1735,30 @@
             ${f.size ? Math.round(f.size / 1024 * 10) / 10 + ' KB' : '1 KB'}
           </td>
           <td>${badge}</td>
-          <td style="text-align: right;">
+          <td style="text-align: right; display: flex; gap: 6px; justify-content: flex-end; align-items: center;">
+            ${(f.name.endsWith('.py') || f.name.endsWith('.js') || f.name.endsWith('.sh')) ? `
+              <button class="btn btn-primary btn-sm" style="background: #10b981; border-color: #34d399; font-weight: 700;" onclick="runScriptFile('${escapeHtml(f.name)}')">
+                ▶ Start Bot
+              </button>
+            ` : ''}
             <button class="btn btn-secondary btn-sm" onclick="editBotFile('${escapeHtml(f.name)}')">Edit</button>
             <button class="btn btn-secondary btn-sm" style="color: var(--danger);" onclick="deleteBotFile('${escapeHtml(f.name)}')">Delete</button>
           </td>
         </tr>
       `;
     }).join('');
+  }
+
+  function runScriptFile(filename) {
+    document.getElementById('bot-script-file').value = filename;
+    if (filename.endsWith('.js')) {
+      document.getElementById('bot-runtime-select').value = 'node';
+    } else if (filename.endsWith('.py')) {
+      document.getElementById('bot-runtime-select').value = 'python';
+    }
+    showToast(`Selected ${filename}. Launching 24/7 Bot...`);
+    switchTab('bot');
+    startBotSupervisor();
   }
 
   function editBotFile(filename) {
@@ -1721,24 +1777,69 @@
     }
   }
 
-  // BOT SUPERVISOR CONTROLS
+  // =========================================================================
+  // BOT SUPERVISOR CONTROLS & LIVE LOGS (24/7 ALWAYS-ON)
+  // =========================================================================
+  STATE.autoScrollLogs = true;
+
+  function toggleAutoScrollLogs() {
+    STATE.autoScrollLogs = !STATE.autoScrollLogs;
+    const btn = document.getElementById('btn-autoscroll-toggle');
+    if (btn) btn.textContent = `Auto-Scroll: ${STATE.autoScrollLogs ? 'ON' : 'OFF'}`;
+  }
+
+  function formatUptime(sec) {
+    if (!sec || sec < 60) return `${sec || 0}s`;
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    if (m < 60) return `${m}m ${s}s`;
+    const h = Math.floor(m / 60);
+    return `${h}h ${m % 60}m`;
+  }
+
+  function applyBotStatus(b) {
+    if (!b) return;
+    const badge = document.getElementById('bot-live-badge');
+    const detailText = document.getElementById('bot-status-detail-text');
+    const liveDot = document.getElementById('bot-log-live-dot');
+    const isRunning = b.running === true || b.status === 'running';
+
+    if (badge) {
+      if (isRunning) {
+        const uptimeStr = b.uptime_seconds ? formatUptime(b.uptime_seconds) : 'Just started';
+        badge.textContent = '24/7 ONLINE 🟢';
+        badge.style.color = '#34d399';
+        badge.style.borderColor = '#10b981';
+        badge.style.background = 'rgba(16, 185, 129, 0.15)';
+        if (detailText) {
+          detailText.innerHTML = `PID: <strong style="color: #fff;">${b.pid || 'Active'}</strong> &bull; Uptime: <strong style="color: #34d399;">${uptimeStr}</strong> &bull; Restarts: ${b.restarts || 0}`;
+        }
+        if (liveDot) liveDot.style.display = 'inline-flex';
+      } else {
+        badge.textContent = 'STOPPED ⚪';
+        badge.style.color = 'var(--text-muted)';
+        badge.style.borderColor = 'var(--surface-border)';
+        badge.style.background = 'transparent';
+        if (detailText) {
+          detailText.textContent = 'Process is stopped. Click Start Bot to run 24/7.';
+        }
+        if (liveDot) liveDot.style.display = 'none';
+      }
+    }
+
+    if (b.runtime && document.getElementById('bot-runtime-select')) {
+      document.getElementById('bot-runtime-select').value = b.runtime;
+    }
+    if ((b.script || b.filename) && document.getElementById('bot-script-file')) {
+      document.getElementById('bot-script-file').value = b.script || b.filename;
+    }
+  }
+
   async function fetchBotStatus() {
     if (!STATE.activeVpsId) return;
     const res = await api(`/api/vps/${STATE.activeVpsId}/bot`);
     if (res.ok && res.data) {
-      const b = res.data;
-      const badge = document.getElementById('bot-live-badge');
-      if (b.status === 'running') {
-        badge.textContent = '24/7 ONLINE 🟢';
-        badge.style.color = 'var(--success)';
-        badge.style.borderColor = 'var(--success)';
-      } else {
-        badge.textContent = 'STANDBY ⚪';
-        badge.style.color = 'var(--text-muted)';
-        badge.style.borderColor = 'var(--surface-border)';
-      }
-      if (b.runtime) document.getElementById('bot-runtime-select').value = b.runtime;
-      if (b.filename) document.getElementById('bot-script-file').value = b.filename;
+      applyBotStatus(res.data);
     }
   }
 
@@ -1759,19 +1860,52 @@
     const runtime = document.getElementById('bot-runtime-select').value;
     const filename = document.getElementById('bot-script-file').value.trim() || 'bot.py';
 
-    showToast('Starting 24/7 Bot Process Watchdog...');
+    showToast('Starting 24/7 Discord Bot Supervisor...');
     const res = await api(`/api/vps/${STATE.activeVpsId}/bot/start`, {
       method: 'POST',
-      body: { token, runtime, filename }
+      body: { token, runtime, filename, script: filename }
     });
 
     if (res.ok) {
-      showToast('Discord Bot started 24/7!');
-      document.getElementById('bot-live-badge').textContent = '24/7 ONLINE 🟢';
-      document.getElementById('bot-live-badge').style.color = 'var(--success)';
-      fetchBotLogs();
+      showToast('Discord Bot launched in 24/7 Always-On mode! 🟢');
+      if (res.data.status_info) {
+        applyBotStatus(res.data.status_info);
+      } else {
+        const badge = document.getElementById('bot-live-badge');
+        if (badge) {
+          badge.textContent = '24/7 ONLINE 🟢';
+          badge.style.color = '#34d399';
+          badge.style.borderColor = '#10b981';
+        }
+      }
+      await fetchBotLogs();
     } else {
       showToast(`Error: ${res.data.error || 'Failed to start bot'}`);
+      await fetchBotLogs();
+    }
+  }
+
+  async function restartBotSupervisor() {
+    if (!STATE.activeVpsId) {
+      showToast('Please select or deploy a VPS first');
+      return;
+    }
+    const token = document.getElementById('bot-token-input').value.trim();
+    const runtime = document.getElementById('bot-runtime-select').value;
+    const filename = document.getElementById('bot-script-file').value.trim() || 'bot.py';
+
+    showToast('Restarting Discord Bot in 24/7 Watchdog...');
+    const res = await api(`/api/vps/${STATE.activeVpsId}/bot/restart`, {
+      method: 'POST',
+      body: { token, runtime, filename, script: filename }
+    });
+    if (res.ok) {
+      showToast('Discord Bot restarted 24/7!');
+      if (res.data.status_info) applyBotStatus(res.data.status_info);
+      await fetchBotLogs();
+    } else {
+      showToast(`Restart failed: ${res.data.error || 'Check watchdog logs'}`);
+      await fetchBotLogs();
     }
   }
 
@@ -1780,24 +1914,77 @@
     const res = await api(`/api/vps/${STATE.activeVpsId}/bot/stop`, { method: 'POST' });
     if (res.ok) {
       showToast('Bot stopped');
-      document.getElementById('bot-live-badge').textContent = 'STOPPED ⚪';
-      fetchBotLogs();
+      if (res.data.status_info) {
+        applyBotStatus(res.data.status_info);
+      } else {
+        const badge = document.getElementById('bot-live-badge');
+        if (badge) {
+          badge.textContent = 'STOPPED ⚪';
+          badge.style.color = 'var(--text-muted)';
+        }
+      }
+      await fetchBotLogs();
     }
   }
 
   async function fetchBotLogs() {
     if (!STATE.activeVpsId) return;
     const res = await api(`/api/vps/${STATE.activeVpsId}/bot/logs`);
-    if (res.ok && res.data.logs) {
+    if (res.ok) {
+      let lines = [];
+      if (Array.isArray(res.data.logs)) {
+        lines = res.data.logs;
+      } else if (typeof res.data.logs === 'string') {
+        lines = res.data.logs.split('\n');
+      } else if (res.data.raw) {
+        lines = res.data.raw.split('\n');
+      }
+
       const t = document.getElementById('bot-logs-terminal');
-      t.innerHTML = res.data.logs.map(l => `<div>${escapeHtml(l)}</div>`).join('');
-      t.scrollTop = t.scrollHeight;
+      if (t) {
+        if (lines.length === 0) {
+          t.innerHTML = `<div style="color: var(--text-dim);">[Supervisor] No logs recorded yet. Click '▶ Start Bot' above to launch 24/7.</div>`;
+        } else {
+          t.innerHTML = lines.map(line => {
+            let color = '#d1d5db';
+            const lower = line.toLowerCase();
+            if (line.includes('===') || line.includes('[CloudVPS 24/7') || line.includes('[24/7 Watchdog]')) {
+              color = 'var(--primary)';
+            } else if (lower.includes('error') || lower.includes('traceback') || lower.includes('exception') || lower.includes('failed') || lower.includes('loginfailure') || lower.includes('privilegedintentsrequired')) {
+              color = '#f87171'; // bright red
+            } else if (lower.includes('warning') || lower.includes('notice') || lower.includes('standing by') || lower.includes('waiting') || lower.includes('recovering')) {
+              color = '#fbbf24'; // amber
+            } else if (lower.includes('online') || lower.includes('logged in') || lower.includes('success') || lower.includes('listening') || lower.includes('ready') || lower.includes('connected')) {
+              color = '#34d399'; // green
+            }
+            return `<div style="color: ${color}; line-height: 1.5; font-family: var(--mono);">${escapeHtml(line)}</div>`;
+          }).join('');
+        }
+        if (STATE.autoScrollLogs) {
+          t.scrollTop = t.scrollHeight;
+        }
+      }
+
+      if (res.data.status) {
+        applyBotStatus(res.data.status);
+      }
     }
   }
 
-  function clearBotLogs() {
-    document.getElementById('bot-logs-terminal').innerHTML = '<div style="color: var(--text-dim);">Logs cleared.</div>';
+  async function clearBotLogs() {
+    if (!STATE.activeVpsId) return;
+    await api(`/api/vps/${STATE.activeVpsId}/bot/logs/clear`, { method: 'POST' });
+    const t = document.getElementById('bot-logs-terminal');
+    if (t) t.innerHTML = '<div style="color: var(--text-dim);">--- Logs cleared by user ---</div>';
+    showToast('Watchdog logs cleared');
   }
+
+  // 24/7 Live Watchdog Polling (every 2.5s when viewing the bot tab)
+  setInterval(() => {
+    if (STATE.activeTab === 'bot' && STATE.activeVpsId) {
+      fetchBotLogs();
+    }
+  }, 2500);
 
   // =========================================================================
   // TERMINAL KEYBOARD HANDLER
@@ -1892,6 +2079,12 @@
       showToast(`Saved ${filename}`);
       fetchBotFiles();
     }
+  }
+
+  async function saveAndStartBot() {
+    await saveActiveFile();
+    const filename = document.getElementById('file-code-editor').dataset.currentFile || 'bot.py';
+    runScriptFile(filename);
   }
 
   function escapeHtml(str) {

@@ -620,9 +620,40 @@ def vps_bot_start(vps_id):
     row, resp = _own_row(vps_id)
     if resp:
         return resp
+    # If the VPS is stopped, auto-start it so the bot can run seamlessly
     if row.get('status') == 'stopped':
-        return error('VPS is stopped. Start the VPS first.', 400)
-    res = vps_engine.start_vps_bot(vps_id)
+        try:
+            vps_engine.start_container(row.get('container_id', f"native-{vps_id}"))
+            conn = get_db()
+            conn.execute('UPDATE vps_instances SET status = ? WHERE id = ?', ('running', vps_id))
+            conn.commit()
+            conn.close()
+        except Exception:
+            pass
+
+    data = request.get_json(silent=True) or {}
+    if data:
+        vps_engine.update_bot_config(vps_id, data)
+
+    res = vps_engine.start_vps_bot(vps_id, config=data)
+    res['status_info'] = vps_engine.get_vps_bot_status(vps_id)
+    return jsonify(res)
+
+
+@app.route('/api/vps/<vps_id>/bot/restart', methods=['POST'])
+@auth_required
+def vps_bot_restart(vps_id):
+    row, resp = _own_row(vps_id)
+    if resp:
+        return resp
+    data = request.get_json(silent=True) or {}
+    if data:
+        vps_engine.update_bot_config(vps_id, data)
+    vps_engine.stop_vps_bot(vps_id)
+    import time
+    time.sleep(0.4)
+    res = vps_engine.start_vps_bot(vps_id, config=data)
+    res['status_info'] = vps_engine.get_vps_bot_status(vps_id)
     return jsonify(res)
 
 
@@ -633,6 +664,7 @@ def vps_bot_stop(vps_id):
     if resp:
         return resp
     res = vps_engine.stop_vps_bot(vps_id)
+    res['status_info'] = vps_engine.get_vps_bot_status(vps_id)
     return jsonify(res)
 
 
@@ -643,7 +675,30 @@ def vps_bot_logs(vps_id):
     if resp:
         return resp
     logs = vps_engine.get_vps_bot_logs(vps_id)
-    return jsonify({'success': True, 'logs': logs})
+    status_info = vps_engine.get_vps_bot_status(vps_id)
+    raw_text = '\n'.join(logs) if isinstance(logs, list) else str(logs)
+    return jsonify({
+        'success': True,
+        'logs': logs,
+        'raw': raw_text,
+        'status': status_info
+    })
+
+
+@app.route('/api/vps/<vps_id>/bot/logs/clear', methods=['POST'])
+@auth_required
+def vps_bot_logs_clear(vps_id):
+    row, resp = _own_row(vps_id)
+    if resp:
+        return resp
+    import time
+    log_path = os.path.join(vps_engine._get_logs_dir(vps_id), 'bot.log')
+    try:
+        with open(log_path, 'w', encoding='utf-8') as f:
+            f.write(f"--- [CloudVPS 24/7 Supervisor] Logs cleared by user at {time.strftime('%Y-%m-%d %H:%M:%S')} ---\n")
+        return jsonify({'success': True, 'message': 'Logs cleared successfully'})
+    except Exception as e:
+        return error(f"Failed to clear logs: {str(e)}", 500)
 
 
 @app.route('/api/vps/<vps_id>/bot/upload', methods=['POST'])
