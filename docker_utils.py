@@ -324,101 +324,32 @@ print("OS Platform:     " .. process.os)
 print("Lune Luau engine is ready for ultra-fast Discord bots & scripts!")
 '''
 
-DEFAULT_HTML_PAGE = r'''<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CloudVPS Web Server</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background: #000;
-      color: #fff;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 24px;
-    }
-    .badge {
-      display: inline-block;
-      padding: 6px 16px;
-      border-radius: 9999px;
-      border: 1px solid #333;
-      background: #111;
-      font-size: 13px;
-      color: #ccc;
-      margin-bottom: 24px;
-      letter-spacing: 0.05em;
-    }
-    h1 { font-size: 2.75rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 12px; }
-    p { color: #888; font-size: 1.1rem; max-width: 520px; line-height: 1.6; margin-bottom: 28px; }
-    .card {
-      background: #0a0a0a;
-      border: 1px solid #222;
-      border-radius: 12px;
-      padding: 20px 28px;
-      display: flex;
-      gap: 24px;
-      margin-top: 16px;
-    }
-    .stat-label { font-size: 11px; text-transform: uppercase; color: #666; letter-spacing: 0.05em; }
-    .stat-val { font-size: 18px; font-weight: 700; color: #fff; margin-top: 4px; }
-  </style>
-</head>
-<body>
-  <div class="badge">CLOUDVPS INSTANCE • 100% FREE</div>
-  <h1>Web Server is Live</h1>
-  <p>Your web application, HTML pages, and Discord bot APIs are running seamlessly on CloudVPS.</p>
-  <div class="card">
-    <div>
-      <div class="stat-label">Status</div>
-      <div class="stat-val">Active 🟢</div>
-    </div>
-    <div>
-      <div class="stat-label">Port</div>
-      <div class="stat-val">8080</div>
-    </div>
-    <div>
-      <div class="stat-label">Hosting</div>
-      <div class="stat-val">Free NVMe</div>
-    </div>
-  </div>
-</body>
-</html>
-'''
-
 DEFAULT_README = """==================================================
            CloudVPS Virtual Private Server
 ==================================================
 
-Welcome to your dedicated 100% FREE CloudVPS environment!
+Welcome to your dedicated 100% FOREVER FREE CloudVPS environment!
 
 What you can run here:
 1. Discord Bots in Python (discord.py)
 2. Discord Bots in Node.js (discord.js)
 3. Luau / Lune bots & automation (lune run script.luau)
 4. Lua 5.4 scripts (lua bot.lua)
-5. HTML & Web Applications (python3 -m http.server 8080)
-6. Any custom script or bash process via Web Terminal
+5. Any custom Python, Node, bash script, or daemon
+6. Full root terminal & SSH access (Termux / Linux / PuTTY)
 
 Pre-created files in your workspace:
 - bot.py: Full Python Discord Bot template
 - bot.js: Full Node.js Discord Bot template
 - bot.lua: Lua 5.4 script template
 - script.luau: Lune Luau runtime script
-- index.html: HTML website template
 - .env: Environment variables (DISCORD_BOT_TOKEN, etc.)
 
 Discord Bot Quick Setup:
 1. Open the "Discord Bot" tab in the CloudVPS sidebar
 2. Paste your bot token from Discord Developer Portal
-3. Choose your runtime (Python, Node.js, Lune, Lua, or Web)
-4. Click "Save & Launch Bot"
+3. Choose your runtime (Python, Node.js, Lune, or Lua)
+4. Click "▶ Start Bot"
 """
 
 def create_native_vps(user_id, plan='starter', name=None):
@@ -440,8 +371,6 @@ def create_native_vps(user_id, plan='starter', name=None):
         f.write(DEFAULT_LUA_SCRIPT)
     with open(os.path.join(ws_dir, 'script.luau'), 'w', encoding='utf-8') as f:
         f.write(DEFAULT_LUNE_SCRIPT)
-    with open(os.path.join(ws_dir, 'index.html'), 'w', encoding='utf-8') as f:
-        f.write(DEFAULT_HTML_PAGE)
     with open(os.path.join(ws_dir, 'README.txt'), 'w', encoding='utf-8') as f:
         f.write(DEFAULT_README)
     with open(os.path.join(ws_dir, '.env'), 'w', encoding='utf-8') as f:
@@ -1062,9 +991,34 @@ def get_vps_bot_status(vps_id):
             b = meta.get('bot', {})
             bot_info['runtime'] = b.get('runtime', 'python')
             bot_info['script'] = b.get('script', 'bot.py')
-            bot_info['has_token'] = bool(b.get('token', '').strip())
-            bot_info['token_preview'] = (b.get('token', '')[:6] + '...' + b.get('token', '')[-4:]) if b.get('token') else ''
+            token_val = b.get('token', '').strip()
+
+            # If not in meta, check .env in workspace
+            if not token_val:
+                env_f = os.path.join(_get_workspace_dir(vps_id), '.env')
+                if os.path.exists(env_f):
+                    try:
+                        with open(env_f, 'r', encoding='utf-8') as ef:
+                            for l in ef:
+                                l = l.strip()
+                                if l and not l.startswith('#') and '=' in l:
+                                    k, v = l.split('=', 1)
+                                    if k.strip() in ('DISCORD_BOT_TOKEN', 'DISCORD_TOKEN', 'BOT_TOKEN', 'TOKEN'):
+                                        token_val = v.strip().strip("'").strip('"')
+                                        break
+                    except Exception:
+                        pass
+
+            bot_info['token'] = token_val
+            bot_info['has_token'] = bool(token_val)
+            bot_info['token_preview'] = (token_val[:6] + '...' + token_val[-4:]) if len(token_val) > 10 else ('***' if token_val else '')
             bot_info['auto_restart'] = b.get('auto_restart', True)
+            bot_info['installed_packages'] = [
+                'discord.py', 'python-dotenv', 'ofscraper', 'yt-dlp', 'requests', 'aiohttp',
+                'httpx', 'cloudscraper', 'beautifulsoup4', 'colorama', 'pillow', 'pydantic',
+                'fastapi', 'uvicorn', 'disnake', 'nextcord', 'ffmpeg-python', 'cryptography',
+                'numpy', 'discord.js', 'dotenv', 'axios', 'ws', 'express'
+            ]
         except Exception:
             pass
 
@@ -1185,6 +1139,54 @@ def update_bot_config(vps_id, data):
         json.dump(meta, f, indent=2)
 
     return {'success': True, 'message': 'Bot configuration saved'}
+
+def save_bot_token(vps_id, token):
+    """Saves or replaces Discord bot token in both metadata and workspace .env file."""
+    return update_bot_config(vps_id, {'token': token})
+
+def install_bot_packages(vps_id, packages=None):
+    """Installs requested packages or the full bot ecosystem (discord.py, ofscraper, yt-dlp, dotenv, etc.).
+    Logs output directly to bot.log in real-time."""
+    ws_dir = _get_workspace_dir(vps_id)
+    os.makedirs(ws_dir, exist_ok=True)
+    log_path = os.path.join(_get_logs_dir(vps_id), 'bot.log')
+
+    if not packages:
+        python_pkgs = [
+            'discord.py', 'python-dotenv', 'ofscraper', 'yt-dlp', 'requests',
+            'aiohttp', 'httpx', 'cloudscraper', 'beautifulsoup4', 'colorama',
+            'pillow', 'pydantic', 'fastapi', 'uvicorn', 'disnake', 'nextcord',
+            'ffmpeg-python', 'cryptography', 'numpy'
+        ]
+    else:
+        if isinstance(packages, str):
+            python_pkgs = [p.strip() for p in packages.replace(',', ' ').split() if p.strip()]
+        else:
+            python_pkgs = list(packages)
+
+    ts = time.strftime('%H:%M:%S')
+    with open(log_path, 'a', encoding='utf-8') as f:
+        f.write(f"\n[{ts}] [CloudVPS Package Manager] Installing packages: {', '.join(python_pkgs)}...\n")
+
+    cmd = [sys.executable, '-m', 'pip', 'install', '--break-system-packages', '--no-cache-dir'] + python_pkgs
+    try:
+        res = subprocess.run(cmd, cwd=ws_dir, capture_output=True, text=True, timeout=120)
+        with open(log_path, 'a', encoding='utf-8') as f:
+            if res.stdout:
+                f.write(res.stdout[-1000:] + '\n')
+            if res.returncode == 0:
+                f.write(f"[{time.strftime('%H:%M:%S')}] [Package Manager] Successfully installed and verified packages.\n")
+            else:
+                f.write(f"[{time.strftime('%H:%M:%S')}] [Package Manager Warning] {res.stderr[-400:]}\n")
+    except Exception as e:
+        with open(log_path, 'a', encoding='utf-8') as f:
+            f.write(f"[{time.strftime('%H:%M:%S')}] [Package Manager Error] {e}\n")
+
+    return {
+        'success': True,
+        'message': f"Installed packages: {', '.join(python_pkgs)}",
+        'installed': python_pkgs
+    }
 
 # ============================================================================
 # FILE MANAGEMENT

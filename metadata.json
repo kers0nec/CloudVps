@@ -1,6 +1,6 @@
 {
-  "name": "Cloud-VPS",
-  "description": "Render-style free cloud platform with bare-metal hypervisor, GitHub deployments, 24/7 Discord bots, web hosting, and cyberpunk blue control center.",
+  "name": "Cloud VPS",
+  "description": "100% Forever Free 24/7 Discord bot, root SSH terminal, and cloud container hosting with Termux mobile access and auto-restart watchdog.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
