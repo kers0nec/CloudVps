@@ -8,6 +8,7 @@ Supports both Docker (when available) and Native Sandbox VPS subsystem.
 from flask import Flask, request, jsonify, send_from_directory, send_file
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from functools import wraps
 import sqlite3
 import random
@@ -636,6 +637,73 @@ def vps_bot_logs(vps_id):
         return resp
     logs = vps_engine.get_vps_bot_logs(vps_id)
     return jsonify({'success': True, 'logs': logs})
+
+
+@app.route('/api/vps/<vps_id>/bot/upload', methods=['POST'])
+@auth_required
+def vps_bot_upload(vps_id):
+    row, resp = _own_row(vps_id)
+    if resp:
+        return resp
+
+    uploaded = []
+    files = request.files.getlist('files')
+    if not files and 'file' in request.files:
+        files = [request.files['file']]
+
+    if not files:
+        return error('No files provided', 400)
+
+    detected_entry = None
+    detected_runtime = None
+
+    for f in files:
+        if not f or not f.filename:
+            continue
+        fname = secure_filename(f.filename) if 'secure_filename' in globals() else f.filename.replace('/', '_')
+        if not fname:
+            fname = 'uploaded_file'
+        content = f.read()
+
+        if fname.lower().endswith('.zip'):
+            res = vps_engine.extract_zip_to_vps(vps_id, content)
+            uploaded.append(f"Extracted {fname}: {res.get('extracted_count', 0)} files")
+        else:
+            vps_engine.write_vps_file_binary(vps_id, fname, content)
+            uploaded.append(fname)
+
+        if fname.lower() in ('bot.py', 'main.py', 'app.py') and not detected_entry:
+            detected_entry = fname
+            detected_runtime = 'python'
+        elif fname.lower() in ('index.js', 'bot.js', 'main.js') and not detected_entry:
+            detected_entry = fname
+            detected_runtime = 'node'
+        elif fname.lower().endswith('.luau') or fname.lower().endswith('.lua'):
+            detected_entry = fname
+            detected_runtime = 'lune'
+
+    # Auto-update bot configuration if entrypoint detected
+    if detected_entry or detected_runtime:
+        update_data = {}
+        if detected_entry:
+            update_data['filename'] = detected_entry
+        if detected_runtime:
+            update_data['runtime'] = detected_runtime
+        vps_engine.update_bot_config(vps_id, update_data)
+
+    current_files = vps_engine.list_vps_files(vps_id)
+    bot_status = vps_engine.get_vps_bot_status(vps_id)
+
+    return jsonify({
+        'success': True,
+        'message': f'Uploaded {len(uploaded)} file(s)',
+        'uploaded': uploaded,
+        'files': current_files,
+        'bot_status': bot_status,
+        'detected_entry': detected_entry,
+        'detected_runtime': detected_runtime
+    })
+
 
 
 # ============================ WEBSITE HOSTING ============================

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cloud VPS — Free Cloud Platform & Bare-Metal Hypervisor</title>
+  <title>Cloud-VPS — 24/7 Discord Bot & Virtual Machine Platform</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23020612' stroke='%2300f0ff' stroke-width='2'/%3E%3Cpath d='M6 16h20M16 6v20' stroke='%2300f0ff' stroke-width='2.5' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='16' r='4' fill='%2300f0ff'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,7 +28,6 @@
       --danger: #f43f5e;
       --danger-bg: rgba(244, 63, 94, 0.12);
       --success: #10b981;
-      --success-glow: #00f0ff;
       --warning: #facc15;
       --mono: 'JetBrains Mono', monospace;
       --sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -69,9 +68,10 @@
       min-height: 100vh;
       position: relative;
       z-index: 1;
+      transition: all 0.25s ease;
     }
 
-    /* Render Sidebar */
+    /* Collapsible Sidebar */
     aside#sidebar {
       width: 260px;
       min-width: 260px;
@@ -83,10 +83,21 @@
       top: 0;
       height: 100vh;
       z-index: 50;
+      transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s ease, opacity 0.2s ease;
+    }
+
+    aside#sidebar.collapsed {
+      width: 0 !important;
+      min-width: 0 !important;
+      overflow: hidden !important;
+      border-right-color: transparent !important;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateX(-10px);
     }
 
     .brand-section {
-      padding: 18px 20px;
+      padding: 16px 18px;
       border-bottom: 1px solid var(--surface-border);
       display: flex;
       align-items: center;
@@ -123,12 +134,33 @@
       color: #fff;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
     }
 
     .brand-title span {
       color: var(--primary);
       text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+    }
+
+    /* Sidebar Close Button */
+    .btn-icon-sidebar {
+      background: rgba(0, 240, 255, 0.08);
+      border: 1px solid var(--surface-border);
+      color: var(--text-muted);
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-icon-sidebar:hover {
+      background: rgba(0, 240, 255, 0.2);
+      border-color: var(--primary);
+      color: #fff;
     }
 
     .badge-cyber {
@@ -143,45 +175,14 @@
       border-radius: 9999px;
     }
 
-    /* Workspace Switcher */
-    .workspace-select-bar {
-      padding: 12px 14px;
-      border-bottom: 1px solid var(--surface-border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: rgba(6, 17, 45, 0.5);
-    }
-
-    .workspace-info {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-muted);
-    }
-
-    .workspace-avatar {
-      width: 20px;
-      height: 20px;
-      border-radius: 4px;
-      background: var(--azure);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 11px;
-      color: #fff;
-      font-weight: 700;
-    }
-
+    /* Navigation Menu */
     .nav-menu {
-      padding: 14px 10px;
+      padding: 16px 12px;
       flex: 1;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      gap: 4px;
     }
 
     .nav-category {
@@ -189,7 +190,7 @@
       text-transform: uppercase;
       letter-spacing: 0.12em;
       color: var(--text-dim);
-      padding: 10px 10px 4px;
+      padding: 12px 10px 4px;
       font-weight: 800;
       font-family: var(--mono);
     }
@@ -197,9 +198,9 @@
     .nav-btn {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       width: 100%;
-      padding: 9px 12px;
+      padding: 10px 14px;
       border-radius: var(--radius-sm);
       border: 1px solid transparent;
       background: transparent;
@@ -246,9 +247,6 @@
       padding: 14px;
       border-top: 1px solid var(--surface-border);
       background: var(--bg-subtle);
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
     }
 
     .user-pill {
@@ -288,16 +286,17 @@
       height: 100vh;
       overflow-y: auto;
       background: var(--bg);
+      width: 100%;
     }
 
-    /* Render Topbar */
+    /* Topbar */
     header#top-bar {
-      height: 62px;
-      min-height: 62px;
+      height: 60px;
+      min-height: 60px;
       border-bottom: 1px solid var(--surface-border);
       background: rgba(4, 9, 26, 0.85);
       backdrop-filter: blur(12px);
-      padding: 0 28px;
+      padding: 0 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -309,7 +308,28 @@
     .top-left {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 14px;
+    }
+
+    /* Sidebar Toggle Button in Topbar */
+    .btn-toggle-sidebar {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      color: var(--primary);
+      width: 34px;
+      height: 34px;
+      border-radius: var(--radius-sm);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-toggle-sidebar:hover {
+      background: var(--surface-hover);
+      border-color: var(--primary);
+      box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
     }
 
     .breadcrumbs {
@@ -329,7 +349,7 @@
     .top-actions {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
     }
 
     /* Buttons */
@@ -385,66 +405,16 @@
     }
 
     .btn-sm {
-      padding: 5px 11px;
+      padding: 5px 12px;
       font-size: 12px;
       border-radius: 5px;
     }
 
-    /* Dropdown Menu "+ New" (Render Style) */
-    .dropdown-wrapper {
-      position: relative;
-    }
-
-    .dropdown-menu {
-      position: absolute;
-      top: calc(100% + 6px);
-      right: 0;
-      background: var(--surface);
-      border: 1px solid var(--border-bright);
-      border-radius: var(--radius-md);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(0, 240, 255, 0.2);
-      width: 260px;
-      padding: 6px;
-      display: none;
-      flex-direction: column;
-      z-index: 100;
-    }
-
-    .dropdown-menu.show { display: flex; }
-
-    .dropdown-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 12px;
-      border-radius: var(--radius-sm);
-      color: var(--text);
-      text-decoration: none;
-      font-size: 13px;
-      cursor: pointer;
-      border: none;
-      background: transparent;
-      text-align: left;
-      width: 100%;
-      transition: background 0.12s;
-    }
-
-    .dropdown-item:hover {
-      background: var(--surface-hover);
-      color: var(--primary);
-    }
-
-    .dropdown-item-desc {
-      font-size: 11px;
-      color: var(--text-dim);
-      margin-top: 2px;
-    }
-
-    /* Tab Contents */
+    /* Content Area */
     .tab-content {
       display: none;
-      padding: 28px;
-      max-width: 1360px;
+      padding: 24px;
+      max-width: 1280px;
       width: 100%;
       margin: 0 auto;
     }
@@ -459,7 +429,7 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Cyber Cards */
+    /* Cards */
     .card {
       background: var(--surface);
       border: 1px solid var(--surface-border);
@@ -479,6 +449,8 @@
       align-items: center;
       justify-content: space-between;
       margin-bottom: 18px;
+      flex-wrap: wrap;
+      gap: 12px;
     }
 
     .card-title {
@@ -497,214 +469,19 @@
       margin-top: 4px;
     }
 
-    /* Filter Bar (Render Style) */
-    .filter-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-    }
-
-    .filter-pills {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      overflow-x: auto;
-    }
-
-    .filter-pill {
-      padding: 6px 13px;
-      border-radius: 9999px;
-      border: 1px solid var(--surface-border);
-      background: var(--surface);
-      color: var(--text-muted);
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.12s;
-    }
-
-    .filter-pill:hover {
-      color: #fff;
-      border-color: var(--border-bright);
-    }
-
-    .filter-pill.active {
-      background: rgba(0, 240, 255, 0.15);
-      border-color: var(--primary);
-      color: var(--primary);
-      font-weight: 700;
-    }
-
-    .search-input-box {
-      position: relative;
-      min-width: 260px;
-    }
-
-    .search-input-box input {
-      width: 100%;
-      background: var(--surface);
-      border: 1px solid var(--surface-border);
-      border-radius: var(--radius-sm);
-      padding: 7px 12px 7px 34px;
-      color: #fff;
-      font-family: var(--sans);
-      font-size: 13px;
-    }
-
-    .search-input-box input:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);
-    }
-
-    .search-input-box svg {
-      position: absolute;
-      left: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-      stroke: var(--text-dim);
-    }
-
-    /* Render Service List Item Cards */
-    .service-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .service-row-card {
-      background: var(--surface);
-      border: 1px solid var(--surface-border);
-      border-radius: var(--radius-md);
-      padding: 16px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      transition: all 0.15s ease;
-      cursor: pointer;
-    }
-
-    .service-row-card:hover {
-      border-color: rgba(0, 240, 255, 0.4);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(0, 240, 255, 0.1);
-      transform: translateY(-1px);
-    }
-
-    .service-main {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .service-icon-box {
-      width: 40px;
-      height: 40px;
-      border-radius: var(--radius-sm);
-      background: rgba(0, 240, 255, 0.1);
-      border: 1px solid var(--border-bright);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--primary);
-    }
-
-    .service-name {
-      font-weight: 700;
-      font-size: 15px;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .service-type-pill {
-      font-size: 10px;
-      font-weight: 700;
-      font-family: var(--mono);
-      text-transform: uppercase;
-      padding: 2px 7px;
-      border-radius: 4px;
-      background: rgba(0, 112, 243, 0.18);
-      color: #38bdf8;
-      border: 1px solid rgba(0, 112, 243, 0.4);
-    }
-
-    .service-meta-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 4px;
-      font-family: var(--mono);
-    }
-
-    .status-live-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 9999px;
-      background: var(--success);
-      box-shadow: 0 0 8px var(--success);
-      display: inline-block;
-    }
-
-    /* Sub Tabs inside Service Detail (Render Style) */
-    .render-tabs-bar {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      border-bottom: 1px solid var(--surface-border);
-      margin-bottom: 24px;
-    }
-
-    .render-tab-item {
-      padding: 10px 18px;
-      border: none;
-      background: transparent;
-      color: var(--text-muted);
-      font-family: var(--sans);
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      position: relative;
-      transition: color 0.15s;
-    }
-
-    .render-tab-item:hover { color: #fff; }
-
-    .render-tab-item.active {
-      color: var(--primary);
-      font-weight: 700;
-    }
-
-    .render-tab-item.active::after {
-      content: '';
-      position: absolute;
-      bottom: -1px;
-      left: 0;
-      width: 100%;
-      height: 2px;
-      background: var(--primary);
-      box-shadow: 0 0 8px var(--primary);
-    }
-
-    /* Hardware Telemetry Specs */
+    /* 4-Stat Specs Grid */
     .specs-grid-4 {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 16px;
-      margin-bottom: 24px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
     }
 
     .stat-card {
       background: var(--surface);
       border: 1px solid var(--surface-border);
       border-radius: var(--radius-md);
-      padding: 18px;
+      padding: 16px;
       position: relative;
       overflow: hidden;
     }
@@ -727,11 +504,10 @@
     }
 
     .stat-value {
-      font-size: 22px;
+      font-size: 20px;
       font-weight: 800;
       color: #fff;
-      margin: 6px 0 2px;
-      letter-spacing: -0.02em;
+      margin: 4px 0 2px;
     }
 
     .stat-sub {
@@ -740,7 +516,43 @@
       font-family: var(--mono);
     }
 
-    /* Live Terminal Container */
+    /* Dedicated Bot File Upload Area */
+    .upload-dropzone {
+      border: 2px dashed rgba(0, 240, 255, 0.4);
+      background: rgba(6, 17, 45, 0.6);
+      border-radius: var(--radius-md);
+      padding: 32px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .upload-dropzone:hover, .upload-dropzone.dragover {
+      border-color: var(--primary);
+      background: rgba(0, 240, 255, 0.08);
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+    }
+
+    .upload-icon {
+      font-size: 36px;
+      margin-bottom: 8px;
+    }
+
+    .upload-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+
+    .upload-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    /* Terminal Window */
     .terminal-window {
       background: #01040a;
       border: 1px solid var(--border-bright);
@@ -774,7 +586,7 @@
 
     .terminal-body {
       padding: 16px;
-      height: 380px;
+      height: 320px;
       overflow-y: auto;
       font-family: var(--mono);
       font-size: 13px;
@@ -808,31 +620,7 @@
       outline: none;
     }
 
-    /* Modals */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(2, 6, 18, 0.85);
-      backdrop-filter: blur(8px);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      padding: 20px;
-    }
-
-    .modal-overlay.show { display: flex; }
-
-    .modal-card {
-      background: var(--surface);
-      border: 1px solid var(--border-bright);
-      border-radius: var(--radius-lg);
-      width: 100%;
-      max-width: 540px;
-      padding: 28px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9), 0 0 30px rgba(0, 240, 255, 0.2);
-    }
-
+    /* Forms */
     .form-group { margin-bottom: 16px; }
     .form-label { display: block; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
     .form-input {
@@ -840,13 +628,36 @@
       background: var(--bg-subtle);
       border: 1px solid var(--surface-border);
       border-radius: var(--radius-sm);
-      padding: 10px 14px;
+      padding: 9px 12px;
       color: #fff;
       font-family: var(--sans);
       font-size: 13px;
-      transition: border 0.15s;
     }
     .form-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 10px rgba(0, 240, 255, 0.2); }
+
+    /* File List Table */
+    .file-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-top: 12px;
+    }
+
+    .file-table th {
+      text-align: left;
+      padding: 8px 12px;
+      color: var(--text-dim);
+      font-family: var(--mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--surface-border);
+    }
+
+    .file-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(14, 39, 86, 0.5);
+      color: #fff;
+    }
 
     /* Toast */
     #toast-container {
@@ -882,80 +693,53 @@
 <body>
 
 <div id="app-container">
-  <!-- SIDEBAR NAVIGATION -->
+  <!-- COLLAPSIBLE SIDEBAR -->
   <aside id="sidebar">
     <div class="brand-section">
-      <a href="#" class="brand-logo" onclick="switchTab('services')">
+      <a href="#" class="brand-logo" onclick="switchTab('vps')">
         <div class="logo-icon">⚡</div>
         <div class="brand-title">CLOUD<span>VPS</span></div>
       </a>
-      <span class="badge-cyber">FREE</span>
-    </div>
-
-    <div class="workspace-select-bar">
-      <div class="workspace-info">
-        <div class="workspace-avatar">P</div>
-        <span>Personal Projects</span>
-      </div>
-      <span class="badge-cyber" style="font-size: 8px;">RENDER/PVE</span>
+      <!-- Sidebar Close Button -->
+      <button class="btn-icon-sidebar" onclick="toggleSidebar()" title="Close Sidebar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
     </div>
 
     <nav class="nav-menu">
-      <div class="nav-category">RENDER CLOUD</div>
-      <button class="nav-btn active" id="nav-services" onclick="switchTab('services')">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-        <span>Dashboard / Services</span>
-        <span class="nav-badge" id="nav-services-badge">3</span>
-      </button>
-
-      <button class="nav-btn" id="nav-service-detail" onclick="switchTab('service-detail')">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-        <span>Service Studio</span>
-      </button>
-
-      <button class="nav-btn" id="nav-github" onclick="switchTab('github')">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
-        <span>GitHub Deployments</span>
-      </button>
-
-      <div class="nav-category">HARDWARE & BARE-METAL</div>
-      <button class="nav-btn" id="nav-hardware" onclick="switchTab('hardware')">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
-        <span>Hardware & Proxmox</span>
-        <span class="nav-badge" style="background: rgba(16, 185, 129, 0.2); color: var(--success);">VT-x OK</span>
-      </button>
-
-      <button class="nav-btn" id="nav-vps" onclick="switchTab('vps')">
+      <div class="nav-category">PRIMARY WORKSPACES</div>
+      
+      <!-- TAB 1: MY VPS -->
+      <button class="nav-btn active" id="nav-vps" onclick="switchTab('vps')">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-        <span>VPS Instances</span>
-        <span class="nav-badge" id="sidebar-vps-count">0</span>
+        <span>My VPS Instances</span>
+        <span class="nav-badge" id="sidebar-vps-count">1</span>
       </button>
 
-      <div class="nav-category">WORKSPACES & APPS</div>
+      <!-- TAB 2: DISCORD BOT (24/7 ALWAYS-ON) -->
       <button class="nav-btn" id="nav-bot" onclick="switchTab('bot')">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><line x1="12" y1="7" x2="12" y2="11"/><line x1="8" y1="15" x2="8.01" y2="15"/><line x1="16" y1="15" x2="16.01" y2="15"/></svg>
-        <span>24/7 Discord Bot</span>
-        <span class="nav-badge">SUPERVISOR</span>
+        <span>Discord Bot (24/7)</span>
+        <span class="nav-badge" style="background: rgba(16, 185, 129, 0.2); color: var(--success);">ONLINE</span>
       </button>
 
-      <button class="nav-btn" id="nav-website" onclick="switchTab('website')">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-        <span>Web Hosting (ZIP/Git)</span>
-      </button>
-
+      <!-- TAB 3: ROOT TERMINAL & SSH -->
       <button class="nav-btn" id="nav-terminal" onclick="switchTab('terminal')">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
-        <span>Root Terminal & SSH</span>
+        <span>Interactive Terminal</span>
       </button>
 
+      <!-- TAB 4: FILES & WORKSPACE -->
       <button class="nav-btn" id="nav-files" onclick="switchTab('files')">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
         <span>Files & Code Editor</span>
       </button>
 
+      <div class="nav-category">SETTINGS</div>
+      <!-- TAB 5: ACCOUNT & SETTINGS -->
       <button class="nav-btn" id="nav-settings" onclick="switchTab('settings')">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        <span>Account & API Keys</span>
+        <span>Account & API Key</span>
       </button>
     </nav>
 
@@ -964,7 +748,7 @@
         <div class="user-avatar" id="sidebar-avatar">C</div>
         <div class="user-info">
           <div class="user-name" id="sidebar-username">cyber_dev</div>
-          <div class="user-meta">100% Free Plan</div>
+          <div class="user-meta">100% Free Tier</div>
         </div>
       </div>
     </div>
@@ -972,538 +756,273 @@
 
   <!-- MAIN VIEWPORT -->
   <main id="main-content">
-    <!-- TOPBAR WITH RENDER "+ NEW" DROPDOWN -->
+    <!-- TOPBAR WITH SIDEBAR TOGGLE -->
     <header id="top-bar">
       <div class="top-left">
+        <!-- Sidebar Toggle Button -->
+        <button class="btn-toggle-sidebar" id="btn-toggle-sidebar" onclick="toggleSidebar()" title="Toggle Sidebar [Collapse/Expand]">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+
         <div class="breadcrumbs">
-          <span>Personal</span>
+          <span>Cloud-VPS</span>
           <span>/</span>
-          <strong id="header-section-title">Dashboard & Services</strong>
+          <strong id="header-section-title">My VPS Instances</strong>
         </div>
       </div>
 
       <div class="top-actions">
-        <button class="btn btn-secondary btn-sm" onclick="syncAllData()">
+        <button class="btn btn-secondary btn-sm" onclick="syncData()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
           Sync
         </button>
-
-        <!-- "+ New" Dropdown -->
-        <div class="dropdown-wrapper">
-          <button class="btn btn-primary btn-sm" onclick="toggleNewMenu()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            + New
-          </button>
-          <div class="dropdown-menu" id="new-services-dropdown">
-            <button class="dropdown-item" onclick="openNewServiceModal('web_service')">
-              <div>
-                <div style="font-weight: 700; color: #fff;">🌐 Web Service</div>
-                <div class="dropdown-item-desc">Deploy Node, Python, Go or Docker from Git</div>
-              </div>
-            </button>
-            <button class="dropdown-item" onclick="openNewServiceModal('static_site')">
-              <div>
-                <div style="font-weight: 700; color: #fff;">⚡ Static Site</div>
-                <div class="dropdown-item-desc">Fast edge hosting for React, Vite, Astro, HTML</div>
-              </div>
-            </button>
-            <button class="dropdown-item" onclick="openNewServiceModal('bot')">
-              <div>
-                <div style="font-weight: 700; color: #fff;">🤖 Discord Bot (24/7)</div>
-                <div class="dropdown-item-desc">Always-on bot with auto-restart supervisor</div>
-              </div>
-            </button>
-            <button class="dropdown-item" onclick="openNewServiceModal('postgres')">
-              <div>
-                <div style="font-weight: 700; color: #fff;">🗄️ PostgreSQL Database</div>
-                <div class="dropdown-item-desc">Free managed relational database</div>
-              </div>
-            </button>
-            <button class="dropdown-item" onclick="openNewServiceModal('redis')">
-              <div>
-                <div style="font-weight: 700; color: #fff;">⚡ Redis Cache</div>
-                <div class="dropdown-item-desc">In-memory key-value cache</div>
-              </div>
-            </button>
-            <button class="dropdown-item" onclick="openNewServiceModal('vm')">
-              <div>
-                <div style="font-weight: 700; color: #fff;">🖥️ Bare-Metal VM (Proxmox)</div>
-                <div class="dropdown-item-desc">Full KVM virtual machine with Ubuntu/Debian ISO</div>
-              </div>
-            </button>
-          </div>
-        </div>
+        <button class="btn btn-primary btn-sm" onclick="deployNewVps()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          + Deploy Free VPS
+        </button>
       </div>
     </header>
 
-    <!-- TAB 1: RENDER SERVICES DASHBOARD -->
-    <section class="tab-content active" id="tab-services">
-      <div class="filter-bar">
-        <div class="filter-pills">
-          <button class="filter-pill active" onclick="filterServices('all', this)">All (3)</button>
-          <button class="filter-pill" onclick="filterServices('web_service', this)">Web Services</button>
-          <button class="filter-pill" onclick="filterServices('static_site', this)">Static Sites</button>
-          <button class="filter-pill" onclick="filterServices('bot', this)">Discord Bots</button>
-          <button class="filter-pill" onclick="filterServices('vm', this)">Bare-Metal VMs</button>
+    <!-- ==================== TAB 1: MY VPS INSTANCES ==================== -->
+    <section class="tab-content active" id="tab-vps">
+      <!-- Hardware Telemetry Bar -->
+      <div class="specs-grid-4">
+        <div class="stat-card">
+          <div class="stat-label">Virtualization Status</div>
+          <div class="stat-value" style="font-size: 16px;">Intel VT-x / AMD-V</div>
+          <div class="stat-sub" style="color: var(--success);">✓ ENABLED in BIOS (KVM Active)</div>
         </div>
-        <div class="search-input-box">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" id="services-search" placeholder="Search services..." oninput="renderServicesList()">
+        <div class="stat-card">
+          <div class="stat-label">RAM Pool</div>
+          <div class="stat-value">32.0 GB DDR4</div>
+          <div class="stat-sub">19.5 GB Available (8GB min req)</div>
         </div>
-      </div>
-
-      <div class="service-grid" id="services-container">
-        <!-- Rendered dynamically -->
-      </div>
-    </section>
-
-    <!-- TAB 2: SERVICE STUDIO (RENDER DEEP-DIVE WITH EVENTS, LOGS, METRICS, SETTINGS) -->
-    <section class="tab-content" id="tab-service-detail">
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
-        <div>
-          <div style="display: flex; align-items: center; gap: 12px;">
-            <h2 style="font-size: 24px; font-weight: 800; color: #fff;" id="studio-service-name">cyber-api-gateway</h2>
-            <span class="service-type-pill" id="studio-service-type">WEB SERVICE</span>
-            <span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--success); font-weight: 700;">
-              <span class="status-live-dot"></span> Live
-            </span>
-          </div>
-          <a href="#" target="_blank" id="studio-service-url" style="color: var(--primary); font-size: 13px; font-family: var(--mono); text-decoration: none; margin-top: 4px; display: inline-block;">
-            https://cyber-api-gateway.cloudvps.app ↗
-          </a>
+        <div class="stat-card">
+          <div class="stat-label">NVMe Storage Pool</div>
+          <div class="stat-value">2TB ZFS Mirror</div>
+          <div class="stat-sub">3,480 MB/s &bull; 450k IOPS</div>
         </div>
-
-        <div style="display: flex; gap: 10px;">
-          <button class="btn btn-secondary btn-sm" onclick="rollbackActiveService()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-            Rollback
-          </button>
-          <button class="btn btn-primary btn-sm" onclick="deployActiveService()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Manual Deploy
-          </button>
+        <div class="stat-card">
+          <div class="stat-label">Network Bridge</div>
+          <div class="stat-value">vmbr0 (VirtIO)</div>
+          <div class="stat-sub">CGNAT Tunnel Active 🟢</div>
         </div>
       </div>
 
-      <!-- Render Tab Bar -->
-      <div class="render-tabs-bar">
-        <button class="render-tab-item active" onclick="switchStudioSubTab('events', this)">Events</button>
-        <button class="render-tab-item" onclick="switchStudioSubTab('logs', this)">Logs</button>
-        <button class="render-tab-item" onclick="switchStudioSubTab('metrics', this)">Metrics</button>
-        <button class="render-tab-item" onclick="switchStudioSubTab('env', this)">Environment</button>
-        <button class="render-tab-item" onclick="switchStudioSubTab('settings', this)">Settings</button>
-      </div>
-
-      <!-- SUBTAB 1: EVENTS / DEPLOYS -->
-      <div id="studio-sub-events" class="studio-sub-pane">
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Deploy History & Activity Feed</div>
-              <div class="card-desc">Complete immutable record of all git commits, builds, and rollbacks.</div>
-            </div>
-          </div>
-          <div id="deploys-history-list" style="display: flex; flex-direction: column; gap: 10px;">
-            <!-- Rendered dynamically -->
-          </div>
-        </div>
-      </div>
-
-      <!-- SUBTAB 2: STREAMING LOGS -->
-      <div id="studio-sub-logs" class="studio-sub-pane" style="display: none;">
-        <div class="terminal-window">
-          <div class="terminal-topbar">
-            <div class="terminal-dots">
-              <span class="terminal-dot red"></span>
-              <span class="terminal-dot yellow"></span>
-              <span class="terminal-dot green"></span>
-              <span class="terminal-title" id="logs-service-title">live-stream — cyber-api-gateway</span>
-            </div>
-            <div style="display: flex; gap: 8px;">
-              <button class="btn btn-secondary btn-sm" onclick="clearServiceLogs()">Clear</button>
-              <button class="btn btn-secondary btn-sm" onclick="fetchServiceLogs()">Refresh</button>
-            </div>
-          </div>
-          <div class="terminal-body" id="service-logs-terminal">
-            <div style="color: var(--primary);">==> Connected to Cloud VPS stream socket [TCP/TLS]</div>
-            <div>[system] Worker thread spawned for service</div>
-            <div>[app] Server initialized on port 3000</div>
-            <div>[app] Healthcheck probe GET / 200 OK (12ms)</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- SUBTAB 3: METRICS (CYBERPUNK CHARTS) -->
-      <div id="studio-sub-metrics" class="studio-sub-pane" style="display: none;">
-        <div class="specs-grid-4">
-          <div class="stat-card">
-            <div class="stat-label">CPU Usage</div>
-            <div class="stat-value" id="metric-cpu-val">14.2%</div>
-            <div class="stat-sub">Limit: 2.0 Cores (Burstable)</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Memory Allocation</div>
-            <div class="stat-value" id="metric-ram-val">174 MB</div>
-            <div class="stat-sub">Limit: 2048 MB Free Tier</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Requests / Sec</div>
-            <div class="stat-value" id="metric-rps-val">42 RPS</div>
-            <div class="stat-sub">HTTP 200 OK: 99.98%</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Network Egress</div>
-            <div class="stat-value" id="metric-net-val">2.8 MB/s</div>
-            <div class="stat-sub">Global Cloud VPS Edge CDN</div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-title" style="margin-bottom: 16px;">Telemetry Overview (Last 30 Minutes)</div>
-          <div style="height: 180px; width: 100%; display: flex; align-items: flex-end; gap: 8px; border-bottom: 1px solid var(--surface-border); padding-bottom: 8px;" id="metrics-bar-chart">
-            <!-- Dynamically generated SVG / bars -->
-          </div>
-          <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; color: var(--text-dim); font-family: var(--mono);">
-            <span>30m ago</span>
-            <span>15m ago</span>
-            <span>Just now</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- SUBTAB 4: ENVIRONMENT VARIABLES -->
-      <div id="studio-sub-env" class="studio-sub-pane" style="display: none;">
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Environment Variables & Secrets</div>
-              <div class="card-desc">Encrypted at rest. Injected automatically during builds and runtime.</div>
-            </div>
-            <button class="btn btn-cyan btn-sm" onclick="saveActiveServiceEnv()">Save Changes</button>
-          </div>
-          <div id="env-vars-container" style="display: flex; flex-direction: column; gap: 10px;">
-            <div style="display: flex; gap: 10px;">
-              <input type="text" class="form-input" style="flex: 1;" placeholder="KEY (e.g. NODE_ENV)" value="NODE_ENV">
-              <input type="text" class="form-input" style="flex: 1;" placeholder="VALUE" value="production">
-            </div>
-            <div style="display: flex; gap: 10px;">
-              <input type="text" class="form-input" style="flex: 1;" placeholder="KEY (e.g. PORT)" value="PORT">
-              <input type="text" class="form-input" style="flex: 1;" placeholder="VALUE" value="3000">
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- SUBTAB 5: SETTINGS -->
-      <div id="studio-sub-settings" class="studio-sub-pane" style="display: none;">
-        <div class="card">
-          <div class="card-title" style="margin-bottom: 16px;">Service Configuration</div>
-          <div class="form-group">
-            <label class="form-label">Service Name</label>
-            <input type="text" id="settings-srv-name" class="form-input" value="cyber-api-gateway">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Build Command</label>
-            <input type="text" id="settings-srv-build" class="form-input" value="npm install">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Start Command</label>
-            <input type="text" id="settings-srv-start" class="form-input" value="node index.js">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Custom Domain & Automatic Let's Encrypt TLS</label>
-            <input type="text" id="settings-srv-domain" class="form-input" value="cyber-api-gateway.cloudvps.app">
-            <div style="font-size: 11px; color: var(--success); margin-top: 6px; font-family: var(--mono);">
-              ✓ Let's Encrypt Wildcard SSL Active (Auto-renewed free)
-            </div>
-          </div>
-          <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--surface-border);">
-            <div style="color: var(--danger); font-weight: 700; margin-bottom: 8px;">Danger Zone</div>
-            <button class="btn btn-secondary btn-sm" style="color: var(--danger); border-color: rgba(244, 63, 94, 0.4);" onclick="deleteActiveService()">
-              Delete this service
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- TAB 3: BARE-METAL HARDWARE & PROXMOX HYPERVISOR SUITE -->
-    <section class="tab-content" id="tab-hardware">
+      <!-- VPS List Container -->
       <div class="card cyber-glow">
         <div class="card-header">
           <div>
             <div class="card-title">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
-              Bare-Metal Hardware & Proxmox Hypervisor Engine
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+              Active VPS Containers & Virtual Machines
             </div>
-            <div class="card-desc">Self-hosted bare-metal specifications: CPU virtualization, NVMe storage pools, dual gigabit NICs, and CGNAT bypass tunnel.</div>
+            <div class="card-desc">Isolated sandbox environments with full root access, dedicated filesystem, and 24/7 supervisor.</div>
           </div>
-          <button class="btn btn-primary btn-sm" onclick="runHardwareBenchmark()">
-            ⚡ Benchmark Hardware
-          </button>
+          <button class="btn btn-primary btn-sm" onclick="deployNewVps()">+ Deploy New VPS</button>
         </div>
 
-        <!-- 4 Stat Cards for Hardware -->
-        <div class="specs-grid-4">
-          <div class="stat-card">
-            <div class="stat-label">CPU & Virtualization</div>
-            <div class="stat-value" style="font-size: 18px;">Intel VT-x / AMD-V</div>
-            <div class="stat-sub" style="color: var(--success);">✓ ENABLED in BIOS (vmx/svm)</div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-label">RAM Pool (8GB Min Req)</div>
-            <div class="stat-value">32.0 GB</div>
-            <div class="stat-sub">12.5GB in use • 19.5GB free</div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-label">Storage Pool (NVMe Flash)</div>
-            <div class="stat-value">2x 2TB NVMe</div>
-            <div class="stat-sub">3,480 MB/s Read • 450k IOPS</div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-label">Dual NICs & Bridge</div>
-            <div class="stat-value">eth0 + vmbr0</div>
-            <div class="stat-sub">2.5 Gbps Mgmt • 10G VirtIO Bridge</div>
-          </div>
-        </div>
-
-        <!-- Hardware Details Grid -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-top: 10px;">
-          <!-- Card 1: Hypervisor & ISO Images -->
-          <div style="background: var(--bg-subtle); border: 1px solid var(--surface-border); border-radius: var(--radius-sm); padding: 16px;">
-            <div style="font-weight: 700; color: #fff; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-              <span>💿 Hypervisor & ISO Templates</span>
-            </div>
-            <div style="font-size: 12px; color: var(--text-muted); line-height: 1.6;">
-              <div><strong>Hypervisor:</strong> Proxmox Virtual Environment 8.2 (Debian 12)</div>
-              <div><strong>Kernel:</strong> Linux 6.8.4-2-pve (KVM/QEMU accelerated)</div>
-              <div><strong>Alternatives:</strong> Plain Linux + KVM, XCP-ng, Harvester, ESXi</div>
-              <div style="margin-top: 10px; font-weight: 700; color: var(--primary);">Available ISO Images (1-Click Mount):</div>
-              <div style="margin-top: 6px; display: flex; flex-direction: column; gap: 4px; font-family: var(--mono); font-size: 11px;">
-                <div style="background: var(--surface); padding: 4px 8px; border-radius: 4px;">• Ubuntu 24.04 LTS Server (2.6 GB)</div>
-                <div style="background: var(--surface); padding: 4px 8px; border-radius: 4px;">• Debian 12 Bookworm Minimal (620 MB)</div>
-                <div style="background: var(--surface); padding: 4px 8px; border-radius: 4px;">• Alpine Linux 3.20 Virtual (64 MB)</div>
-                <div style="background: var(--surface); padding: 4px 8px; border-radius: 4px;">• Arch Linux Minimal (940 MB)</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Card 2: Networking & CGNAT Bypass Tunnel -->
-          <div style="background: var(--bg-subtle); border: 1px solid var(--surface-border); border-radius: var(--radius-sm); padding: 16px;">
-            <div style="font-weight: 700; color: #fff; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
-              <span>🌐 Public Network & CGNAT Solver</span>
-              <button class="btn btn-cyan btn-sm" onclick="toggleCgnatTunnel()" id="btn-cgnat-toggle">Tunnel Active 🟢</button>
-            </div>
-            <div style="font-size: 12px; color: var(--text-muted); line-height: 1.6;">
-              <div><strong>ISP Status:</strong> Residential Carrier-Grade NAT (CGNAT) detected</div>
-              <div><strong>Port 80/443:</strong> Blocked by ISP firewall</div>
-              <div style="color: var(--primary); margin-top: 6px;">
-                <strong>✓ Solution:</strong> Cloudflare Zero Trust Tunnel & Tailscale Subnet Router routes external requests directly to VMs without needing open inbound ports!
-              </div>
-              <div style="margin-top: 8px;"><strong>Dynamic DNS:</strong> DuckDNS sync (cloudvps.duckdns.org)</div>
-              <div><strong>Reverse Proxy:</strong> Caddy 2.8 with automatic Let's Encrypt TLS</div>
-            </div>
-          </div>
-
-          <!-- Card 3: UPS Power & Anti-Abuse Guard -->
-          <div style="background: var(--bg-subtle); border: 1px solid var(--surface-border); border-radius: var(--radius-sm); padding: 16px;">
-            <div style="font-weight: 700; color: #fff; margin-bottom: 12px;">
-              <span>⚡ UPS Power Backup & Anti-Abuse</span>
-            </div>
-            <div style="font-size: 12px; color: var(--text-muted); line-height: 1.6;">
-              <div><strong>UPS Unit:</strong> CyberPower 1500VA / 900W Pure Sine Wave</div>
-              <div><strong>Battery Status:</strong> 100% Charged (48 min runtime on power failure)</div>
-              <div><strong>Auto-Protection:</strong> Clean VM suspend when battery &lt; 10%</div>
-              <div style="margin-top: 8px;"><strong>Residential Upload:</strong> 92.4 Mbps verified</div>
-              <div><strong>Abuse Guard:</strong> Outbound Port 25 (SMTP) blocked to avoid blacklisting</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- TAB 4: GITHUB DEPLOYMENTS -->
-    <section class="tab-content" id="tab-github">
-      <div class="card cyber-glow">
-        <div class="card-header">
-          <div>
-            <div class="card-title">GitHub Continuous Deployment</div>
-            <div class="card-desc">Connect any public or private GitHub repository to auto-deploy on every push.</div>
-          </div>
-        </div>
-
-        <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px;">
-          <div style="flex: 2; min-width: 280px;">
-            <label class="form-label">GitHub Repository URL</label>
-            <input type="text" id="github-quick-repo" class="form-input" placeholder="https://github.com/username/my-service">
-          </div>
-          <div style="flex: 1; min-width: 160px;">
-            <label class="form-label">Branch</label>
-            <input type="text" id="github-quick-branch" class="form-input" value="main">
-          </div>
-          <div style="display: flex; align-items: flex-end;">
-            <button class="btn btn-primary" onclick="deployFromGithubInput()">Clone & Deploy</button>
-          </div>
-        </div>
-
-        <div style="font-weight: 700; color: #fff; margin-bottom: 12px;">Pre-Built Starter Repositories:</div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px;">
-          <div class="card" style="padding: 16px; margin: 0; cursor: pointer;" onclick="useRepoTemplate('https://github.com/render-examples/express-hello-world', 'Node.js Express Server')">
-            <div style="font-weight: 700; color: #fff;">Node.js Express REST API</div>
-            <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">npm install &bull; node index.js</div>
-          </div>
-          <div class="card" style="padding: 16px; margin: 0; cursor: pointer;" onclick="useRepoTemplate('https://github.com/render-examples/vite-react-starter', 'React + Vite Edge Site')">
-            <div style="font-weight: 700; color: #fff;">React + Vite SPA</div>
-            <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">npm run build &bull; dist output</div>
-          </div>
-          <div class="card" style="padding: 16px; margin: 0; cursor: pointer;" onclick="useRepoTemplate('https://github.com/discord-bots/sentinel-py', 'Discord.py 24/7 Bot')">
-            <div style="font-weight: 700; color: #fff;">Discord.py 24/7 Bot</div>
-            <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">pip install -r requirements.txt &bull; python bot.py</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- TAB 5: VPS INSTANCES (EXISTING VPS-FIRST WORKFLOW) -->
-    <section class="tab-content" id="tab-vps">
-      <div class="card cyber-glow">
-        <div class="card-header">
-          <div>
-            <div class="card-title">VPS Virtual Machine Containers</div>
-            <div class="card-desc">Deploy and manage isolated sandboxed VPS containers with full root bash capabilities.</div>
-          </div>
-          <button class="btn btn-primary btn-sm" onclick="openDeployVpsModal()">+ Deploy Free VPS</button>
-        </div>
         <div id="vps-list-container" style="display: flex; flex-direction: column; gap: 12px;">
-          <!-- Rendered dynamically -->
+          <!-- Dynamically filled -->
         </div>
       </div>
     </section>
 
-    <!-- TAB 6: 24/7 DISCORD BOT STUDIO -->
+    <!-- ==================== TAB 2: DISCORD BOT (24/7 ALWAYS-ON) ==================== -->
     <section class="tab-content" id="tab-bot">
+      <!-- STEP 1: VPS SETUP STATUS BANNER -->
+      <div class="card" id="bot-vps-status-card" style="border-color: rgba(0, 240, 255, 0.3); background: rgba(6, 17, 45, 0.8);">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 14px;">
+            <div style="width: 42px; height: 42px; border-radius: var(--radius-sm); background: rgba(0, 240, 255, 0.12); border: 1px solid var(--border-bright); display: flex; align-items: center; justify-content: center; font-size: 20px;">
+              🤖
+            </div>
+            <div>
+              <div style="font-weight: 800; font-size: 16px; color: #fff; display: flex; align-items: center; gap: 8px;">
+                <span>Step 1: VPS Setup & Hosting Environment</span>
+                <span class="badge-cyber" id="bot-vps-badge">CHECKING...</span>
+              </div>
+              <div style="font-size: 13px; color: var(--text-muted); margin-top: 2px;" id="bot-vps-subtext">
+                Verifying your isolated VPS container...
+              </div>
+            </div>
+          </div>
+          <div id="bot-vps-action-btn-container">
+            <!-- Rendered: "Deploy Free VPS" or "Change VPS" -->
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2: UPLOAD BOT FILES -->
       <div class="card cyber-glow">
         <div class="card-header">
           <div>
-            <div class="card-title">Discord Bot Studio (24/7 Always-On)</div>
-            <div class="card-desc">Self-healing process watchdog that automatically restarts your bot on crash.</div>
+            <div class="card-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Step 2: Upload Files to Your Bot
+            </div>
+            <div class="card-desc">Upload your bot files directly to your VPS. Supports Python (`bot.py`), Node.js (`index.js`), Lune/Lua, requirements, or a full `.zip` bundle!</div>
           </div>
-          <span class="badge-cyber" style="background: rgba(16, 185, 129, 0.15); color: var(--success);" id="bot-status-badge">STANDBY ⚪</span>
+          <label class="btn btn-primary btn-sm" style="cursor: pointer;">
+            <span>📁 Select Files to Upload</span>
+            <input type="file" multiple id="bot-file-input" style="display: none;" onchange="handleBotFilesSelect(event)">
+          </label>
         </div>
 
-        <div style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;">
-          <div style="flex: 2; min-width: 260px;">
-            <label class="form-label">Bot Token</label>
-            <input type="password" id="bot-token-input" class="form-input" placeholder="Paste Discord Bot Token (Stored safely)">
+        <!-- Drag & Drop Zone -->
+        <div class="upload-dropzone" id="bot-dropzone" onclick="document.getElementById('bot-file-input').click()">
+          <div class="upload-icon">📤</div>
+          <div class="upload-title">Drop your bot files here or click to browse</div>
+          <div class="upload-subtitle">Accepts bot.py, index.js, .env, requirements.txt, package.json, or complete .ZIP archives</div>
+          <span class="btn btn-cyan btn-sm">Browse Files</span>
+        </div>
+
+        <!-- Uploaded Files Manager Table -->
+        <div style="margin-top: 24px;">
+          <div style="font-weight: 700; color: #fff; font-size: 14px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+            <span>Bot Workspace Files (<span id="bot-files-count">0</span>)</span>
+            <button class="btn btn-secondary btn-sm" onclick="fetchBotFiles()">Refresh Files</button>
           </div>
-          <div style="flex: 1; min-width: 160px;">
-            <label class="form-label">Runtime</label>
+
+          <div style="background: var(--bg-subtle); border: 1px solid var(--surface-border); border-radius: var(--radius-sm); overflow: hidden;">
+            <table class="file-table">
+              <thead>
+                <tr>
+                  <th>File Name</th>
+                  <th>Size</th>
+                  <th>Detected Type</th>
+                  <th style="text-align: right;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="bot-files-table-body">
+                <tr>
+                  <td colspan="4" style="text-align: center; color: var(--text-dim); padding: 20px;">
+                    No files uploaded yet. Upload your bot files above!
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3: CONFIGURE & LAUNCH 24/7 BOT -->
+      <div class="card cyber-glow">
+        <div class="card-header">
+          <div>
+            <div class="card-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Step 3: Configure Token & Start 24/7 Bot
+            </div>
+            <div class="card-desc">Our persistent watchdog monitors your bot process 24/7 and restarts it immediately if it stops or crashes.</div>
+          </div>
+          <span class="badge-cyber" id="bot-live-badge" style="font-size: 11px;">OFFLINE ⚪</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-bottom: 18px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Discord Bot Token</label>
+            <input type="password" id="bot-token-input" class="form-input" placeholder="Paste your Discord Bot Token">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Runtime Engine</label>
             <select id="bot-runtime-select" class="form-input">
-              <option value="python">Python 3 (discord.py)</option>
-              <option value="node">Node.js (discord.js)</option>
+              <option value="python">Python 3.11 (discord.py)</option>
+              <option value="node">Node.js 20 (discord.js)</option>
               <option value="lune">Lune (Luau 0.10+)</option>
               <option value="lua">Lua 5.4</option>
             </select>
           </div>
-          <div style="display: flex; align-items: flex-end; gap: 8px;">
-            <button class="btn btn-primary" onclick="startBotSupervisor()">Start 24/7 Bot</button>
-            <button class="btn btn-secondary" onclick="stopBotSupervisor()">Stop</button>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Main Script File</label>
+            <input type="text" id="bot-script-file" class="form-input" value="bot.py" placeholder="e.g. bot.py or index.js">
           </div>
         </div>
 
+        <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+          <button class="btn btn-primary" onclick="startBotSupervisor()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Launch 24/7 Bot
+          </button>
+          <button class="btn btn-secondary" onclick="stopBotSupervisor()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="6" y="6" width="12" height="12"/></svg>
+            Stop Bot
+          </button>
+        </div>
+
+        <!-- 24/7 Watchdog Terminal Output -->
         <div class="terminal-window">
           <div class="terminal-topbar">
             <div class="terminal-dots">
               <span class="terminal-dot red"></span>
               <span class="terminal-dot yellow"></span>
               <span class="terminal-dot green"></span>
-              <span class="terminal-title">bot-watchdog-logs</span>
+              <span class="terminal-title">watchdog-logs — 24/7 process supervisor</span>
             </div>
-            <button class="btn btn-secondary btn-sm" onclick="fetchBotLogs()">Refresh</button>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-secondary btn-sm" onclick="clearBotLogs()">Clear</button>
+              <button class="btn btn-secondary btn-sm" onclick="fetchBotLogs()">Refresh</button>
+            </div>
           </div>
           <div class="terminal-body" id="bot-logs-terminal">
-            <div style="color: var(--primary);">[Supervisor] 24/7 Process Watchdog ready</div>
-            <div>[Supervisor] Waiting for token and launch command...</div>
+            <div style="color: var(--primary);">==> Cloud-VPS 24/7 Discord Bot Watchdog Ready</div>
+            <div>[Supervisor] Waiting for bot files and token configuration...</div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- TAB 7: WEB HOSTING -->
-    <section class="tab-content" id="tab-website">
-      <div class="card cyber-glow">
-        <div class="card-header">
-          <div>
-            <div class="card-title">Web Hosting Suite (ZIP & Git)</div>
-            <div class="card-desc">Deploy static sites and full web applications directly from ZIP files or Git.</div>
-          </div>
-          <a href="#" target="_blank" class="btn btn-cyan btn-sm" id="web-live-link">Open Live Site ↗</a>
-        </div>
-
-        <div style="display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap;">
-          <label class="btn btn-secondary" style="cursor: pointer;">
-            📁 Upload ZIP Archive
-            <input type="file" accept=".zip" style="display: none;" onchange="handleZipUpload(event)">
-          </label>
-          <label class="btn btn-secondary" style="cursor: pointer;">
-            📄 Upload HTML/CSS Files
-            <input type="file" multiple style="display: none;" onchange="handleWebFilesUpload(event)">
-          </label>
-        </div>
-
-        <div class="terminal-window" style="height: 340px;">
-          <iframe id="website-preview-iframe" style="width: 100%; height: 100%; border: none; background: #fff;" src="about:blank"></iframe>
-        </div>
-      </div>
-    </section>
-
-    <!-- TAB 8: TERMINAL -->
+    <!-- ==================== TAB 3: INTERACTIVE TERMINAL ==================== -->
     <section class="tab-content" id="tab-terminal">
-      <div class="terminal-window" style="height: 520px;">
+      <div class="terminal-window" style="height: 580px;">
         <div class="terminal-topbar">
           <div class="terminal-dots">
             <span class="terminal-dot red"></span>
             <span class="terminal-dot yellow"></span>
             <span class="terminal-dot green"></span>
-            <span class="terminal-title">bash — root@cloudvps:~# (Proxmox KVM)</span>
+            <span class="terminal-title" id="terminal-hostname-title">bash — root@cloudvps:~#</span>
           </div>
-          <div style="font-family: var(--mono); font-size: 11px; color: var(--primary);">Connected: 10.88.0.1/16</div>
+          <div style="font-family: var(--mono); font-size: 11px; color: var(--primary);">KVM VirtIO Shell Active</div>
         </div>
         <div class="terminal-body" id="main-terminal-body">
-          <div style="color: var(--primary);">Cloud VPS Terminal (Cyberpunk Edition)</div>
-          <div>Proxmox Virtual Environment 8.2 / Linux 6.8.4-2-pve (x86_64)</div>
-          <div>Type 'help' for available commands.</div>
+          <div style="color: var(--primary);">⚡ Cloud-VPS Root Terminal [Cyberpunk Edition]</div>
+          <div>Connected to isolated container sandbox. Type 'help', 'ls', 'python3 --version', or 'cat bot.py'.</div>
         </div>
         <div class="terminal-input-row">
-          <span class="terminal-prompt" id="term-prompt-prefix">root@cloudvps:~#</span>
-          <input type="text" id="main-terminal-input" class="terminal-cmd-input" placeholder="e.g. ls -la, python3 --version, df -h" onkeydown="handleTerminalKey(event)">
+          <span class="terminal-prompt" id="terminal-prompt-prefix">root@vps:~$</span>
+          <input type="text" id="main-terminal-input" class="terminal-cmd-input" placeholder="Type command and press Enter..." onkeydown="handleTerminalKey(event)">
         </div>
       </div>
     </section>
 
-    <!-- TAB 9: FILES & CODE EDITOR -->
+    <!-- ==================== TAB 4: FILES & CODE EDITOR ==================== -->
     <section class="tab-content" id="tab-files">
       <div class="card cyber-glow">
         <div class="card-header">
           <div>
             <div class="card-title">Files & Code Editor</div>
-            <div class="card-desc">Edit your bot scripts, web files, and configurations with auto-save.</div>
+            <div class="card-desc">View, edit, and save your bot code and configuration files directly inside your VPS.</div>
           </div>
-          <button class="btn btn-primary btn-sm" onclick="saveFileContent()">Save File</button>
+          <button class="btn btn-primary btn-sm" onclick="saveActiveFile()">Save File</button>
         </div>
-        <div style="display: flex; gap: 12px; height: 420px;">
-          <div style="width: 200px; background: var(--bg-subtle); border: 1px solid var(--surface-border); border-radius: var(--radius-sm); padding: 10px; overflow-y: auto;" id="file-tree-container">
-            <!-- Files listed dynamically -->
+
+        <div style="display: flex; gap: 14px; height: 460px; flex-wrap: wrap;">
+          <div style="width: 220px; min-width: 180px; background: var(--bg-subtle); border: 1px solid var(--surface-border); border-radius: var(--radius-sm); padding: 10px; overflow-y: auto;" id="files-tree-list">
+            <!-- Listed dynamically -->
           </div>
-          <textarea id="file-editor-area" style="flex: 1; background: #01040a; border: 1px solid var(--border-bright); border-radius: var(--radius-sm); color: #00f0ff; font-family: var(--mono); font-size: 13px; padding: 14px; outline: none; resize: none;"></textarea>
+          <div style="flex: 1; min-width: 280px; display: flex; flex-direction: column;">
+            <div style="background: var(--surface); border: 1px solid var(--surface-border); border-bottom: none; border-radius: var(--radius-sm) var(--radius-sm) 0 0; padding: 6px 14px; font-family: var(--mono); font-size: 12px; color: var(--primary);" id="editor-active-filename">
+              bot.py
+            </div>
+            <textarea id="file-code-editor" style="flex: 1; background: #01040a; border: 1px solid var(--border-bright); border-radius: 0 0 var(--radius-sm) var(--radius-sm); color: #00f0ff; font-family: var(--mono); font-size: 13px; padding: 14px; outline: none; resize: none;"></textarea>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- TAB 10: ACCOUNT & SETTINGS -->
+    <!-- ==================== TAB 5: SETTINGS & API ==================== -->
     <section class="tab-content" id="tab-settings">
       <div class="card cyber-glow">
         <div class="card-title" style="margin-bottom: 16px;">Account, API Keys & SSH Credentials</div>
@@ -1524,58 +1043,40 @@
   </main>
 </div>
 
-<!-- MODAL: CREATE NEW SERVICE -->
-<div class="modal-overlay" id="modal-new-service">
-  <div class="modal-card">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
-      <h3 style="font-size: 18px; font-weight: 800; color: #fff;" id="modal-new-service-title">+ New Service</h3>
-      <button style="background: none; border: none; color: #fff; font-size: 18px; cursor: pointer;" onclick="closeNewServiceModal()">✕</button>
-    </div>
-    <form onsubmit="submitNewService(event)">
-      <div class="form-group">
-        <label class="form-label">Service Name</label>
-        <input type="text" id="modal-srv-name" class="form-input" placeholder="e.g. cyber-api-v2" required>
-      </div>
-      <div class="form-group">
-        <label class="form-label">GitHub Repository URL</label>
-        <input type="text" id="modal-srv-repo" class="form-input" placeholder="https://github.com/render-examples/express-hello-world" value="https://github.com/render-examples/express-hello-world" required>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Branch</label>
-        <input type="text" id="modal-srv-branch" class="form-input" value="main">
-      </div>
-      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
-        <button type="button" class="btn btn-secondary" onclick="closeNewServiceModal()">Cancel</button>
-        <button type="submit" class="btn btn-primary">Deploy Service</button>
-      </div>
-    </form>
-  </div>
-</div>
-
 <!-- TOAST CONTAINER -->
 <div id="toast-container"></div>
 
 <script>
-  // STATE MANAGEMENT
+  // GLOBAL STATE
   const STATE = {
     user: null,
-    services: [],
-    activeServiceId: null,
-    activeTab: 'services',
     vpsList: [],
     activeVpsId: null,
-    hardware: null,
+    activeTab: 'vps',
+    botFiles: [],
+    botStatus: null,
   };
 
+  // TOAST NOTIFICATIONS
   function showToast(msg) {
     const c = document.getElementById('toast-container');
     const t = document.createElement('div');
     t.className = 'toast-msg';
     t.innerHTML = `<span>⚡</span><span>${msg}</span>`;
     c.appendChild(t);
-    setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
+    setTimeout(() => {
+      t.style.opacity = '0';
+      setTimeout(() => t.remove(), 300);
+    }, 3200);
   }
 
+  // SIDEBAR TOGGLE
+  function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    sidebar.classList.toggle('collapsed');
+  }
+
+  // API CALL HELPER
   async function api(path, options = {}) {
     options.headers = options.headers || {};
     if (STATE.user && STATE.user.api_key) {
@@ -1597,6 +1098,7 @@
   // TAB SWITCHING
   function switchTab(tabId) {
     STATE.activeTab = tabId;
+
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     const btn = document.getElementById(`nav-${tabId}`);
     if (btn) btn.classList.add('active');
@@ -1606,254 +1108,337 @@
     if (target) target.classList.add('active');
 
     const titles = {
-      'services': 'Dashboard & Services',
-      'service-detail': 'Service Studio',
-      'github': 'GitHub Deployments',
-      'hardware': 'Hardware & Proxmox Hypervisor',
-      'vps': 'VPS Virtual Machine Instances',
-      'bot': 'Discord Bot Studio (24/7)',
-      'website': 'Web Hosting Suite',
-      'terminal': 'Root Terminal & SSH',
+      'vps': 'My VPS Instances',
+      'bot': 'Discord Bot (24/7)',
+      'terminal': 'Interactive Terminal',
       'files': 'Files & Code Editor',
       'settings': 'Account & Settings'
     };
-    document.getElementById('header-section-title').textContent = titles[tabId] || 'Cloud VPS';
+    document.getElementById('header-section-title').textContent = titles[tabId] || 'Cloud-VPS';
 
-    if (tabId === 'hardware') loadHardwareData();
-    if (tabId === 'services') loadServices();
     if (tabId === 'vps') loadVpsList();
-    if (tabId === 'website') loadWebsitePreview();
-    if (tabId === 'files') loadFileList();
+    if (tabId === 'bot') updateBotTabUi();
+    if (tabId === 'files') fetchFilesTree();
   }
 
-  function toggleNewMenu() {
-    const m = document.getElementById('new-services-dropdown');
-    m.classList.toggle('show');
-  }
-
-  window.addEventListener('click', (e) => {
-    if (!e.target.closest('.dropdown-wrapper')) {
-      const m = document.getElementById('new-services-dropdown');
-      if (m) m.classList.remove('show');
-    }
-  });
-
-  // SERVICES LOGIC
-  async function loadServices() {
-    const res = await api('/api/services');
-    if (res.ok && res.data.services) {
-      STATE.services = res.data.services;
-      renderServicesList();
-      if (!STATE.activeServiceId && STATE.services.length > 0) {
-        selectService(STATE.services[0].id, false);
+  // VPS MANAGEMENT
+  async function loadVpsList() {
+    const res = await api('/api/vps');
+    if (res.ok && res.data.vps) {
+      STATE.vpsList = res.data.vps;
+      document.getElementById('sidebar-vps-count').textContent = STATE.vpsList.length;
+      if (!STATE.activeVpsId && STATE.vpsList.length > 0) {
+        STATE.activeVpsId = STATE.vpsList[0].id;
       }
+      renderVpsList();
+      updateBotVpsStatusCard();
     }
   }
 
-  function renderServicesList() {
-    const container = document.getElementById('services-container');
-    const search = (document.getElementById('services-search').value || '').toLowerCase();
-    
-    let filtered = STATE.services.filter(s => 
-      s.name.toLowerCase().includes(search) || 
-      (s.repo_url || '').toLowerCase().includes(search)
-    );
-
-    document.getElementById('nav-services-badge').textContent = STATE.services.length;
-
-    if (filtered.length === 0) {
-      container.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-dim);">No matching services found. Click "+ New" to deploy one.</div>`;
+  function renderVpsList() {
+    const container = document.getElementById('vps-list-container');
+    if (STATE.vpsList.length === 0) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 40px 20px; color: var(--text-muted); background: var(--bg-subtle); border-radius: var(--radius-sm); border: 1px dashed var(--surface-border);">
+          <div style="font-size: 36px; margin-bottom: 12px;">🖥️</div>
+          <div style="font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 6px;">No VPS Containers Yet</div>
+          <div style="font-size: 13px; margin-bottom: 18px;">Deploy your free high-performance container to host 24/7 Discord bots and run root terminal commands.</div>
+          <button class="btn btn-primary" onclick="deployNewVps()">+ Deploy Free VPS</button>
+        </div>
+      `;
       return;
     }
 
-    container.innerHTML = filtered.map(s => {
-      const typeIcons = {
-        'web_service': '🌐',
-        'static_site': '⚡',
-        'bot': '🤖',
-        'postgres': '🗄️',
-        'redis': '⚡',
-        'vm': '🖥️'
-      };
-      const icon = typeIcons[s.type] || '🌐';
-
+    container.innerHTML = STATE.vpsList.map(v => {
+      const isSelected = v.id === STATE.activeVpsId;
       return `
-        <div class="service-row-card" onclick="selectService('${s.id}', true)">
-          <div class="service-main">
-            <div class="service-icon-box">${icon}</div>
+        <div style="background: ${isSelected ? 'rgba(0, 240, 255, 0.08)' : 'var(--bg-subtle)'}; border: 1px solid ${isSelected ? 'var(--primary)' : 'var(--surface-border)'}; border-radius: var(--radius-sm); padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; transition: all 0.15s ease;">
+          <div style="display: flex; align-items: center; gap: 14px;">
+            <div style="width: 40px; height: 40px; border-radius: var(--radius-sm); background: rgba(0, 240, 255, 0.12); border: 1px solid var(--border-bright); display: flex; align-items: center; justify-content: center; font-size: 18px;">
+              🖥️
+            </div>
             <div>
-              <div class="service-name">
-                <span>${escapeHtml(s.name)}</span>
-                <span class="service-type-pill">${(s.type || 'web_service').replace('_', ' ').toUpperCase()}</span>
-                <span class="badge-cyber" style="font-size: 9px;">${s.region || 'cyber-us-east'}</span>
+              <div style="font-weight: 800; font-size: 15px; color: #fff; display: flex; align-items: center; gap: 8px;">
+                <span>${escapeHtml(v.name)}</span>
+                <span class="badge-cyber">${escapeHtml(v.plan || 'Standard').toUpperCase()}</span>
+                ${isSelected ? '<span style="font-size: 10px; color: var(--primary); font-weight: 800; font-family: var(--mono);">[ACTIVE CONTAINER]</span>' : ''}
               </div>
-              <div class="service-meta-row">
-                <span style="display: flex; align-items: center; gap: 4px; color: var(--success);">
-                  <span class="status-live-dot"></span> Live
-                </span>
-                <span>•</span>
-                <span>Branch: ${escapeHtml(s.branch || 'main')}</span>
-                <span>•</span>
-                <span>https://${escapeHtml(s.domain || `${s.name}.cloudvps.app`)}</span>
+              <div style="font-size: 12px; color: var(--text-muted); font-family: var(--mono); margin-top: 4px;">
+                CPU: ${v.cpu || '2 Cores'} &bull; RAM: ${v.memory || '2048 MB'} &bull; NVMe: ${v.storage || '40 GB'} &bull; ID: ${v.id}
               </div>
             </div>
           </div>
-          <div style="display: flex; align-items: center; gap: 10px;" onclick="event.stopPropagation()">
-            <a href="https://${escapeHtml(s.domain || `${s.name}.cloudvps.app`)}" target="_blank" class="btn btn-secondary btn-sm">Visit ↗</a>
-            <button class="btn btn-primary btn-sm" onclick="deployServiceById('${s.id}')">Deploy</button>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <button class="btn btn-secondary btn-sm" onclick="setActiveVps('${v.id}')">
+              ${isSelected ? '✓ Selected' : 'Select'}
+            </button>
+            <button class="btn btn-cyan btn-sm" onclick="openTerminalForVps('${v.id}')">
+              Terminal
+            </button>
+            <button class="btn btn-secondary btn-sm" style="color: var(--danger); border-color: rgba(244,63,94,0.3);" onclick="deleteVps('${v.id}')">
+              Delete
+            </button>
           </div>
         </div>
       `;
     }).join('');
   }
 
-  function filterServices(type, btn) {
-    document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    if (type === 'all') {
-      renderServicesList();
-    } else {
-      const container = document.getElementById('services-container');
-      const filtered = STATE.services.filter(s => s.type === type);
-      // temporary render
-      const orig = STATE.services;
-      STATE.services = filtered;
-      renderServicesList();
-      STATE.services = orig;
-    }
+  function setActiveVps(id) {
+    STATE.activeVpsId = id;
+    renderVpsList();
+    updateBotVpsStatusCard();
+    fetchBotFiles();
+    showToast(`Active container set to ${id}`);
   }
 
-  async function selectService(srvId, shouldSwitch = false) {
-    STATE.activeServiceId = srvId;
-    const res = await api(`/api/services/${srvId}`);
-    if (res.ok && res.data.service) {
-      const s = res.data.service;
-      document.getElementById('studio-service-name').textContent = s.name;
-      document.getElementById('studio-service-type').textContent = (s.type || 'web_service').replace('_', ' ').toUpperCase();
-      const urlLink = document.getElementById('studio-service-url');
-      urlLink.textContent = `https://${s.domain} ↗`;
-      urlLink.href = `https://${s.domain}`;
-      document.getElementById('logs-service-title').textContent = `live-stream — ${s.name}`;
-      
-      // render deploys
-      if (res.data.deploys) {
-        renderDeploys(res.data.deploys);
-      }
-      loadMetrics(srvId);
-      if (shouldSwitch) switchTab('service-detail');
-    }
+  function openTerminalForVps(id) {
+    setActiveVps(id);
+    switchTab('terminal');
   }
 
-  function renderDeploys(deploys) {
-    const list = document.getElementById('deploys-history-list');
-    list.innerHTML = deploys.map(d => `
-      <div style="background: var(--bg-subtle); border: 1px solid var(--surface-border); border-radius: var(--radius-sm); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;">
-        <div>
-          <div style="font-weight: 700; color: #fff; font-size: 13px; display: flex; align-items: center; gap: 8px;">
-            <span class="status-live-dot"></span>
-            <span>${escapeHtml(d.commit_msg || 'Deploy update')}</span>
-            <span class="badge-cyber" style="font-family: var(--mono);">${escapeHtml(d.commit_hash || 'a7f92e1')}</span>
-          </div>
-          <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px; font-family: var(--mono);">
-            Trigger: ${escapeHtml(d.trigger_type || 'Manual Deploy')} &bull; Duration: ${d.duration_sec || 12}s &bull; ${escapeHtml(d.created_at || 'Just now')}
-          </div>
-        </div>
-        <button class="btn btn-secondary btn-sm" onclick="rollbackDeploy('${d.id}')">Rollback to this</button>
-      </div>
-    `).join('');
-  }
-
-  async function loadMetrics(srvId) {
-    const res = await api(`/api/services/${srvId}/metrics`);
-    if (res.ok && res.data.metrics) {
-      const points = res.data.metrics;
-      const last = points[points.length - 1];
-      document.getElementById('metric-cpu-val').textContent = `${last.cpu_percent}%`;
-      document.getElementById('metric-ram-val').textContent = `${Math.round(last.memory_mb)} MB`;
-      document.getElementById('metric-rps-val').textContent = `${last.rps} RPS`;
-      document.getElementById('metric-net-val').textContent = `${Math.round(last.net_out_kb)} KB/s`;
-
-      const chart = document.getElementById('metrics-bar-chart');
-      chart.innerHTML = points.map(p => `
-        <div style="flex: 1; background: rgba(0, 240, 255, 0.4); height: ${Math.max(10, p.cpu_percent * 1.6)}px; border-radius: 2px 2px 0 0; transition: height 0.3s;" title="${p.time_label}: ${p.cpu_percent}% CPU"></div>
-      `).join('');
-    }
-  }
-
-  function switchStudioSubTab(subId, btn) {
-    document.querySelectorAll('.render-tab-item').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    document.querySelectorAll('.studio-sub-pane').forEach(p => p.style.display = 'none');
-    const target = document.getElementById(`studio-sub-${subId}`);
-    if (target) target.style.display = 'block';
-  }
-
-  async function deployActiveService() {
-    if (!STATE.activeServiceId) return;
-    showToast('Triggering build and deployment...');
-    const res = await api(`/api/services/${STATE.activeServiceId}/deploy`, { method: 'POST' });
-    if (res.ok) {
-      showToast('Deployment live on Cloud VPS edge!');
-      selectService(STATE.activeServiceId, false);
-    }
-  }
-
-  async function rollbackActiveService() {
-    showToast('Rolling back to previous green deploy...');
-    await deployActiveService();
-  }
-
-  // HARDWARE DATA
-  async function loadHardwareData() {
-    const res = await api('/api/hardware');
-    if (res.ok && res.data.hardware) {
-      STATE.hardware = res.data.hardware;
-    }
-  }
-
-  async function runHardwareBenchmark() {
-    showToast('Running bare-metal NVMe and virtualization benchmark...');
-    const res = await api('/api/hardware/benchmark', { method: 'POST' });
-    if (res.ok && res.data.benchmark) {
-      const b = res.data.benchmark;
-      showToast(`Benchmark complete: Read ${b.nvme_seq_read}, IOPS ${b.iops}!`);
-    }
-  }
-
-  async function toggleCgnatTunnel() {
-    const res = await api('/api/hardware/cgnat-tunnel', { method: 'POST' });
-    if (res.ok) {
-      showToast(res.data.message);
-      const btn = document.getElementById('btn-cgnat-toggle');
-      if (btn) {
-        btn.textContent = res.data.tunnel_active ? 'Tunnel Active 🟢' : 'Tunnel Inactive ⚪';
-      }
-    }
-  }
-
-  // DISCORD BOT
-  async function startBotSupervisor() {
-    const token = document.getElementById('bot-token-input').value.trim();
-    const runtime = document.getElementById('bot-runtime-select').value;
-    if (!STATE.activeVpsId && STATE.vpsList.length > 0) {
-      STATE.activeVpsId = STATE.vpsList[0].id;
-    }
-    if (!STATE.activeVpsId) {
-      showToast('Creating container for 24/7 bot...');
-      const vRes = await api('/api/vps', { method: 'POST', body: { name: 'discord-bot-vps', plan: 'standard' } });
-      if (vRes.ok && vRes.data.vps) {
-        STATE.activeVpsId = vRes.data.vps.id;
-      }
-    }
-    showToast('Starting 24/7 Discord Bot Watchdog Supervisor...');
-    const res = await api(`/api/vps/${STATE.activeVpsId}/bot/start`, {
+  async function deployNewVps() {
+    const name = `vps-${Math.random().toString(36).substring(2, 7)}`;
+    showToast(`Deploying isolated container ${name}...`);
+    const res = await api('/api/vps', {
       method: 'POST',
-      body: { token, runtime }
+      body: { name, plan: 'standard' }
+    });
+    if (res.ok && res.data.vps) {
+      STATE.activeVpsId = res.data.vps.id;
+      showToast(`VPS ${name} is live and ready!`);
+      await loadVpsList();
+      updateBotVpsStatusCard();
+    }
+  }
+
+  async function deleteVps(id) {
+    if (!confirm('Are you sure you want to delete this VPS instance?')) return;
+    const res = await api(`/api/vps/${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      showToast('VPS instance deleted');
+      if (STATE.activeVpsId === id) STATE.activeVpsId = null;
+      await loadVpsList();
+    }
+  }
+
+  // =========================================================================
+  // BOT WORKSPACE & FILE UPLOADS
+  // =========================================================================
+  function updateBotVpsStatusCard() {
+    const badge = document.getElementById('bot-vps-badge');
+    const subtext = document.getElementById('bot-vps-subtext');
+    const actionContainer = document.getElementById('bot-vps-action-btn-container');
+
+    if (!STATE.activeVpsId || STATE.vpsList.length === 0) {
+      badge.textContent = 'NEEDS SETUP ⚠️';
+      badge.style.borderColor = 'var(--warning)';
+      badge.style.color = 'var(--warning)';
+      subtext.textContent = 'No VPS detected. Deploy a free VPS container first to host your bot 24/7.';
+      actionContainer.innerHTML = `
+        <button class="btn btn-primary btn-sm" onclick="deployNewVps()">
+          ⚡ Deploy Free VPS Now (3s)
+        </button>
+      `;
+    } else {
+      const activeVps = STATE.vpsList.find(v => v.id === STATE.activeVpsId) || STATE.vpsList[0];
+      badge.textContent = 'ONLINE & READY 🟢';
+      badge.style.borderColor = 'var(--success)';
+      badge.style.color = 'var(--success)';
+      subtext.innerHTML = `Target: <strong style="color: #fff;">${escapeHtml(activeVps.name)}</strong> (${activeVps.cpu || '2 Cores'}, ${activeVps.memory || '2GB RAM'}) &bull; Container: ${activeVps.id}`;
+      actionContainer.innerHTML = `
+        <button class="btn btn-secondary btn-sm" onclick="switchTab('vps')">
+          Manage VPS
+        </button>
+      `;
+    }
+  }
+
+  async function updateBotTabUi() {
+    updateBotVpsStatusCard();
+    if (STATE.activeVpsId) {
+      await fetchBotFiles();
+      await fetchBotStatus();
+    }
+  }
+
+  // BOT FILE UPLOAD HANDLERS
+  const dropzone = document.getElementById('bot-dropzone');
+  ['dragenter', 'dragover'].forEach(eventName => {
+    dropzone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      dropzone.classList.add('dragover');
+    }, false);
+  });
+
+  ['dragleave', 'drop'].forEach(eventName => {
+    dropzone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+    }, false);
+  });
+
+  dropzone.addEventListener('drop', (e) => {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    if (files.length) uploadBotFiles(files);
+  });
+
+  function handleBotFilesSelect(e) {
+    const files = e.target.files;
+    if (files.length) uploadBotFiles(files);
+  }
+
+  async function uploadBotFiles(files) {
+    if (!STATE.activeVpsId) {
+      showToast('Please deploy a free VPS first!');
+      await deployNewVps();
+    }
+
+    showToast(`Uploading ${files.length} file(s) to bot workspace...`);
+    const formData = new FormData();
+    for (let i = 0; i < files.length; i++) {
+      formData.append('files', files[i]);
+    }
+
+    try {
+      const res = await fetch(`/api/vps/${STATE.activeVpsId}/bot/upload`, {
+        method: 'POST',
+        headers: { 'X-API-Key': STATE.user?.api_key || '' },
+        body: formData
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast(data.message || 'Bot files uploaded successfully!');
+        if (data.detected_entry) {
+          document.getElementById('bot-script-file').value = data.detected_entry;
+        }
+        if (data.detected_runtime) {
+          document.getElementById('bot-runtime-select').value = data.detected_runtime;
+        }
+        await fetchBotFiles();
+      } else {
+        showToast(`Upload failed: ${data.error || 'Server error'}`);
+      }
+    } catch (err) {
+      showToast(`Upload error: ${err.message}`);
+    }
+  }
+
+  async function fetchBotFiles() {
+    if (!STATE.activeVpsId) return;
+    const res = await api(`/api/vps/${STATE.activeVpsId}/files`);
+    if (res.ok && res.data.files) {
+      STATE.botFiles = res.data.files;
+      renderBotFilesTable();
+    }
+  }
+
+  function renderBotFilesTable() {
+    const tbody = document.getElementById('bot-files-table-body');
+    document.getElementById('bot-files-count').textContent = STATE.botFiles.length;
+
+    if (STATE.botFiles.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="4" style="text-align: center; color: var(--text-dim); padding: 20px;">
+            No files uploaded yet. Upload your bot files above!
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = STATE.botFiles.map(f => {
+      let badge = '<span style="color: var(--text-dim);">File</span>';
+      if (f.name === 'bot.py' || f.name === 'main.py') {
+        badge = '<span class="badge-cyber" style="color: var(--success); border-color: var(--success);">ENTRYPOINT (Python)</span>';
+      } else if (f.name === 'index.js' || f.name === 'bot.js') {
+        badge = '<span class="badge-cyber" style="color: #38bdf8; border-color: #38bdf8;">ENTRYPOINT (Node)</span>';
+      } else if (f.name === 'requirements.txt' || f.name === 'package.json') {
+        badge = '<span class="badge-cyber">DEPENDENCIES</span>';
+      } else if (f.name === '.env' || f.name === 'config.json') {
+        badge = '<span class="badge-cyber" style="color: var(--warning); border-color: var(--warning);">CONFIG</span>';
+      }
+
+      return `
+        <tr>
+          <td style="font-family: var(--mono); font-weight: 700; color: #fff;">
+            📄 ${escapeHtml(f.name)}
+          </td>
+          <td style="font-family: var(--mono); color: var(--text-muted);">
+            ${f.size ? Math.round(f.size / 1024 * 10) / 10 + ' KB' : '1 KB'}
+          </td>
+          <td>${badge}</td>
+          <td style="text-align: right;">
+            <button class="btn btn-secondary btn-sm" onclick="editBotFile('${escapeHtml(f.name)}')">Edit</button>
+            <button class="btn btn-secondary btn-sm" style="color: var(--danger);" onclick="deleteBotFile('${escapeHtml(f.name)}')">Delete</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function editBotFile(filename) {
+    switchTab('files');
+    loadFileContent(filename);
+  }
+
+  async function deleteBotFile(filename) {
+    if (!confirm(`Delete ${filename}?`)) return;
+    const res = await api(`/api/vps/${STATE.activeVpsId}/file?path=${encodeURIComponent(filename)}`, {
+      method: 'DELETE'
     });
     if (res.ok) {
-      showToast('Discord bot running 24/7 with auto-recovery!');
-      document.getElementById('bot-status-badge').textContent = '24/7 ONLINE 🟢';
+      showToast(`Deleted ${filename}`);
+      fetchBotFiles();
+    }
+  }
+
+  // BOT SUPERVISOR CONTROLS
+  async function fetchBotStatus() {
+    if (!STATE.activeVpsId) return;
+    const res = await api(`/api/vps/${STATE.activeVpsId}/bot`);
+    if (res.ok && res.data) {
+      const b = res.data;
+      const badge = document.getElementById('bot-live-badge');
+      if (b.status === 'running') {
+        badge.textContent = '24/7 ONLINE 🟢';
+        badge.style.color = 'var(--success)';
+        badge.style.borderColor = 'var(--success)';
+      } else {
+        badge.textContent = 'STANDBY ⚪';
+        badge.style.color = 'var(--text-muted)';
+        badge.style.borderColor = 'var(--surface-border)';
+      }
+      if (b.runtime) document.getElementById('bot-runtime-select').value = b.runtime;
+      if (b.filename) document.getElementById('bot-script-file').value = b.filename;
+    }
+  }
+
+  async function startBotSupervisor() {
+    if (!STATE.activeVpsId) {
+      showToast('Deploying a free VPS container first...');
+      await deployNewVps();
+    }
+
+    const token = document.getElementById('bot-token-input').value.trim();
+    const runtime = document.getElementById('bot-runtime-select').value;
+    const filename = document.getElementById('bot-script-file').value.trim() || 'bot.py';
+
+    showToast('Starting 24/7 Bot Process Watchdog...');
+    const res = await api(`/api/vps/${STATE.activeVpsId}/bot/start`, {
+      method: 'POST',
+      body: { token, runtime, filename }
+    });
+
+    if (res.ok) {
+      showToast('Discord Bot started 24/7!');
+      document.getElementById('bot-live-badge').textContent = '24/7 ONLINE 🟢';
+      document.getElementById('bot-live-badge').style.color = 'var(--success)';
       fetchBotLogs();
+    } else {
+      showToast(`Error: ${res.data.error || 'Failed to start bot'}`);
     }
   }
 
@@ -1861,8 +1446,9 @@
     if (!STATE.activeVpsId) return;
     const res = await api(`/api/vps/${STATE.activeVpsId}/bot/stop`, { method: 'POST' });
     if (res.ok) {
-      showToast('Bot supervisor stopped');
-      document.getElementById('bot-status-badge').textContent = 'STOPPED ⚪';
+      showToast('Bot stopped');
+      document.getElementById('bot-live-badge').textContent = 'STOPPED ⚪';
+      fetchBotLogs();
     }
   }
 
@@ -1876,7 +1462,13 @@
     }
   }
 
-  // TERMINAL
+  function clearBotLogs() {
+    document.getElementById('bot-logs-terminal').innerHTML = '<div style="color: var(--text-dim);">Logs cleared.</div>';
+  }
+
+  // =========================================================================
+  // TERMINAL KEYBOARD HANDLER
+  // =========================================================================
   async function handleTerminalKey(e) {
     if (e.key === 'Enter') {
       const input = document.getElementById('main-terminal-input');
@@ -1885,7 +1477,7 @@
       input.value = '';
 
       const body = document.getElementById('main-terminal-body');
-      body.innerHTML += `<div style="color: var(--primary); margin-top: 6px;">root@cloudvps:~# ${escapeHtml(cmd)}</div>`;
+      body.innerHTML += `<div style="color: var(--primary); margin-top: 6px;">root@vps:~$ ${escapeHtml(cmd)}</div>`;
 
       if (cmd === 'clear') {
         body.innerHTML = '';
@@ -1896,7 +1488,7 @@
         STATE.activeVpsId = STATE.vpsList[0].id;
       }
       if (!STATE.activeVpsId) {
-        body.innerHTML += `<div>Deploy a VPS instance first or use global host shell.</div>`;
+        body.innerHTML += `<div style="color: var(--warning);">No VPS container deployed. Please deploy one first.</div>`;
         return;
       }
 
@@ -1913,181 +1505,25 @@
     }
   }
 
-  // VPS LIST
-  async function loadVpsList() {
-    const res = await api('/api/vps');
-    if (res.ok && res.data.vps) {
-      STATE.vpsList = res.data.vps;
-      document.getElementById('sidebar-vps-count').textContent = STATE.vpsList.length;
-      renderVpsList();
-    }
-  }
-
-  function renderVpsList() {
-    const c = document.getElementById('vps-list-container');
-    if (STATE.vpsList.length === 0) {
-      c.innerHTML = `<div style="text-align: center; padding: 20px; color: var(--text-dim);">No VPS instances yet. Click "+ Deploy Free VPS" above.</div>`;
-      return;
-    }
-    c.innerHTML = STATE.vpsList.map(v => `
-      <div style="background: var(--bg-subtle); border: 1px solid var(--surface-border); border-radius: var(--radius-sm); padding: 14px 18px; display: flex; align-items: center; justify-content: space-between;">
-        <div>
-          <div style="font-weight: 700; color: #fff; font-size: 14px; display: flex; align-items: center; gap: 8px;">
-            <span class="status-live-dot"></span>
-            <span>${escapeHtml(v.name)}</span>
-            <span class="badge-cyber">${escapeHtml(v.plan || 'standard').toUpperCase()}</span>
-          </div>
-          <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px; font-family: var(--mono);">
-            CPU: ${v.cpu || '2 Cores'} &bull; RAM: ${v.memory || '2GB'} &bull; NVMe: ${v.storage || '40GB'} &bull; Hostname: ${v.hostname || v.name}
-          </div>
-        </div>
-        <div style="display: flex; gap: 8px;">
-          <button class="btn btn-secondary btn-sm" onclick="selectActiveVps('${v.id}')">Select</button>
-        </div>
-      </div>
-    `).join('');
-  }
-
-  function selectActiveVps(id) {
-    STATE.activeVpsId = id;
-    showToast(`Active VPS container set to ${id}`);
-  }
-
-  async function openDeployVpsModal() {
-    const name = `vps-${Math.random().toString(36).substring(2, 7)}`;
-    showToast('Provisioning free bare-metal container...');
-    const res = await api('/api/vps', {
-      method: 'POST',
-      body: { name, plan: 'standard' }
-    });
-    if (res.ok) {
-      showToast(`VPS ${name} provisioned successfully!`);
-      loadVpsList();
-    }
-  }
-
-  // MODAL NEW SERVICE
-  function openNewServiceModal(type = 'web_service') {
-    document.getElementById('modal-new-service').classList.add('show');
-    const titles = {
-      'web_service': '+ New Web Service',
-      'static_site': '+ New Static Site',
-      'bot': '+ New 24/7 Discord Bot',
-      'postgres': '+ New PostgreSQL Database',
-      'redis': '+ New Redis Cache',
-      'vm': '+ New Bare-Metal VM (Proxmox)'
-    };
-    document.getElementById('modal-new-service-title').textContent = titles[type] || '+ New Service';
-  }
-
-  function closeNewServiceModal() {
-    document.getElementById('modal-new-service').classList.remove('show');
-  }
-
-  async function submitNewService(e) {
-    e.preventDefault();
-    const name = document.getElementById('modal-srv-name').value.trim();
-    const repo = document.getElementById('modal-srv-repo').value.trim();
-    const branch = document.getElementById('modal-srv-branch').value.trim();
-
-    showToast(`Provisioning and deploying ${name}...`);
-    closeNewServiceModal();
-
-    const res = await api('/api/services', {
-      method: 'POST',
-      body: { name, repo_url: repo, branch, type: 'web_service' }
-    });
-
-    if (res.ok && res.data.service) {
-      showToast(`Service ${res.data.service.name} deployed live!`);
-      await loadServices();
-      selectService(res.data.service.id, true);
-    }
-  }
-
-  // GITHUB INPUT HELPER
-  function useRepoTemplate(repo, name) {
-    document.getElementById('github-quick-repo').value = repo;
-    showToast(`Loaded ${name} template`);
-  }
-
-  async function deployFromGithubInput() {
-    const repo = document.getElementById('github-quick-repo').value.trim();
-    const branch = document.getElementById('github-quick-branch').value.trim() || 'main';
-    if (!repo) return showToast('Please enter a GitHub repository URL');
-
-    const name = repo.split('/').pop().replace('.git', '') || 'my-app';
-    showToast(`Cloning and deploying ${name} from GitHub...`);
-    const res = await api('/api/services', {
-      method: 'POST',
-      body: { name, repo_url: repo, branch, type: 'web_service' }
-    });
-    if (res.ok) {
-      showToast('GitHub repository deployed live on Cloud VPS!');
-      await loadServices();
-      selectService(res.data.service.id, true);
-    }
-  }
-
-  // WEB HOSTING
-  async function loadWebsitePreview() {
-    if (!STATE.activeVpsId && STATE.vpsList.length > 0) {
-      STATE.activeVpsId = STATE.vpsList[0].id;
-    }
-    if (!STATE.activeVpsId) return;
-    const url = `/sites/${STATE.activeVpsId}/`;
-    document.getElementById('website-preview-iframe').src = url;
-    document.getElementById('web-live-link').href = url;
-  }
-
-  async function handleZipUpload(e) {
-    const file = e.target.files[0];
-    if (!file || !STATE.activeVpsId) return showToast('Deploy or select a VPS first');
-    const formData = new FormData();
-    formData.append('file', file);
-    showToast(`Extracting ${file.name} to web root...`);
-    const res = await fetch(`/api/vps/${STATE.activeVpsId}/website/zip`, {
-      method: 'POST',
-      headers: { 'X-API-Key': STATE.user?.api_key || '' },
-      body: formData
-    });
-    if (res.ok) {
-      showToast('ZIP archive extracted! Website is live.');
-      loadWebsitePreview();
-    }
-  }
-
-  async function handleWebFilesUpload(e) {
-    const files = e.target.files;
-    if (!files || files.length === 0 || !STATE.activeVpsId) return;
-    showToast(`Uploading ${files.length} web files...`);
-    for (let f of files) {
-      const formData = new FormData();
-      formData.append('file', f);
-      await fetch(`/api/vps/${STATE.activeVpsId}/website/upload`, {
-        method: 'POST',
-        headers: { 'X-API-Key': STATE.user?.api_key || '' },
-        body: formData
-      });
-    }
-    showToast('Files uploaded! Preview refreshed.');
-    loadWebsitePreview();
-  }
-
+  // =========================================================================
   // FILES & EDITOR
-  async function loadFileList() {
+  // =========================================================================
+  async function fetchFilesTree() {
     if (!STATE.activeVpsId && STATE.vpsList.length > 0) {
       STATE.activeVpsId = STATE.vpsList[0].id;
     }
     if (!STATE.activeVpsId) return;
+
     const res = await api(`/api/vps/${STATE.activeVpsId}/files`);
     if (res.ok && res.data.files) {
-      const c = document.getElementById('file-tree-container');
-      c.innerHTML = res.data.files.map(f => `
-        <div style="padding: 6px; font-family: var(--mono); font-size: 12px; cursor: pointer; color: var(--text-muted);" onclick="loadFileContent('${f.name}')">
-          📄 ${escapeHtml(f.name)}
+      const tree = document.getElementById('files-tree-list');
+      tree.innerHTML = res.data.files.map(f => `
+        <div style="padding: 7px 10px; border-radius: 4px; font-family: var(--mono); font-size: 12px; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; gap: 6px;" onmouseover="this.style.background='var(--surface-hover)'" onmouseout="this.style.background='transparent'" onclick="loadFileContent('${escapeHtml(f.name)}')">
+          <span>📄</span>
+          <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(f.name)}</span>
         </div>
       `).join('');
+
       if (res.data.files.length > 0) {
         loadFileContent(res.data.files[0].name);
       }
@@ -2096,22 +1532,27 @@
 
   async function loadFileContent(filename) {
     if (!STATE.activeVpsId) return;
-    const res = await api(`/api/vps/${STATE.activeVpsId}/files/read?filename=${encodeURIComponent(filename)}`);
+    const res = await api(`/api/vps/${STATE.activeVpsId}/file?path=${encodeURIComponent(filename)}`);
     if (res.ok && res.data.content !== undefined) {
-      document.getElementById('file-editor-area').value = res.data.content;
-      document.getElementById('file-editor-area').dataset.currentFile = filename;
+      document.getElementById('file-code-editor').value = res.data.content;
+      document.getElementById('file-code-editor').dataset.currentFile = filename;
+      document.getElementById('editor-active-filename').textContent = filename;
     }
   }
 
-  async function saveFileContent() {
-    const filename = document.getElementById('file-editor-area').dataset.currentFile || 'bot.py';
-    const content = document.getElementById('file-editor-area').value;
+  async function saveActiveFile() {
+    const filename = document.getElementById('file-code-editor').dataset.currentFile || 'bot.py';
+    const content = document.getElementById('file-code-editor').value;
     if (!STATE.activeVpsId) return;
-    const res = await api(`/api/vps/${STATE.activeVpsId}/files/write`, {
+
+    const res = await api(`/api/vps/${STATE.activeVpsId}/file`, {
       method: 'POST',
-      body: { filename, content }
+      body: { path: filename, content }
     });
-    if (res.ok) showToast(`Saved ${filename}`);
+    if (res.ok) {
+      showToast(`Saved ${filename}`);
+      fetchBotFiles();
+    }
   }
 
   function escapeHtml(str) {
@@ -2120,26 +1561,26 @@
     }[tag] || tag));
   }
 
-  async function syncAllData() {
-    showToast('Synchronizing services, hardware and VM metrics...');
-    await loadServices();
-    await loadHardwareData();
+  async function syncData() {
+    showToast('Synchronizing VPS and Bot status...');
     await loadVpsList();
-    showToast('All Cloud VPS services synchronized 🟢');
+    if (STATE.activeVpsId) {
+      await fetchBotFiles();
+      await fetchBotStatus();
+    }
+    showToast('Cloud-VPS Synchronized 🟢');
   }
 
-  // INITIALIZE SESSION
+  // INITIALIZATION
   async function init() {
-    const sRes = await api('/api/session');
-    if (sRes.ok && sRes.data.user) {
-      STATE.user = sRes.data.user;
+    const res = await api('/api/session');
+    if (res.ok && res.data.user) {
+      STATE.user = res.data.user;
       document.getElementById('sidebar-username').textContent = STATE.user.username;
       document.getElementById('settings-username').value = STATE.user.username;
       document.getElementById('settings-apikey').value = STATE.user.api_key;
     }
-    await loadServices();
     await loadVpsList();
-    await loadHardwareData();
   }
 
   init();
