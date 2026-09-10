@@ -104,21 +104,16 @@ def load_db():
         except Exception:
             pass
 
-    # Ensure kers0ne default user
-    def_user = "usr_kers0ne"
+    # Ensure default user
+    def_user = "usr_free_user"
     if def_user not in db["users"]:
         db["users"][def_user] = {
             "id": def_user,
-            "username": "kers0ne",
-            "password_hash": hash_password("1LuhhCrim!"),
+            "username": "demo_user",
+            "password_hash": hash_password("demo123"),
             "api_key": "cvps_live_free_key_777",
             "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ")
         }
-    else:
-        db["users"][def_user]["username"] = "kers0ne"
-        db["users"][def_user]["password_hash"] = hash_password("1LuhhCrim!")
-
-    db["users"]["usr_free_user"] = {**db["users"][def_user], "id": "usr_free_user", "username": "kers0ne"}
 
     # Ensure default VPS
     def_vps = "vps-free-01"
@@ -126,7 +121,7 @@ def load_db():
         db["vps"][def_vps] = {
             "id": def_vps,
             "user_id": def_user,
-            "name": "kers0ne-VPS-01",
+            "name": "Cloud-VPS-01",
             "plan": "ultra",
             "status": "running",
             "cpu": "8.0 Cores",
@@ -139,8 +134,7 @@ def load_db():
         }
     else:
         db["vps"][def_vps]["user_id"] = def_user
-        if db["vps"][def_vps].get("name") == "Discord-Bot-VPS-01":
-            db["vps"][def_vps]["name"] = "kers0ne-VPS-01"
+        db["vps"][def_vps]["name"] = "Cloud-VPS-01"
 
     init_workspace(def_vps)
 
@@ -265,10 +259,8 @@ def api_login():
     password = data.get("password") or ""
     pw_hash = hash_password(password)
 
-    # Normalize username if kersOne was typed instead of kers0ne
-    clean_u = username.lower().replace("kersone", "kers0ne")
-
-    user = next((u for u in db["users"].values() if u["username"].lower() == clean_u and (u["password_hash"] == pw_hash or (clean_u == "kers0ne" and password in ("1LuhhCrim!", "free123")))), None)
+    clean_u = username.lower()
+    user = next((u for u in db["users"].values() if u["username"].lower() == clean_u and u["password_hash"] == pw_hash), None)
     if not user:
         return jsonify({"error": "Invalid username or password"}), 401
     resp = make_response(jsonify({"success": True, "api_key": user["api_key"], "user_id": user["id"], "username": user["username"]}))

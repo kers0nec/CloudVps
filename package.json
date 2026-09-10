@@ -15,7 +15,7 @@
     "discord-bot",
     "cloud"
   ],
-  "author": "kers0ne",
+  "author": "CloudVPS",
   "license": "MIT",
   "dependencies": {
     "axios": "^1.20.0",

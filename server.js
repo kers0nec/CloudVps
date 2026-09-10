@@ -54,37 +54,25 @@ function loadDb() {
     console.warn('[CloudVPS DB] Could not read db file, initializing fresh:', err.message);
   }
 
-  // Ensure kers0ne primary account exists
-  const defaultUserId = 'usr_kers0ne';
+  // Ensure default demo user exists
+  const defaultUserId = 'usr_free_user';
   if (!db.users[defaultUserId]) {
     db.users[defaultUserId] = {
       id: defaultUserId,
-      username: 'kers0ne',
-      password_hash: hashPassword('1LuhhCrim!'),
+      username: 'demo_user',
+      password_hash: hashPassword('demo123'),
       api_key: 'cvps_live_free_key_777',
       created_at: new Date().toISOString()
     };
-  } else {
-    db.users[defaultUserId].username = 'kers0ne';
-    if (!db.users[defaultUserId].password_hash || db.users[defaultUserId].password_hash === hashPassword('free123')) {
-      db.users[defaultUserId].password_hash = hashPassword('1LuhhCrim!');
-    }
   }
 
-  // Also preserve usr_free_user mapped to kers0ne
-  db.users['usr_free_user'] = {
-    ...db.users[defaultUserId],
-    id: 'usr_free_user',
-    username: 'kers0ne'
-  };
-
-  // Ensure default VPS exists under kers0ne
+  // Ensure default VPS exists
   const defaultVpsId = 'vps-free-01';
   if (!db.vps[defaultVpsId]) {
     db.vps[defaultVpsId] = {
       id: defaultVpsId,
       user_id: defaultUserId,
-      name: 'kers0ne-VPS-01',
+      name: 'Cloud-VPS-01',
       plan: 'ultra',
       status: 'running',
       cpu: '8.0 Cores',
@@ -97,9 +85,7 @@ function loadDb() {
     };
   } else {
     db.vps[defaultVpsId].user_id = defaultUserId;
-    if (db.vps[defaultVpsId].name === 'Discord-Bot-VPS-01') {
-      db.vps[defaultVpsId].name = 'kers0ne-VPS-01';
-    }
+    db.vps[defaultVpsId].name = 'Cloud-VPS-01';
   }
 
   // Ensure workspace directory & starter files for default VPS
@@ -402,13 +388,10 @@ app.post('/api/login', (req, res) => {
   }
 
   const reqHash = hashPassword(password);
-  const cleanUsername = username.toLowerCase().replace('kersone', 'kers0ne');
+  const cleanUsername = username.toLowerCase();
 
   const user = Object.values(db.users).find(
-    u => u.username.toLowerCase() === cleanUsername && (
-      u.password_hash === reqHash ||
-      (cleanUsername === 'kers0ne' && (password === '1LuhhCrim!' || password === 'free123'))
-    )
+    u => u.username.toLowerCase() === cleanUsername && u.password_hash === reqHash
   );
 
   if (!user) {
@@ -1381,8 +1364,8 @@ app.get('/api/vps/:vps_id/pc/processes', (req, res) => {
   const essentialProcesses = [
     { pid: process.pid, name: 'CloudVPS-Core.exe', cpu: '1.2%', mem: '45 MB', status: 'RUNNING', user: 'SYSTEM' },
     { pid: 104, name: 'VirtIO-RDP-Service.exe', cpu: '0.8%', mem: '18 MB', status: 'RUNNING', user: 'SYSTEM' },
-    { pid: 1420, name: 'LuneLuauHost.exe', cpu: '0.0%', mem: '12 MB', status: 'READY', user: 'kers0ne' },
-    { pid: 2188, name: 'DiscordBotSupervisor.py', cpu: '0.4%', mem: '28 MB', status: 'RUNNING', user: 'kers0ne' }
+    { pid: 1420, name: 'LuneLuauHost.exe', cpu: '0.0%', mem: '12 MB', status: 'READY', user: 'Administrator' },
+    { pid: 2188, name: 'DiscordBotSupervisor.py', cpu: '0.4%', mem: '28 MB', status: 'RUNNING', user: 'Administrator' }
   ];
 
   essentialProcesses.forEach(ep => {
