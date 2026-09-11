@@ -1,6 +1,6 @@
 {
   "name": "Cloud VPS",
-  "description": "100% Forever Free 24/7 Discord bot, root SSH terminal, AppOnFly Remote PC controller, and cloud container hosting with Lune Luau runtime and auto-restart watchdog.",
+  "description": "High-performance Keyforge cyber-glass Cloud VPS platform featuring clean-slate workspaces, instant file creation, custom domains with TLS 1.3, and 24/7 background process execution.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
