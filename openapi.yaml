@@ -1,0 +1,1289 @@
+openapi: 3.0.3
+info:
+  title: CloudVPS API
+  description: |
+    CloudVPS - Real VPS hosting platform with Discord bot hosting, interactive terminal, and process manager.
+    
+    ## Authentication
+    All authenticated endpoints require an API key passed via:
+    - `X-API-Key` header
+    - `Authorization: Bearer <key>` header
+    - `api_key` query parameter
+    - `api_key` cookie
+    
+    ## Rate Limiting
+    API requests are limited to 100 requests per 15 minutes per IP.
+  version: 1.0.0
+  contact:
+    name: CloudVPS
+    url: https://cloudvps.app
+servers:
+  - url: http://localhost:3000
+    description: Development server
+  - url: https://api.cloudvps.app
+    description: Production server
+tags:
+  - name: Health
+    description: Health check and service info endpoints
+  - name: Plans
+    description: VPS plan catalog
+  - name: Authentication
+    description: User registration, login, and session management
+  - name: VPS Management
+    description: VPS instance lifecycle management
+  - name: File Manager
+    description: File operations in VPS workspace
+  - name: Discord Bot
+    description: Discord bot process management
+  - name: Terminal
+    description: Command execution in VPS
+  - name: GitHub
+    description: GitHub repository integration
+  - name: Domains
+    description: Free domain allocation and SSL
+  - name: AI Agent
+    description: Manus AI agent integration
+  - name: Hardware
+    description: Hardware info and benchmarks
+paths:
+  /api/health:
+    get:
+      tags: [Health]
+      summary: Health check
+      description: Returns service health status and Docker connectivity
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /api/plans:
+    get:
+      tags: [Plans]
+      summary: List available VPS plans
+      responses:
+        '200':
+          description: List of plans
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlansResponse'
+  /api/backend-info:
+    get:
+      tags: [Health]
+      summary: Backend info
+      responses:
+        '200':
+          description: Backend information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BackendInfoResponse'
+  /api/session:
+    get:
+      tags: [Authentication]
+      summary: Get current session
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Session info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+  /api/register:
+    post:
+      tags: [Authentication]
+      summary: Register new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '200':
+          description: Registration successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/login:
+    post:
+      tags: [Authentication]
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/logout:
+    post:
+      tags: [Authentication]
+      summary: Logout user
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+  /api/vps:
+    get:
+      tags: [VPS Management]
+      summary: List user's VPS instances
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: List of VPS instances
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VpsListResponse'
+        '401':
+          description: Authentication required
+    post:
+      tags: [VPS Management]
+      summary: Create new VPS
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateVpsRequest'
+      responses:
+        '201':
+          description: VPS created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VpsResponse'
+        '400':
+          description: Validation error
+        '401':
+          description: Authentication required
+  /api/vps/{vps_id}:
+    get:
+      tags: [VPS Management]
+      summary: Get VPS details
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: vps_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: VPS details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VpsResponse'
+        '404':
+          description: VPS not found
+  /api/vps/{vps_id}/start:
+    post:
+      tags: [VPS Management]
+      summary: Start VPS
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: vps_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: VPS started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionResponse'
+  /api/vps/{vps_id}/stop:
+    post:
+      tags: [VPS Management]
+      summary: Stop VPS
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: vps_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: VPS stopped
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionResponse'
+  /api/vps/{vps_id}/restart:
+    post:
+      tags: [VPS Management]
+      summary: Restart VPS
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: vps_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: VPS restarted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionResponse'
+  /api/vps/{vps_id}/stats:
+    get:
+      tags: [VPS Management]
+      summary: Get VPS stats
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: vps_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: VPS stats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VpsStatsResponse'
+  /api/vps/{vps_id}/files:
+    get:
+      tags: [File Manager]
+      summary: List files in VPS workspace
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: vps_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of files
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileListResponse'
+  /api/vps/{vps_id}/file:
+    get:
+      tags: [File Manager]
+      summary: Read file
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: vps_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: path
+          in: query
+          schema:
+            type: string
+            default: bot.py
+      responses:
+        '200':
+          description: File content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileContentResponse'
+    post:
+      tags: [File Manager]
+      summary: Write file
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: vps_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FileWriteRequest'
+      responses:
+        '200':
+          description: File saved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+    delete:
+      tags: [File Manager]
+      summary: Delete file
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: vps_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: path
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: File deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+  /api/vps/{vps_id}/bot:
+    get:
+      tags: [Discord Bot]
+      summary: Get bot status
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: vps_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bot status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BotStatusResponse'
+    post:
+      tags: [Discord Bot]
+      summary: Update bot config
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: vps_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BotConfigRequest'
+      responses:
+        '200':
+          description: Config updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BotConfigResponse'
+  /api/vps/{vps_id}/bot/start:
+    post:
+      tags: [Discord Bot]
+      summary: Start bot process
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: vps_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BotStartRequest'
+      responses:
+        '200':
+          description: Bot started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BotActionResponse'
+  /api/vps/{vps_id}/bot/stop:
+    post:
+      tags: [Discord Bot]
+      summary: Stop bot process
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: vps_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bot stopped
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+  /api/vps/{vps_id}/bot/restart:
+    post:
+      tags: [Discord Bot]
+      summary: Restart bot process
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: vps_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BotStartRequest'
+      responses:
+        '200':
+          description: Bot restarted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BotActionResponse'
+  /api/vps/{vps_id}/bot/logs:
+    get:
+      tags: [Discord Bot]
+      summary: Get bot logs
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: vps_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bot logs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BotLogsResponse'
+  /api/vps/{vps_id}/terminal/exec:
+    post:
+      tags: [Terminal]
+      summary: Execute command in VPS
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: vps_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TerminalExecRequest'
+      responses:
+        '200':
+          description: Command output
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TerminalExecResponse'
+  /api/vps/{vps_id}/github/clone:
+    post:
+      tags: [GitHub]
+      summary: Clone GitHub repository
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: vps_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GitHubCloneRequest'
+      responses:
+        '200':
+          description: Repository cloned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GitHubCloneResponse'
+  /api/vps/{vps_id}/domains:
+    get:
+      tags: [Domains]
+      summary: List domains for VPS
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: vps_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of domains
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainsResponse'
+  /api/vps/{vps_id}/domains/allocate:
+    post:
+      tags: [Domains]
+      summary: Allocate free domain
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: vps_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DomainAllocateRequest'
+      responses:
+        '200':
+          description: Domain allocated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainAllocateResponse'
+  /api/ai/agent:
+    post:
+      tags: [AI Agent]
+      summary: Run Manus AI agent
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiAgentRequest'
+      responses:
+        '200':
+          description: Agent response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiAgentResponse'
+  /api/hardware:
+    get:
+      tags: [Hardware]
+      summary: Get hardware info
+      responses:
+        '200':
+          description: Hardware information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HardwareResponse'
+  /api/hardware/benchmark:
+    post:
+      tags: [Hardware]
+      summary: Run benchmark
+      responses:
+        '200':
+          description: Benchmark results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BenchmarkResponse'
+  /api/hardware/cgnat-tunnel:
+    post:
+      tags: [Hardware]
+      summary: Create CGNAT tunnel
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Tunnel info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TunnelResponse'
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authentication
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ok]
+        docker:
+          type: boolean
+        native_ready:
+          type: boolean
+        engine:
+          type: string
+        detail:
+          type: string
+        image:
+          type: string
+        plans:
+          type: array
+          items:
+            type: string
+    PlansResponse:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/Plan'
+    Plan:
+      type: object
+      properties:
+        cpu:
+          type: string
+        memory:
+          type: string
+        storage:
+          type: string
+        price:
+          type: string
+        tier:
+          type: string
+    BackendInfoResponse:
+      type: object
+      properties:
+        backend_url:
+          type: string
+        status:
+          type: string
+        runtime:
+          type: string
+        speed:
+          type: string
+        version:
+          type: string
+    SessionResponse:
+      type: object
+      properties:
+        authenticated:
+          type: boolean
+        success:
+          type: boolean
+        user:
+          $ref: '#/components/schemas/User'
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        api_key:
+          type: string
+        vps_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+    RegisterRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+        password:
+          type: string
+          minLength: 6
+          maxLength: 128
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        api_key:
+          type: string
+        user_id:
+          type: string
+        username:
+          type: string
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [false]
+        error:
+          type: string
+        code:
+          type: string
+        details:
+          type: array
+          items:
+            type: string
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        message:
+          type: string
+    ActionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        status:
+          type: string
+    VpsListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        vps:
+          type: array
+          items:
+            $ref: '#/components/schemas/Vps'
+    VpsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        vps:
+          $ref: '#/components/schemas/Vps'
+    Vps:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        name:
+          type: string
+        plan:
+          type: string
+        status:
+          type: string
+        cpu:
+          type: string
+        memory:
+          type: string
+        storage:
+          type: string
+        ip:
+          type: string
+        container_id:
+          type: string
+        engine:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    CreateVpsRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        plan:
+          type: string
+          enum: [starter, standard, performance, ultra]
+          default: performance
+        os:
+          type: string
+          default: ubuntu
+        starter:
+          type: string
+          default: blank
+        subdomain:
+          type: string
+          maxLength: 63
+    VpsStatsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        stats:
+          $ref: '#/components/schemas/VpsStats'
+    VpsStats:
+      type: object
+      properties:
+        cpu_percent:
+          type: string
+        memory_usage:
+          type: string
+        disk_usage:
+          type: string
+        network_rx:
+          type: string
+        network_tx:
+          type: string
+        uptime:
+          type: string
+        status:
+          type: string
+    FileListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileInfo'
+    FileInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        isDirectory:
+          type: boolean
+        size:
+          type: integer
+        modified:
+          type: integer
+    FileContentResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        path:
+          type: string
+        content:
+          type: string
+    FileWriteRequest:
+      type: object
+      required:
+        - path
+      properties:
+        path:
+          type: string
+        content:
+          type: string
+          default: ''
+    BotStatusResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        bot:
+          $ref: '#/components/schemas/Bot'
+    Bot:
+      type: object
+      properties:
+        status:
+          type: string
+        running:
+          type: boolean
+        pid:
+          type: integer
+        filename:
+          type: string
+        runtime:
+          type: string
+        token:
+          type: string
+        restarts:
+          type: integer
+        started_at:
+          type: integer
+        logs:
+          type: array
+          items:
+            type: string
+    BotConfigRequest:
+      type: object
+      properties:
+        filename:
+          type: string
+        runtime:
+          type: string
+          enum: [python, node, bash]
+    BotConfigResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        bot:
+          $ref: '#/components/schemas/Bot'
+    BotStartRequest:
+      type: object
+      properties:
+        filename:
+          type: string
+        runtime:
+          type: string
+          enum: [python, node, bash]
+        token:
+          type: string
+        user_token:
+          type: string
+        bot_token:
+          type: string
+        token_type:
+          type: string
+          enum: [bot, user, both]
+          default: bot
+    BotActionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        message:
+          type: string
+        bot_status:
+          $ref: '#/components/schemas/Bot'
+    BotLogsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        logs:
+          type: array
+          items:
+            type: string
+        status:
+          $ref: '#/components/schemas/BotStatus'
+    BotStatus:
+      type: object
+      properties:
+        status:
+          type: string
+        running:
+          type: boolean
+        pid:
+          type: integer
+        restarts:
+          type: integer
+        uptime_seconds:
+          type: integer
+    TerminalExecRequest:
+      type: object
+      properties:
+        command:
+          type: string
+          default: ''
+    TerminalExecResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        output:
+          type: string
+        exit_code:
+          type: integer
+    GitHubCloneRequest:
+      type: object
+      required:
+        - repo_url
+      properties:
+        repo_url:
+          type: string
+        target_folder:
+          type: string
+          default: site
+        branch:
+          type: string
+        auto_install:
+          type: boolean
+          default: true
+        auto_host:
+          type: boolean
+          default: true
+    GitHubCloneResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        repo_name:
+          type: string
+        repo_url:
+          type: string
+        target_dir:
+          type: string
+        detected_type:
+          type: string
+        start_command:
+          type: string
+        last_commit:
+          type: string
+        install_output:
+          type: string
+        domain:
+          type: object
+        site_preview_url:
+          type: string
+        message:
+          type: string
+    DomainsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        domains:
+          type: array
+          items:
+            $ref: '#/components/schemas/Domain'
+        primary_domain:
+          type: string
+        available_suffixes:
+          type: array
+          items:
+            type: string
+        live_site_url:
+          type: string
+        ssl_provider:
+          type: string
+    Domain:
+      type: object
+      properties:
+        subdomain:
+          type: string
+        suffix:
+          type: string
+        full_domain:
+          type: string
+        target_path:
+          type: string
+        ssl:
+          type: string
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    DomainAllocateRequest:
+      type: object
+      required:
+        - subdomain
+      properties:
+        subdomain:
+          type: string
+          minLength: 2
+          maxLength: 63
+        suffix:
+          type: string
+          default: .cloudvps.site
+        target_path:
+          type: string
+          default: site
+    DomainAllocateResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        domain:
+          type: object
+          properties:
+            subdomain:
+              type: string
+            full_domain:
+              type: string
+            ssl:
+              type: string
+            site_preview_url:
+              type: string
+        message:
+          type: string
+    AiAgentRequest:
+      type: object
+      required:
+        - prompt
+      properties:
+        prompt:
+          type: string
+        vps_id:
+          type: string
+        history:
+          type: array
+          items:
+            type: object
+            properties:
+              role:
+                type: string
+                enum: [user, assistant]
+              content:
+                type: string
+    AiAgentResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        thinking:
+          type: string
+        duration_seconds:
+          type: string
+        actions:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              type:
+                type: string
+              title:
+                type: string
+              detail:
+                type: string
+              status:
+                type: string
+              output:
+                type: string
+        reply:
+          type: string
+        artifact:
+          type: object
+    HardwareResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        hardware:
+          $ref: '#/components/schemas/Hardware'
+    Hardware:
+      type: object
+      properties:
+        cpu_model:
+          type: string
+        cpu_cores:
+          type: integer
+        total_memory:
+          type: string
+        free_memory:
+          type: string
+        uptime_seconds:
+          type: integer
+        platform:
+          type: string
+        kernel:
+          type: string
+        virtualization:
+          type: string
+        network_interfaces:
+          type: array
+          items:
+            type: string
+    BenchmarkResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        benchmark:
+          $ref: '#/components/schemas/Benchmark'
+    Benchmark:
+      type: object
+      properties:
+        single_core_score:
+          type: integer
+        multi_core_score:
+          type: integer
+        compute_time_ms:
+          type: integer
+        nvme_read_speed:
+          type: string
+        nvme_write_speed:
+          type: string
+        rating:
+          type: string
+    TunnelResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        tunnel:
+          $ref: '#/components/schemas/Tunnel'
+    Tunnel:
+      type: object
+      properties:
+        host:
+          type: string
+        port:
+          type: integer
+        command:
+          type: string
+        termux_command:
+          type: string
+        status:
+          type: string
+        encryption:
+          type: string

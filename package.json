@@ -3,11 +3,20 @@
   "version": "1.0.0",
   "description": "Real VPS hosting platform with Discord bot hosting, interactive terminal, and process manager",
   "main": "server.js",
+  "type": "module",
   "scripts": {
-    "build": "node -e \"console.log('Build successful')\"",
-    "lint": "node -e \"console.log('Lint clean')\"",
+    "build": "tsc --noEmit",
+    "lint": "eslint . --ext .js,.ts",
+    "lint:fix": "eslint . --ext .js,.ts --fix",
+    "format": "prettier --write \"**/*.{js,ts,json,md,html,css}\"",
+    "format:check": "prettier --check \"**/*.{js,ts,json,md,html,css}\"",
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node --watch server.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "db:reset": "node scripts/reset-db.js",
+    "db:seed": "node scripts/seed-db.js"
   },
   "keywords": [
     "vps",
@@ -20,10 +29,33 @@
   "dependencies": {
     "@google/genai": "^2.22.0",
     "axios": "^1.20.0",
+    "cors": "^2.8.5",
     "discord.js": "^14.27.0",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "express-rate-limit": "^7.4.0",
+    "helmet": "^8.0.0",
     "multer": "^2.3.0",
-    "ws": "^8.21.3"
+    "pino": "^9.3.0",
+    "pino-pretty": "^11.2.0",
+    "swagger-ui-express": "^5.0.1",
+    "ws": "^8.21.3",
+    "yamljs": "^0.3.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/multer": "^1.4.11",
+    "@types/node": "^22.5.0",
+    "@types/swagger-ui-express": "^4.1.8",
+    "@types/ws": "^8.5.12",
+    "@types/yamljs": "^0.2.34",
+    "@vitest/coverage-v8": "^2.1.0",
+    "eslint": "^9.10.0",
+    "globals": "^15.9.0",
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
   }
 }
