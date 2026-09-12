@@ -1,6 +1,6 @@
 {
   "name": "Cloud VPS",
-  "description": "High-performance Keyforge cyber-glass Cloud VPS platform featuring clean-slate workspaces, instant file creation, custom domains with TLS 1.3, and 24/7 background process execution.",
+  "description": "Cloud VPS hosting platform featuring custom VPS creation, free TLS 1.3 domains, 24/7 Discord bot & selfbot user token hosting with workspace files, and a cyber-glass interface.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
