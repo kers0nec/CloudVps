@@ -5,9 +5,11 @@ const os = require('os');
 const crypto = require('crypto');
 const child_process = require('child_process');
 const multer = require('multer');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 const BASE_DIR = __dirname;
 const INSTANCES_DIR = path.join(BASE_DIR, 'vps_instances');
@@ -16,22 +18,52 @@ const DATA_DIR = path.join(BASE_DIR, 'data');
 if (!fs.existsSync(INSTANCES_DIR)) fs.mkdirSync(INSTANCES_DIR, { recursive: true });
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
-// Middleware
+// Security middleware
+app.use(helmet({
+  contentSecurityPolicy: false, // Allow inline scripts for dashboard
+  crossOriginEmbedderPolicy: false
+}));
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 500, // limit each IP to 500 requests per windowMs
+  message: { success: false, error: 'Too many requests, please try again later' }
+});
+app.use('/api/', limiter);
+
+// Stricter rate limit for auth endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: { success: false, error: 'Too many login attempts, please try again later' }
+});
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Multer for file uploads
 const upload = multer({
- storage: multer.memoryStorage(),
- limits: { fileSize: 100 * 1024 * 1024 } // 100MB
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB
+  fileFilter: (req, file, cb) => {
+    // Allow common file types
+    const allowedTypes = ['.py', '.js', '.json', '.txt', '.html', '.css', '.md', '.env', '.zip', '.luau', '.lua', '.sh'];
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowedTypes.includes(ext) || file.mimetype.startsWith('text/') || file.mimetype === 'application/zip') {
+      cb(null, true);
+    } else {
+      cb(new Error('File type not allowed'), false);
+    }
+  }
 });
 
 // Plans Catalog
 const PLANS = {
- starter: { cpu: '1.0 Core', memory: '1GB RAM', storage: '20GB NVMe', price: 'FREE', tier: 'Free Community' },
- standard: { cpu: '2.0 Cores', memory: '2GB RAM', storage: '40GB NVMe', price: 'FREE', tier: 'Free Bot Host' },
- performance: { cpu: '4.0 Cores', memory: '4GB RAM', storage: '80GB NVMe', price: 'FREE', tier: 'Free High Performance' },
- ultra: { cpu: '8.0 Cores', memory: '8GB RAM', storage: '160GB NVMe', price: 'FREE', tier: 'Free Ultra Dedicated' },
+  starter: { cpu: '1.0 Core', memory: '1GB RAM', storage: '20GB NVMe', price: 'FREE', tier: 'Free Community' },
+  standard: { cpu: '2.0 Cores', memory: '2GB RAM', storage: '40GB NVMe', price: 'FREE', tier: 'Free Bot Host' },
+  performance: { cpu: '4.0 Cores', memory: '4GB RAM', storage: '80GB NVMe', price: 'FREE', tier: 'Free High Performance' },
+  ultra: { cpu: '8.0 Cores', memory: '8GB RAM', storage: '160GB NVMe', price: 'FREE', tier: 'Free Ultra Dedicated' },
 };
 
 // In-Memory Database with JSON Persistence & Atomic Flushes
@@ -39,254 +71,298 @@ const DB_FILE = path.join(DATA_DIR, 'cloudvps_db.json');
 const DB_BACKUP_FILE = path.join(DATA_DIR, 'cloudvps_db.backup.json');
 
 let db = {
- users: {},
- vps: {},
- bots: {},
- services: {}
+  users: {},
+  vps: {},
+  bots: {},
+  services: {}
 };
 
-function hashPassword(password, salt = 'cvps_default_salt') {
- try {
- return crypto.scryptSync(password, salt, 32).toString('hex');
- } catch (e) {
- return crypto.createHash('sha256').update(password + salt).digest('hex');
- }
+const DB_LOCK = Promise.resolve();
+
+function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto.scryptSync(password, salt, 32).toString('hex');
+  return { salt, hash };
 }
 
-function verifyPassword(user, password) {
- if (!user || !user.password_hash) return false;
- if (user.salt) {
- const computed = hashPassword(password, user.salt);
- return computed === user.password_hash;
- }
- // Legacy SHA-256 fallback + automatic upgrade
- const legacy = crypto.createHash('sha256').update(password + '_cvps_salt').digest('hex');
- if (legacy === user.password_hash) {
- user.salt = crypto.randomBytes(16).toString('hex');
- user.password_hash = hashPassword(password, user.salt);
- saveDb();
- return true;
- }
- return false;
+function verifyPassword(password, salt, hash) {
+  const computed = crypto.scryptSync(password, salt, 32).toString('hex');
+  return computed === hash;
 }
 
-function loadDb() {
- let loaded = false;
- try {
- if (fs.existsSync(DB_FILE)) {
- const raw = fs.readFileSync(DB_FILE, 'utf8');
- if (raw.trim()) {
- const data = JSON.parse(raw);
- db = { ...db, ...data };
- loaded = true;
- }
- }
- } catch (err) {
- console.warn('[CloudVPS DB] Could not read primary db file, attempting backup recovery:', err.message);
- }
-
- if (!loaded && fs.existsSync(DB_BACKUP_FILE)) {
- try {
- const bkpRaw = fs.readFileSync(DB_BACKUP_FILE, 'utf8');
- if (bkpRaw.trim()) {
- const bkpData = JSON.parse(bkpRaw);
- db = { ...db, ...bkpData };
- console.log('[CloudVPS DB] Restored database state from backup snapshot.');
- }
- } catch (e) {
- console.warn('[CloudVPS DB] Backup recovery failed:', e.message);
- }
- }
-
- // Ensure default demo user exists
- const defaultUserId = 'usr_free_user';
- if (!db.users[defaultUserId]) {
- const salt = 'cvps_default_salt';
- db.users[defaultUserId] = {
- id: defaultUserId,
- username: 'demo_user',
- salt,
- password_hash: hashPassword('demo123', salt),
- api_key: 'cvps_live_free_key_777',
- created_at: new Date().toISOString()
- };
- }
-
- // Ensure brittainjaden347 primary user exists
- const primaryUserId = 'usr_brittainjaden347';
- let primaryUser = Object.values(db.users).find(u => u.username.toLowerCase() === 'brittainjaden347');
- if (!primaryUser) {
- const salt = 'cvps_salt_bj347';
- primaryUser = {
- id: primaryUserId,
- username: 'brittainjaden347',
- salt,
- password_hash: hashPassword('password123', salt),
- api_key: 'cvps_live_bj347_master_key',
- created_at: new Date().toISOString()
- };
- db.users[primaryUserId] = primaryUser;
- }
-
- // Ensure default VPS exists
- const defaultVpsId = 'vps-free-01';
- if (!db.vps[defaultVpsId]) {
- db.vps[defaultVpsId] = {
- id: defaultVpsId,
- user_id: primaryUser ? primaryUser.id : defaultUserId,
- name: 'Cloud-VPS-01',
- plan: 'ultra',
- status: 'running',
- cpu: '8.0 Cores',
- memory: '8GB RAM',
- storage: '160GB NVMe',
- ip: '172.20.0.12',
- container_id: 'c-free-01',
- engine: 'native_sandbox',
- created_at: new Date().toISOString()
- };
- } else if (!db.vps[defaultVpsId].user_id) {
- db.vps[defaultVpsId].user_id = primaryUser ? primaryUser.id : defaultUserId;
- }
-
- // Ensure workspace directory & starter files for default VPS
- initVpsWorkspace(defaultVpsId);
-
- // Ensure bot supervisor state
- if (!db.bots[defaultVpsId]) {
- db.bots[defaultVpsId] = {
- status: 'running',
- running: true,
- pid: 4102,
- filename: 'bot.py',
- runtime: 'python',
- token: '',
- restarts: 0,
- started_at: Date.now() - 360000,
- logs: [
- '[CloudVPS 24/7 Watchdog] Initializing container runtime (python 3.11)...',
- '[CloudVPS 24/7 Watchdog] Container isolated sandbox attached: vps-free-01 (Ubuntu 22.04)',
- '[CloudVPS 24/7 Watchdog] Environment loaded from /root/.env',
- '[CloudVPS 24/7 Watchdog] Process started (PID: 4102) -> entrypoint: bot.py',
- '[CloudVPS 24/7 Supervisor] Bot is online and monitoring Discord events [ONLINE]',
- '[Bot Log] Logged in as CloudBot#2026 (ID: 108923849102)',
- '[Bot Log] Synchronized 3 slash commands across 14 guilds.',
- '[CloudVPS Watchdog] Heartbeat ping OK - CPU: 0.8% | RAM: 48MB | Ping: 12ms'
- ]
- };
- }
-
- saveDb();
+function validateUsername(username) {
+  if (!username || !username.trim()) return 'Username is required';
+  username = username.trim();
+  if (username.length < 3) return 'Username must be at least 3 characters';
+  if (username.length > 32) return 'Username must be at most 32 characters';
+  if (!/^[a-zA-Z0-9_-]+$/.test(username)) return 'Username can only contain letters, numbers, underscore, and hyphen';
+  return null;
 }
 
-function saveDb() {
- try {
- const payload = JSON.stringify(db, null, 2);
- const tmpFile = `${DB_FILE}.tmp.${Date.now()}`;
- fs.writeFileSync(tmpFile, payload, 'utf8');
- fs.renameSync(tmpFile, DB_FILE);
- fs.writeFileSync(DB_BACKUP_FILE, payload, 'utf8');
- } catch (err) {
- console.error('[CloudVPS DB Save Error]:', err.message);
- }
+function validatePassword(password) {
+  if (!password) return 'Password is required';
+  if (password.length < 8) return 'Password must be at least 8 characters';
+  if (password.length > 128) return 'Password must be at most 128 characters';
+  return null;
+}
+
+function validatePlan(plan) {
+  return plan in PLANS;
+}
+
+function sanitizePath(userPath, baseDir) {
+  try {
+    const resolvedBase = path.resolve(baseDir);
+    const target = path.resolve(baseDir, userPath);
+    if (!target.startsWith(resolvedBase)) return null;
+    return target;
+  } catch (e) {
+    return null;
+  }
+}
+
+function validateVpsId(vpsId) {
+  return /^vps-[a-f0-9]{8}$/.test(vpsId);
+}
+
+function validateUserId(userId) {
+  return /^usr_[a-f0-9]{12}$/.test(userId);
+}
+
+function validateApiKey(apiKey) {
+  return /^cvps_[a-f0-9]{32}$/.test(apiKey);
+}
+
+async function loadDb() {
+  let loaded = false;
+  try {
+    if (fs.existsSync(DB_FILE)) {
+      const raw = fs.readFileSync(DB_FILE, 'utf8');
+      if (raw.trim()) {
+        const data = JSON.parse(raw);
+        db = { ...db, ...data };
+        loaded = true;
+        console.log('[CloudVPS DB] Database loaded successfully');
+      }
+    }
+  } catch (err) {
+    console.warn('[CloudVPS DB] Could not read primary db file, attempting backup recovery:', err.message);
+  }
+
+  if (!loaded && fs.existsSync(DB_BACKUP_FILE)) {
+    try {
+      const bkpRaw = fs.readFileSync(DB_BACKUP_FILE, 'utf8');
+      if (bkpRaw.trim()) {
+        const bkpData = JSON.parse(bkpRaw);
+        db = { ...db, ...bkpData };
+        console.log('[CloudVPS DB] Restored database state from backup snapshot.');
+      }
+    } catch (e) {
+      console.warn('[CloudVPS DB] Backup recovery failed:', e.message);
+    }
+  }
+
+  // Ensure default demo user exists
+  const defaultUserId = 'usr_free_user';
+  if (!db.users[defaultUserId]) {
+    const { salt, hash } = hashPassword('demo123');
+    db.users[defaultUserId] = {
+      id: defaultUserId,
+      username: 'demo_user',
+      salt,
+      password_hash: hash,
+      api_key: 'cvps_live_free_key_777',
+      created_at: new Date().toISOString()
+    };
+  }
+
+  // Ensure primary user exists
+  const primaryUserId = 'usr_brittainjaden347';
+  let primaryUser = Object.values(db.users).find(u => u.username.toLowerCase() === 'brittainjaden347');
+  if (!primaryUser) {
+    const { salt, hash } = hashPassword('password123');
+    primaryUser = {
+      id: primaryUserId,
+      username: 'brittainjaden347',
+      salt,
+      password_hash: hash,
+      api_key: 'cvps_live_bj347_master_key',
+      created_at: new Date().toISOString()
+    };
+    db.users[primaryUserId] = primaryUser;
+  }
+
+  // Ensure default VPS exists
+  const defaultVpsId = 'vps-free-01';
+  if (!db.vps[defaultVpsId]) {
+    db.vps[defaultVpsId] = {
+      id: defaultVpsId,
+      user_id: primaryUser ? primaryUser.id : defaultUserId,
+      name: 'Cloud-VPS-01',
+      plan: 'ultra',
+      status: 'running',
+      cpu: '8.0 Cores',
+      memory: '8GB RAM',
+      storage: '160GB NVMe',
+      ip: '172.20.0.12',
+      container_id: 'c-free-01',
+      engine: 'native_sandbox',
+      created_at: new Date().toISOString()
+    };
+  } else if (!db.vps[defaultVpsId].user_id) {
+    db.vps[defaultVpsId].user_id = primaryUser ? primaryUser.id : defaultUserId;
+  }
+
+  // Ensure workspace directory & starter files for default VPS
+  initVpsWorkspace(defaultVpsId);
+
+  // Ensure bot supervisor state
+  if (!db.bots[defaultVpsId]) {
+    db.bots[defaultVpsId] = {
+      status: 'running',
+      running: true,
+      pid: 4102,
+      filename: 'bot.py',
+      runtime: 'python',
+      token: '',
+      restarts: 0,
+      started_at: Date.now() - 360000,
+      logs: [
+        '[CloudVPS 24/7 Watchdog] Initializing container runtime (python 3.11)...',
+        '[CloudVPS 24/7 Watchdog] Container isolated sandbox attached: vps-free-01 (Ubuntu 22.04)',
+        '[CloudVPS 24/7 Watchdog] Environment loaded from /root/.env',
+        '[CloudVPS 24/7 Watchdog] Process started (PID: 4102) -> entrypoint: bot.py',
+        '[CloudVPS 24/7 Supervisor] Bot is online and monitoring Discord events [ONLINE]',
+        '[Bot Log] Logged in as CloudBot#2026 (ID: 108923849102)',
+        '[Bot Log] Synchronized 3 slash commands across 14 guilds.',
+        '[CloudVPS Watchdog] Heartbeat ping OK - CPU: 0.8% | RAM: 48MB | Ping: 12ms'
+      ]
+    };
+  }
+
+  await saveDb();
+}
+
+async function saveDb() {
+  try {
+    const payload = JSON.stringify(db, null, 2);
+    const tmpFile = `${DB_FILE}.tmp.${Date.now()}`;
+    fs.writeFileSync(tmpFile, payload, 'utf8');
+    fs.renameSync(tmpFile, DB_FILE);
+    fs.writeFileSync(DB_BACKUP_FILE, payload, 'utf8');
+  } catch (err) {
+    console.error('[CloudVPS DB Save Error]:', err.message);
+  }
 }
 
 function initVpsWorkspace(vpsId) {
- const wsDir = path.join(INSTANCES_DIR, vpsId);
- if (!fs.existsSync(wsDir)) {
-  fs.mkdirSync(wsDir, { recursive: true });
- }
- const pkgJsonPath = path.join(wsDir, 'package.json');
- if (!fs.existsSync(pkgJsonPath)) {
-  try {
-   fs.writeFileSync(pkgJsonPath, JSON.stringify({
-    name: `vps-${String(vpsId).toLowerCase()}`,
-    version: '1.0.0',
-    description: 'VPS Workspace Node Environment',
-    main: 'index.js',
-    dependencies: {}
-   }, null, 2), 'utf8');
-  } catch (e) {}
- }
+  const wsDir = path.join(INSTANCES_DIR, vpsId);
+  if (!fs.existsSync(wsDir)) {
+    fs.mkdirSync(wsDir, { recursive: true });
+  }
+  const pkgJsonPath = path.join(wsDir, 'package.json');
+  if (!fs.existsSync(pkgJsonPath)) {
+    try {
+      fs.writeFileSync(pkgJsonPath, JSON.stringify({
+        name: `vps-${String(vpsId).toLowerCase()}`,
+        version: '1.0.0',
+        description: 'VPS Workspace Node Environment',
+        main: 'index.js',
+        dependencies: {}
+      }, null, 2), 'utf8');
+    } catch (e) {}
+  }
 }
 
 // Helper: Get user from request with persistent session recovery
 function getUserFromRequest(req) {
- let authHeader = req.headers['authorization'];
- let bearerKey = '';
- if (authHeader && authHeader.startsWith('Bearer ')) {
- bearerKey = authHeader.slice(7).trim();
- }
+  let authHeader = req.headers['authorization'];
+  let bearerKey = '';
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    bearerKey = authHeader.slice(7).trim();
+  }
 
- const key = req.headers['x-api-key'] || bearerKey || req.query.api_key || req.body?.api_key;
- if (key) {
- const user = Object.values(db.users).find(u => u.api_key === key || u.id === key);
- if (user) return user;
- }
+  const key = req.headers['x-api-key'] || bearerKey || req.query.api_key || req.body?.api_key;
+  if (key && validateApiKey(key)) {
+    const user = Object.values(db.users).find(u => u.api_key === key || u.id === key);
+    if (user) return user;
+  }
 
- // Check custom username headers or query
- const usernameHeader = req.headers['x-cloudvps-user'] || req.headers['x-username'] || req.query.username;
- if (usernameHeader) {
- const user = Object.values(db.users).find(u => u.username.toLowerCase() === String(usernameHeader).toLowerCase());
- if (user) return user;
- }
+  // Check custom username headers or query
+  const usernameHeader = req.headers['x-cloudvps-user'] || req.headers['x-username'] || req.query.username;
+  if (usernameHeader) {
+    const user = Object.values(db.users).find(u => u.username.toLowerCase() === String(usernameHeader).toLowerCase());
+    if (user) return user;
+  }
 
- // Check cookies
- const cookieHeader = req.headers.cookie;
- if (cookieHeader) {
- const cookies = Object.fromEntries(
- cookieHeader.split(';').map(c => {
- const [k, ...v] = c.trim().split('=');
- return [k, v.join('=')];
- })
- );
- if (cookies.api_key) {
- const user = Object.values(db.users).find(u => u.api_key === cookies.api_key);
- if (user) return user;
- }
- if (cookies.username) {
- const user = Object.values(db.users).find(u => u.username.toLowerCase() === cookies.username.toLowerCase());
- if (user) return user;
- }
- }
+  // Check cookies
+  const cookieHeader = req.headers.cookie;
+  if (cookieHeader) {
+    const cookies = Object.fromEntries(
+      cookieHeader.split(';').map(c => {
+        const [k, ...v] = c.trim().split('=');
+        return [k, v.join('=')];
+      })
+    );
+    if (cookies.api_key && validateApiKey(cookies.api_key)) {
+      const user = Object.values(db.users).find(u => u.api_key === cookies.api_key);
+      if (user) return user;
+    }
+    if (cookies.username) {
+      const user = Object.values(db.users).find(u => u.username.toLowerCase() === cookies.username.toLowerCase());
+      if (user) return user;
+    }
+  }
 
- // Fallback persistent account: ensure user is never locked out in AI Studio iframe
- const defaultUser = Object.values(db.users).find(u => u.username.toLowerCase() === 'brittainjaden347') ||
- Object.values(db.users).find(u => u.username === 'demo_user') ||
- Object.values(db.users)[0];
- return defaultUser || null;
+  // Fallback persistent account: ensure user is never locked out in AI Studio iframe
+  const defaultUser = Object.values(db.users).find(u => u.username.toLowerCase() === 'brittainjaden347') ||
+  Object.values(db.users).find(u => u.username === 'demo_user') ||
+  Object.values(db.users)[0];
+  return defaultUser || null;
 }
 
 // Authentication Middleware
 function authRequired(req, res, next) {
- const user = getUserFromRequest(req);
- if (!user) {
- return res.status(401).json({ success: false, error: 'Authentication required. Please log in to your account.' });
- }
- req.user = user;
- next();
+  const user = getUserFromRequest(req);
+  if (!user) {
+    return res.status(401).json({ success: false, error: 'Authentication required. Please log in to your account.' });
+  }
+  req.user = user;
+  next();
 }
 
 // VPS Ownership Middleware: Ensures user only accesses their own VPS
 function vpsOwnerRequired(req, res, next) {
- const vpsId = req.params.vps_id;
- const vps = db.vps[vpsId];
- if (!vps) {
- return res.status(404).json({ success: false, error: 'VPS instance not found' });
- }
- if (vps.user_id !== req.user.id) {
- // If instance is unassigned or belongs to demo_user and active user is brittainjaden347 or has no VPS, grant access
- const activeUserVpsCount = Object.values(db.vps).filter(v => v.user_id === req.user.id).length;
- if (activeUserVpsCount === 0 || req.user.username.toLowerCase() === 'brittainjaden347' || vps.user_id === 'usr_free_user') {
- vps.user_id = req.user.id;
- saveDb();
- } else {
- return res.status(403).json({ success: false, error: 'Access denied: You do not own this VPS instance' });
- }
- }
- req.vps = vps;
- next();
+  const vpsId = req.params.vps_id;
+  if (!validateVpsId(vpsId)) {
+    return res.status(400).json({ success: false, error: 'Invalid VPS ID' });
+  }
+  const vps = db.vps[vpsId];
+  if (!vps) {
+    return res.status(404).json({ success: false, error: 'VPS instance not found' });
+  }
+  if (vps.user_id !== req.user.id) {
+    // If instance is unassigned or belongs to demo_user and active user is brittainjaden347 or has no VPS, grant access
+    const activeUserVpsCount = Object.values(db.vps).filter(v => v.user_id === req.user.id).length;
+    if (activeUserVpsCount === 0 || req.user.username.toLowerCase() === 'brittainjaden347' || vps.user_id === 'usr_free_user') {
+      vps.user_id = req.user.id;
+      saveDb();
+    } else {
+      return res.status(403).json({ success: false, error: 'Access denied: You do not own this VPS instance' });
+    }
+  }
+  req.vps = vps;
+  next();
 }
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('[CloudVPS Error]:', err);
+  if (err instanceof multer.MulterError) {
+    return res.status(400).json({ success: false, error: 'File upload error: ' + err.message });
+  }
+  res.status(500).json({ success: false, error: 'Internal server error' });
+});
 
 // ---------------------- API ROUTES ----------------------
 
@@ -340,84 +416,85 @@ app.get('/api/session', (req, res) => {
 });
 
 // Register
-app.post('/api/register', (req, res) => {
- const { username, password } = req.body || {};
- if (!username || !password) {
- return res.status(400).json({ error: 'Username and password required' });
- }
- if (username.length < 3) {
- return res.status(400).json({ error: 'Username must be at least 3 characters' });
- }
- if (password.length < 6) {
- return res.status(400).json({ error: 'Password must be at least 6 characters' });
- }
+app.post('/api/register', authLimiter, async (req, res) => {
+  const { username, password } = req.body || {};
+  
+  const usernameError = validateUsername(username);
+  if (usernameError) {
+    return res.status(400).json({ error: usernameError });
+  }
+  
+  const passwordError = validatePassword(password);
+  if (passwordError) {
+    return res.status(400).json({ error: passwordError });
+  }
 
- const existing = Object.values(db.users).find(u => u.username.toLowerCase() === username.toLowerCase());
- if (existing) {
- return res.status(400).json({ error: 'Username already exists' });
- }
+  const existing = Object.values(db.users).find(u => u.username.toLowerCase() === username.trim().toLowerCase());
+  if (existing) {
+    return res.status(400).json({ error: 'Username already exists' });
+  }
 
- const userId = 'usr_' + crypto.randomBytes(6).toString('hex');
- const apiKey = 'cvps_' + crypto.randomBytes(16).toString('hex');
- const salt = crypto.randomBytes(16).toString('hex');
+  const userId = 'usr_' + crypto.randomBytes(6).toString('hex');
+  const apiKey = 'cvps_' + crypto.randomBytes(16).toString('hex');
+  const { salt, hash } = hashPassword(password);
 
- const newUser = {
- id: userId,
- username,
- salt,
- password_hash: hashPassword(password, salt),
- api_key: apiKey,
- created_at: new Date().toISOString()
- };
+  const newUser = {
+    id: userId,
+    username: username.trim(),
+    salt,
+    password_hash: hash,
+    api_key: apiKey,
+    created_at: new Date().toISOString()
+  };
 
- db.users[userId] = newUser;
+  db.users[userId] = newUser;
 
- // Auto-provision an isolated starter VPS for this new user
- const vpsId = 'vps-' + crypto.randomBytes(4).toString('hex');
- const userVps = {
- id: vpsId,
- user_id: userId,
- name: `${username}-VPS-01`,
- plan: 'performance',
- status: 'running',
- cpu: '4.0 Cores',
- memory: '4GB RAM',
- storage: '80GB NVMe',
- ip: `172.20.0.${Math.floor(Math.random() * 240) + 10}`,
- container_id: 'c-' + vpsId,
- engine: 'native_sandbox',
- hostname: `vps-${vpsId}`,
- domain: `cloudvps.app/${vpsId}`,
- site_url: `/sites/${vpsId}/`,
- created_at: new Date().toISOString()
- };
- db.vps[vpsId] = userVps;
- initVpsWorkspace(vpsId);
+  // Auto-provision an isolated starter VPS for this new user
+  const vpsId = 'vps-' + crypto.randomBytes(4).toString('hex');
+  const userVps = {
+    id: vpsId,
+    user_id: userId,
+    name: `${username.trim()}-VPS-01`,
+    plan: 'performance',
+    status: 'running',
+    cpu: '4.0 Cores',
+    memory: '4GB RAM',
+    storage: '80GB NVMe',
+    ip: `172.20.0.${Math.floor(Math.random() * 240) + 10}`,
+    container_id: 'c-' + vpsId,
+    engine: 'native_sandbox',
+    hostname: `vps-${vpsId}`,
+    domain: `cloudvps.app/${vpsId}`,
+    site_url: `/sites/${vpsId}/`,
+    created_at: new Date().toISOString()
+  };
+  db.vps[vpsId] = userVps;
+  initVpsWorkspace(vpsId);
 
- db.bots[vpsId] = {
- status: 'stopped',
- running: false,
- pid: null,
- filename: 'bot.py',
- runtime: 'python',
- token: '',
- restarts: 0,
- started_at: null,
- logs: [
- `[CloudVPS Watchdog] Provisioned isolated container sandbox for ${username}...`,
- `[CloudVPS Supervisor] Workspace ready at /root/workspace/`
- ]
- };
+  db.bots[vpsId] = {
+    status: 'stopped',
+    running: false,
+    pid: null,
+    filename: 'bot.py',
+    runtime: 'python',
+    token: '',
+    restarts: 0,
+    started_at: null,
+    logs: [
+      `[CloudVPS Watchdog] Provisioned isolated container sandbox for ${username.trim()}...`,
+      `[CloudVPS Supervisor] Workspace ready at /root/workspace/`
+    ]
+  };
 
- saveDb();
+  await saveDb();
 
- res.cookie('api_key', apiKey, { maxAge: 30 * 24 * 3600 * 1000, httpOnly: false, sameSite: 'Lax' });
- res.json({
- success: true,
- api_key: apiKey,
- user_id: userId,
- username
- });
+  res.cookie('api_key', apiKey, { maxAge: 30 * 24 * 3600 * 1000, httpOnly: true, sameSite: 'Lax', secure: process.env.NODE_ENV === 'production' });
+  res.json({
+    success: true,
+    api_key: apiKey,
+    user_id: userId,
+    username: username.trim()
+  });
 });
 
 // List all registered accounts for quick switching & account recovery
@@ -443,76 +520,73 @@ app.post('/api/users/switch', (req, res) => {
 });
 
 // Login (with auto-provision fallback so users NEVER get locked out)
-app.post('/api/login', (req, res) => {
- const { username, password } = req.body || {};
- if (!username) {
- return res.status(400).json({ error: 'Username is required' });
- }
+app.post('/api/login', authLimiter, async (req, res) => {
+  const { username, password } = req.body || {};
+  if (!username) {
+    return res.status(400).json({ error: 'Username is required' });
+  }
 
- const cleanUsername = username.trim().toLowerCase();
- let user = Object.values(db.users).find(
- u => u.username.toLowerCase() === cleanUsername
- );
+  const cleanUsername = username.trim().toLowerCase();
+  let user = Object.values(db.users).find(
+    u => u.username.toLowerCase() === cleanUsername
+  );
 
- // If user already exists:
- if (user) {
- if (password && user.password_hash) {
- // If password provided, verify it. If mismatch but in local development/AI Studio, accept password update
- const valid = verifyPassword(user, password);
- if (!valid && password.length >= 6) {
- // Automatically update password hash if entered
- user.salt = crypto.randomBytes(16).toString('hex');
- user.password_hash = hashPassword(password, user.salt);
- saveDb();
- }
- }
- } else {
- // Auto-create user on the fly so they can log in seamlessly
- const userId = 'usr_' + crypto.randomBytes(6).toString('hex');
- const apiKey = 'cvps_' + crypto.randomBytes(16).toString('hex');
- const salt = crypto.randomBytes(16).toString('hex');
+  // If user already exists:
+  if (user) {
+    if (password && user.password_hash && user.salt) {
+      // If password provided, verify it
+      const valid = verifyPassword(password, user.salt, user.password_hash);
+      if (!valid) {
+        return res.status(401).json({ error: 'Invalid username or password' });
+      }
+    }
+  } else {
+    // Auto-create user on the fly so they can log in seamlessly
+    const userId = 'usr_' + crypto.randomBytes(6).toString('hex');
+    const apiKey = 'cvps_' + crypto.randomBytes(16).toString('hex');
+    const { salt, hash } = hashPassword(password || 'password123');
 
- user = {
- id: userId,
- username: username.trim(),
- salt,
- password_hash: hashPassword(password || 'password123', salt),
- api_key: apiKey,
- created_at: new Date().toISOString()
- };
+    user = {
+      id: userId,
+      username: username.trim(),
+      salt,
+      password_hash: hash,
+      api_key: apiKey,
+      created_at: new Date().toISOString()
+    };
 
- db.users[userId] = user;
+    db.users[userId] = user;
 
- // Create VPS for this new user
- const vpsId = 'vps-' + crypto.randomBytes(4).toString('hex');
- db.vps[vpsId] = {
- id: vpsId,
- user_id: userId,
- name: `${username.trim()}-VPS`,
- plan: 'ultra',
- status: 'running',
- cpu: '8.0 Cores',
- memory: '8GB RAM',
- storage: '160GB NVMe',
- ip: `172.20.0.${Math.floor(Math.random() * 240) + 10}`,
- container_id: 'c-' + vpsId,
- engine: 'native_sandbox',
- domain: `${username.trim().toLowerCase()}.cloudvps.site`,
- primary_domain: `${username.trim().toLowerCase()}.cloudvps.site`,
- site_url: `/sites/${vpsId}/`,
- created_at: new Date().toISOString()
- };
- initVpsWorkspace(vpsId);
- saveDb();
- }
+    // Create VPS for this new user
+    const vpsId = 'vps-' + crypto.randomBytes(4).toString('hex');
+    db.vps[vpsId] = {
+      id: vpsId,
+      user_id: userId,
+      name: `${username.trim()}-VPS`,
+      plan: 'ultra',
+      status: 'running',
+      cpu: '8.0 Cores',
+      memory: '8GB RAM',
+      storage: '160GB NVMe',
+      ip: `172.20.0.${Math.floor(Math.random() * 240) + 10}`,
+      container_id: 'c-' + vpsId,
+      engine: 'native_sandbox',
+      domain: `${username.trim().toLowerCase()}.cloudvps.site`,
+      primary_domain: `${username.trim().toLowerCase()}.cloudvps.site`,
+      site_url: `/sites/${vpsId}/`,
+      created_at: new Date().toISOString()
+    };
+    initVpsWorkspace(vpsId);
+    await saveDb();
+  }
 
- res.cookie('api_key', user.api_key, { maxAge: 30 * 24 * 3600 * 1000, httpOnly: false, sameSite: 'Lax' });
- res.json({
- success: true,
- api_key: user.api_key,
- user_id: user.id,
- username: user.username
- });
+  res.cookie('api_key', user.api_key, { maxAge: 30 * 24 * 3600 * 1000, httpOnly: true, sameSite: 'Lax', secure: process.env.NODE_ENV === 'production' });
+  res.json({
+    success: true,
+    api_key: user.api_key,
+    user_id: user.id,
+    username: user.username
+  });
 });
 
 // Logout
@@ -1629,69 +1703,75 @@ app.get('/api/vps/:vps_id/packages/list', authRequired, vpsOwnerRequired, (req, 
 
 // Install Bot / VPS Packages (Real pip & npm execution)
 const handlePackageInstall = (req, res) => {
- const vpsId = req.params.vps_id;
- const { packages = '', package: singlePkg = '', runtime = 'python' } = req.body || {};
- const wsDir = path.join(INSTANCES_DIR, vpsId);
- initVpsWorkspace(vpsId);
+  const vpsId = req.params.vps_id;
+  const { packages = '', package: singlePkg = '', runtime = 'python' } = req.body || {};
+  const wsDir = path.join(INSTANCES_DIR, vpsId);
+  initVpsWorkspace(vpsId);
 
- const pkgs = (packages || singlePkg || '').trim();
- if (!pkgs) {
- return res.status(400).json({ error: 'No packages specified' });
- }
+  const pkgs = (packages || singlePkg || '').trim();
+  if (!pkgs) {
+    return res.status(400).json({ error: 'No packages specified' });
+  }
 
- appendBotLog(vpsId, `[${new Date().toLocaleTimeString()}] [Package Downloader] Downloading and installing: ${pkgs}...`);
+  // Validate package names - only allow alphanumeric, hyphens, underscores, dots
+  const pkgList = pkgs.split(/\s+/).filter(p => /^[a-zA-Z0-9_.-]+$/.test(p));
+  if (pkgList.length === 0) {
+    return res.status(400).json({ error: 'Invalid package name(s)' });
+  }
 
- const isNode = runtime === 'node' || (db.bots[vpsId]?.runtime === 'node');
- 
- if (isNode) {
- const installCmd = `npm install ${pkgs} --save`;
- child_process.exec(installCmd, { cwd: wsDir, timeout: 90000 }, (err, stdout, stderr) => {
- const output = stdout || stderr || '';
- if (output) appendBotLog(vpsId, output);
+  appendBotLog(vpsId, `[${new Date().toLocaleTimeString()}] [Package Downloader] Downloading and installing: ${pkgList.join(' ')}...`);
 
- if (err) {
- appendBotLog(vpsId, `[${new Date().toLocaleTimeString()}] [Install Error] ${err.message}`);
- return res.status(500).json({ success: false, error: err.message, output, logs: db.bots[vpsId]?.logs });
- }
+  const isNode = runtime === 'node' || (db.bots[vpsId]?.runtime === 'node');
+  
+  if (isNode) {
+    const installCmd = ['npm', 'install', '--save', ...pkgList];
+    child_process.execFile(installCmd[0], installCmd.slice(1), { cwd: wsDir, timeout: 90000 }, (err, stdout, stderr) => {
+      const output = stdout || stderr || '';
+      if (output) appendBotLog(vpsId, output);
 
- appendBotLog(vpsId, `[${new Date().toLocaleTimeString()}] [Package Downloader] Successfully installed: ${pkgs}`);
- res.json({ success: true, message: `Installed ${pkgs}`, output: output || `+ ${pkgs}@latest installed in ${vpsId}`, logs: db.bots[vpsId]?.logs });
- });
- } else {
- // Python package handling
- const reqPath = path.join(wsDir, 'requirements.txt');
- try {
- let cur = fs.existsSync(reqPath) ? fs.readFileSync(reqPath, 'utf8') : '';
- const list = pkgs.split(/\s+/);
- list.forEach(p => {
- if (p && !cur.toLowerCase().includes(p.toLowerCase())) cur += `\n${p}`;
- });
- fs.writeFileSync(reqPath, cur.trim() + '\n', 'utf8');
- } catch (e) {}
+      if (err) {
+        appendBotLog(vpsId, `[${new Date().toLocaleTimeString()}] [Install Error] ${err.message}`);
+        return res.status(500).json({ success: false, error: err.message, output, logs: db.bots[vpsId]?.logs });
+      }
 
- let hasPip = false;
- try {
- child_process.execSync('which pip || which pip3', { timeout: 2000 });
- hasPip = true;
- } catch (e) {
- hasPip = false;
- }
+      appendBotLog(vpsId, `[${new Date().toLocaleTimeString()}] [Package Downloader] Successfully installed: ${pkgList.join(' ')}`);
+      res.json({ success: true, message: `Installed ${pkgList.join(' ')}`, output: output || `+ ${pkgList.join(' ')}@latest installed in ${vpsId}`, logs: db.bots[vpsId]?.logs });
+    });
+  } else {
+    // Python package handling
+    const reqPath = path.join(wsDir, 'requirements.txt');
+    try {
+      let cur = fs.existsSync(reqPath) ? fs.readFileSync(reqPath, 'utf8') : '';
+      pkgList.forEach(p => {
+        if (p && !cur.toLowerCase().includes(p.toLowerCase())) cur += `\n${p}`;
+      });
+      fs.writeFileSync(reqPath, cur.trim() + '\n', 'utf8');
+    } catch (e) {}
 
- if (hasPip) {
- const pipBin = child_process.execSync('which pip3 || which pip', { encoding: 'utf8' }).trim();
- child_process.exec(`${pipBin} install --break-system-packages ${pkgs}`, { cwd: wsDir, timeout: 90000 }, (err, stdout, stderr) => {
- const output = stdout || stderr || '';
- if (output) appendBotLog(vpsId, output);
- appendBotLog(vpsId, `[${new Date().toLocaleTimeString()}] [Package Downloader] Successfully installed: ${pkgs}`);
- res.json({ success: true, message: `Installed ${pkgs}`, output: output || `Successfully installed ${pkgs}`, logs: db.bots[vpsId]?.logs });
- });
- } else {
- const virtualOutput = `Requirement satisfied: ${pkgs} (saved to requirements.txt)\nCollecting ${pkgs}...\nDownloading package binaries to /app/applet/vps_instances/${vpsId}...\nInstalling collected packages: ${pkgs}\nSuccessfully installed ${pkgs}`;
- appendBotLog(vpsId, virtualOutput);
- appendBotLog(vpsId, `[${new Date().toLocaleTimeString()}] [Package Downloader] Successfully installed: ${pkgs}`);
- res.json({ success: true, message: `Installed ${pkgs}`, output: virtualOutput, logs: db.bots[vpsId]?.logs });
- }
- }
+    let hasPip = false;
+    try {
+      child_process.execSync('which pip || which pip3', { timeout: 2000 });
+      hasPip = true;
+    } catch (e) {
+      hasPip = false;
+    }
+
+    if (hasPip) {
+      const pipBin = child_process.execSync('which pip3 || which pip', { encoding: 'utf8' }).trim();
+      const pipCmd = [pipBin, 'install', '--break-system-packages', ...pkgList];
+      child_process.execFile(pipCmd[0], pipCmd.slice(1), { cwd: wsDir, timeout: 90000 }, (err, stdout, stderr) => {
+        const output = stdout || stderr || '';
+        if (output) appendBotLog(vpsId, output);
+        appendBotLog(vpsId, `[${new Date().toLocaleTimeString()}] [Package Downloader] Successfully installed: ${pkgList.join(' ')}`);
+        res.json({ success: true, message: `Installed ${pkgList.join(' ')}`, output: output || `Successfully installed ${pkgList.join(' ')}`, logs: db.bots[vpsId]?.logs });
+      });
+    } else {
+      const virtualOutput = `Requirement satisfied: ${pkgList.join(' ')} (saved to requirements.txt)\nCollecting ${pkgList.join(' ')}...\nDownloading package binaries to /app/applet/vps_instances/${vpsId}...\nInstalling collected packages: ${pkgList.join(' ')}\nSuccessfully installed ${pkgList.join(' ')}`;
+      appendBotLog(vpsId, virtualOutput);
+      appendBotLog(vpsId, `[${new Date().toLocaleTimeString()}] [Package Downloader] Successfully installed: ${pkgList.join(' ')}`);
+      res.json({ success: true, message: `Installed ${pkgList.join(' ')}`, output: virtualOutput, logs: db.bots[vpsId]?.logs });
+    }
+  }
 };
 
 app.post('/api/vps/:vps_id/packages/install', authRequired, vpsOwnerRequired, handlePackageInstall);
@@ -1699,36 +1779,36 @@ app.post('/api/vps/:vps_id/bot/packages/install', authRequired, vpsOwnerRequired
 
 // Uninstall Package
 app.post('/api/vps/:vps_id/packages/uninstall', authRequired, vpsOwnerRequired, (req, res) => {
- const vpsId = req.params.vps_id;
- const { package: pkgName, runtime = 'python' } = req.body || {};
- const wsDir = path.join(INSTANCES_DIR, vpsId);
- initVpsWorkspace(vpsId);
+  const vpsId = req.params.vps_id;
+  const { package: pkgName, runtime = 'python' } = req.body || {};
+  const wsDir = path.join(INSTANCES_DIR, vpsId);
+  initVpsWorkspace(vpsId);
 
- if (!pkgName) return res.status(400).json({ error: 'Package name required' });
+  if (!pkgName || !/^[a-zA-Z0-9_.-]+$/.test(pkgName)) return res.status(400).json({ error: 'Invalid package name' });
 
- appendBotLog(vpsId, `[${new Date().toLocaleTimeString()}] [Package Downloader] Uninstalling: ${pkgName}...`);
+  appendBotLog(vpsId, `[${new Date().toLocaleTimeString()}] [Package Downloader] Uninstalling: ${pkgName}...`);
 
- const isNode = runtime === 'node';
- const uninstallCmd = isNode ? `npm uninstall ${pkgName}` : `pip uninstall -y ${pkgName}`;
+  const isNode = runtime === 'node';
+  const uninstallCmd = isNode ? ['npm', 'uninstall', pkgName] : ['pip', 'uninstall', '-y', pkgName];
+  
+  child_process.execFile(uninstallCmd[0], uninstallCmd.slice(1), { cwd: wsDir, timeout: 45000 }, (err, stdout, stderr) => {
+    if (stdout) appendBotLog(vpsId, stdout);
+    if (stderr) appendBotLog(vpsId, stderr);
 
- child_process.exec(uninstallCmd, { cwd: wsDir, timeout: 45000 }, (err, stdout, stderr) => {
- if (stdout) appendBotLog(vpsId, stdout);
- if (stderr) appendBotLog(vpsId, stderr);
+    if (!isNode) {
+      const reqPath = path.join(wsDir, 'requirements.txt');
+      if (fs.existsSync(reqPath)) {
+        try {
+          const lines = fs.readFileSync(reqPath, 'utf8').split('\n');
+          const filtered = lines.filter(l => !l.toLowerCase().includes(pkgName.toLowerCase()));
+          fs.writeFileSync(reqPath, filtered.join('\n').trim() + '\n', 'utf8');
+        } catch (e) {}
+      }
+    }
 
- if (!isNode) {
- const reqPath = path.join(wsDir, 'requirements.txt');
- if (fs.existsSync(reqPath)) {
- try {
- const lines = fs.readFileSync(reqPath, 'utf8').split('\n');
- const filtered = lines.filter(l => !l.toLowerCase().includes(pkgName.toLowerCase()));
- fs.writeFileSync(reqPath, filtered.join('\n').trim() + '\n', 'utf8');
- } catch (e) {}
- }
- }
-
- appendBotLog(vpsId, `[${new Date().toLocaleTimeString()}] [Package Downloader] Removed: ${pkgName}`);
- res.json({ success: true, message: `Uninstalled ${pkgName}` });
- });
+    appendBotLog(vpsId, `[${new Date().toLocaleTimeString()}] [Package Downloader] Removed: ${pkgName}`);
+    res.json({ success: true, message: `Uninstalled ${pkgName}` });
+  });
 });
 
 // ---------------------- PC SOFTWARE & RUNTIMES CENTER ----------------------
@@ -1852,37 +1932,31 @@ RUNNER
  chmod +x "${wsDir}/run_logger.sh"
  echo "Luau Environment Logger Suite ready at ${wsDir}/run_logger.sh [ONLINE]"
  `;
- } else if (bundle === 'system') {
- label = 'System CLI & PC Tools';
- script = `
- echo "=== [PC Center] Verifying System CLI Utilities ==="
- which curl wget git unzip zip jq || true
- echo "System tools ready [ONLINE]"
- `;
- } else if (bundle === 'custom' && custom_cmd) {
- label = `Custom command: ${custom_cmd}`;
- script = `
- cd "${wsDir}"
- ${custom_cmd}
- `;
- } else {
- return res.status(400).json({ error: 'Unknown bundle requested' });
- }
+} else if (bundle === 'system') {
+  label = 'System CLI & PC Tools';
+  script = `
+  echo "=== [PC Center] Verifying System CLI Utilities ==="
+  which curl wget git unzip zip jq || true
+  echo "System tools ready [ONLINE]"
+  `;
+} else {
+  return res.status(400).json({ error: 'Unknown bundle requested' });
+}
 
- appendBotLog(vpsId, `[${new Date().toLocaleTimeString()}] [PC Center] Installing ${label}...`);
+appendBotLog(vpsId, `[${new Date().toLocaleTimeString()}] [PC Center] Installing ${label}...`);
 
- child_process.exec(script, { cwd: wsDir, timeout: 120000 }, (err, stdout, stderr) => {
- if (stdout) appendBotLog(vpsId, stdout);
- if (stderr) appendBotLog(vpsId, stderr);
+child_process.exec(script, { cwd: wsDir, timeout: 120000 }, (err, stdout, stderr) => {
+  if (stdout) appendBotLog(vpsId, stdout);
+  if (stderr) appendBotLog(vpsId, stderr);
 
- if (err) {
- appendBotLog(vpsId, `[${new Date().toLocaleTimeString()}] [PC Center Error] ${err.message}`);
- return res.status(500).json({ success: false, error: err.message, output: (stdout || '') + '\n' + (stderr || '') });
- }
+  if (err) {
+    appendBotLog(vpsId, `[${new Date().toLocaleTimeString()}] [PC Center Error] ${err.message}`);
+    return res.status(500).json({ success: false, error: err.message, output: (stdout || '') + '\n' + (stderr || '') });
+  }
 
- appendBotLog(vpsId, `[${new Date().toLocaleTimeString()}] [PC Center] ${label} finished successfully [ONLINE]`);
- res.json({ success: true, message: `${label} installed successfully!`, output: stdout || 'Done' });
- });
+  appendBotLog(vpsId, `[${new Date().toLocaleTimeString()}] [PC Center] ${label} finished successfully [ONLINE]`);
+  res.json({ success: true, message: `${label} installed successfully!`, output: stdout || 'Done' });
+});
 });
 
 // ---------------------- APPONFLY REMOTE PC CONTROLLER API ----------------------
@@ -1989,24 +2063,24 @@ app.get('/api/vps/:vps_id/pc/processes', (req, res) => {
 });
 
 // PC Terminate Process / Taskkill
-app.post('/api/vps/:vps_id/pc/kill', (req, res) => {
- const { pid } = req.body || {};
- if (!pid) {
- return res.status(400).json({ error: 'Process PID is required' });
- }
+app.post('/api/vps/:vps_id/pc/kill', authRequired, vpsOwnerRequired, (req, res) => {
+  const { pid } = req.body || {};
+  if (!pid || !Number.isInteger(pid) || pid <= 0) {
+    return res.status(400).json({ error: 'Valid Process PID is required' });
+  }
 
- // Guard critical process
- if (pid === process.pid || pid === 1) {
- return res.status(403).json({ error: 'Cannot terminate core system process' });
- }
+  // Guard critical process
+  if (pid === process.pid || pid === 1) {
+    return res.status(403).json({ error: 'Cannot terminate core system process' });
+  }
 
- try {
- process.kill(pid, 'SIGTERM');
- res.json({ success: true, message: `Terminated process PID ${pid}` });
- } catch (err) {
- // Process may not exist or permission error
- res.json({ success: true, message: `Sent termination signal to PID ${pid}` });
- }
+  try {
+    process.kill(pid, 'SIGTERM');
+    res.json({ success: true, message: `Terminated process PID ${pid}` });
+  } catch (err) {
+    // Process may not exist or permission error
+    res.json({ success: true, message: `Sent termination signal to PID ${pid}` });
+  }
 });
 
 // PC Remote Clipboard Get & Set
@@ -2044,57 +2118,73 @@ app.post('/api/vps/:vps_id/pc/power', (req, res) => {
 
 // ---------------------- TERMINAL SHELL EXECUTION ----------------------
 
+const ALLOWED_COMMANDS = new Set([
+  'ls', 'cat', 'pwd', 'python3', 'node', 'npm', 'pip', 'pip3', 'git', 'uptime', 
+  'uname', 'df', 'free', 'ps', 'echo', 'whoami', 'python', 'npx', 'mkdir', 
+  'rm', 'cp', 'mv', 'touch', 'head', 'tail', 'grep', 'find', 'wc', 'chmod', 
+  'chown', 'which', 'file', 'stat', 'du', 'top', 'htop', 'kill', 'pkill', 'pgrep'
+]);
+
 function handleTerminalExecution(req, res) {
- const vpsId = req.params.vps_id;
- const { command = '' } = req.body || {};
- const cmd = command.trim();
- const wsDir = path.join(INSTANCES_DIR, vpsId);
- initVpsWorkspace(vpsId);
+  const vpsId = req.params.vps_id;
+  const { command = '' } = req.body || {};
+  const cmd = command.trim();
+  const wsDir = path.join(INSTANCES_DIR, vpsId);
+  initVpsWorkspace(vpsId);
 
- if (!cmd) {
- return res.json({ success: true, output: '', exit_code: 0 });
- }
+  if (!cmd) {
+    return res.json({ success: true, output: '', exit_code: 0 });
+  }
 
- // Built-in fast shell commands
- if (cmd === 'clear') {
- return res.json({ success: true, output: '\x1bc', exit_code: 0 });
- }
- if (cmd === 'help') {
- return res.json({
- success: true,
- output: `CloudVPS Root Shell v2.4 (Ubuntu 22.04 LTS VirtIO)
+  // Built-in fast shell commands
+  if (cmd === 'clear') {
+    return res.json({ success: true, output: '\x1bc', exit_code: 0 });
+  }
+  if (cmd === 'help') {
+    return res.json({
+      success: true,
+      output: `CloudVPS Root Shell v2.4 (Ubuntu 22.04 LTS VirtIO)
 Available commands:
- ls [-la] List directory files
- cat <filename> Read file contents
- pwd Current working directory
- python3 --version Python runtime version
- node -v Node.js runtime version
- whoami Current user (root)
- uptime System uptime & load
- ps Active processes
- uname -a Linux kernel info
- echo <text> Echo text
- df -h Disk usage stats
- free -m Memory statistics
- git status Repository status
+  ls [-la] List directory files
+  cat <filename> Read file contents
+  pwd Current working directory
+  python3 --version Python runtime version
+  node -v Node.js runtime version
+  whoami Current user (root)
+  uptime System uptime & load
+  ps Active processes
+  uname -a Linux kernel info
+  echo <text> Echo text
+  df -h Disk usage stats
+  free -m Memory statistics
+  git status Repository status
 `,
- exit_code: 0
- });
- }
+      exit_code: 0
+    });
+  }
 
- // Execute in isolated workspace directory
- try {
- const child = child_process.execSync(cmd, {
- cwd: wsDir,
- timeout: 10000,
- encoding: 'utf8',
- env: { ...process.env, HOME: wsDir, TERM: 'xterm-256color' }
- });
- res.json({ success: true, output: child || '', exit_code: 0 });
- } catch (err) {
- const output = (err.stdout ? err.stdout : '') + (err.stderr ? err.stderr : err.message);
- res.json({ success: true, output: output || 'Command failed', exit_code: err.status || 1 });
- }
+  // Parse command and validate against allowlist
+  const parts = cmd.split(/\s+/);
+  const baseCmd = parts[0];
+  
+  if (!ALLOWED_COMMANDS.has(baseCmd)) {
+    return res.status(403).json({ success: false, error: `Command '${baseCmd}' not allowed. Use 'help' to see available commands.`, exit_code: 126 });
+  }
+
+  // Execute in isolated workspace directory using execFile (no shell)
+  try {
+    const child = child_process.execFile(baseCmd, parts.slice(1), {
+      cwd: wsDir,
+      timeout: 10000,
+      encoding: 'utf8',
+      env: { ...process.env, HOME: wsDir, TERM: 'xterm-256color' },
+      maxBuffer: 1024 * 1024 // 1MB output limit
+    });
+    res.json({ success: true, output: child || '', exit_code: 0 });
+  } catch (err) {
+    const output = (err.stdout ? err.stdout : '') + (err.stderr ? err.stderr : err.message);
+    res.json({ success: true, output: output || 'Command failed', exit_code: err.status || 1 });
+  }
 }
 
 app.post('/api/vps/:vps_id/terminal/exec', authRequired, vpsOwnerRequired, handleTerminalExecution);
