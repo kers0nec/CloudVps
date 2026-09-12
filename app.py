@@ -104,60 +104,31 @@ def load_db():
         except Exception:
             pass
 
-    # Ensure default user
-    def_user = "usr_free_user"
-    if def_user not in db["users"]:
-        db["users"][def_user] = {
-            "id": def_user,
-            "username": "demo_user",
-            "password_hash": hash_password("demo123"),
-            "api_key": "cvps_live_free_key_777",
-            "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ")
-        }
+    # Prune any legacy demo accounts / demo VPS that older versions seeded.
+    # The platform only ever contains real, user-registered accounts.
+    for user_id in [
+        uid
+        for uid, u in db["users"].items()
+        if uid in ("usr_free_user", "usr_brittainjaden347")
+        or u.get("username") in ("demo_user", "brittainjaden347")
+    ]:
+        db["users"].pop(user_id, None)
 
-    # Ensure default VPS
-    def_vps = "vps-free-01"
-    if def_vps not in db["vps"]:
-        db["vps"][def_vps] = {
-            "id": def_vps,
-            "user_id": def_user,
-            "name": "Cloud-VPS-01",
-            "plan": "ultra",
-            "status": "running",
-            "cpu": "8.0 Cores",
-            "memory": "8GB RAM",
-            "storage": "160GB NVMe",
-            "ip": "172.20.0.12",
-            "container_id": "c-free-01",
-            "engine": "native_sandbox",
-            "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ")
-        }
-    else:
-        db["vps"][def_vps]["user_id"] = def_user
-        db["vps"][def_vps]["name"] = "Cloud-VPS-01"
+    for vps_id in list(db["vps"].keys()):
+        vps = db["vps"][vps_id]
+        owner_gone = vps.get("user_id") and vps["user_id"] not in db["users"]
+        is_demo = (
+            vps_id == "vps-free-01"
+            or vps.get("container_id") == "c-free-01"
+            or (vps.get("engine") == "native_sandbox" and not vps.get("user_id"))
+        )
+        if owner_gone or is_demo:
+            db["vps"].pop(vps_id, None)
+            db["bots"].pop(vps_id, None)
 
-    init_workspace(def_vps)
-
-    if def_vps not in db["bots"]:
-        db["bots"][def_vps] = {
-            "status": "running",
-            "running": True,
-            "pid": 4102,
-            "filename": "bot.py",
-            "runtime": "python",
-            "token": "",
-            "restarts": 0,
-            "started_at": int(time.time()) - 360,
-            "logs": [
-                "[CloudVPS 24/7 Watchdog] Initializing container runtime (python 3.11)...",
-                "[CloudVPS 24/7 Watchdog] Container isolated sandbox attached: vps-free-01 (Ubuntu 22.04)",
-                "[CloudVPS 24/7 Watchdog] Environment loaded from /root/.env",
-                "[CloudVPS 24/7 Watchdog] Process started (PID: 4102) -> entrypoint: bot.py",
-                "[CloudVPS 24/7 Supervisor] Bot is online and monitoring Discord events 🟢",
-                "[Bot Log] Logged in as CloudBot#2026 (ID: 108923849102)",
-                "[CloudVPS Watchdog] Heartbeat ping OK - CPU: 0.8% | RAM: 48MB | Ping: 12ms"
-            ]
-        }
+    # Ensure workspace directories exist for every remaining real VPS
+    for vps_id in list(db["vps"].keys()):
+        init_workspace(vps_id)
 
     save_db()
 

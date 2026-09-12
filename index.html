@@ -12,26 +12,26 @@
   <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #06070b;
-      --bg-subtle: rgba(13, 16, 26, 0.76);
-      --surface: rgba(14, 17, 28, 0.72);
-      --surface-hover: rgba(26, 32, 50, 0.88);
+      --bg: #0a0709;
+      --bg-subtle: rgba(20, 14, 18, 0.76);
+      --surface: rgba(21, 15, 19, 0.72);
+      --surface-hover: rgba(34, 22, 30, 0.88);
       --surface-border: rgba(255, 255, 255, 0.09);
-      --border-bright: rgba(99, 102, 241, 0.45);
-      --border-glow: rgba(59, 130, 246, 0.25);
+      --border-bright: rgba(236, 72, 153, 0.45);
+      --border-glow: rgba(236, 72, 153, 0.25);
       --glass-blur: blur(24px);
       --glass-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.8), inset 0 1px 0 0 rgba(255, 255, 255, 0.14);
       --text: #ffffff;
-      --text-muted: #94a3b8;
-      --text-dim: #64748b;
-      --primary: #4f46e5;
-      --primary-light: #6366f1;
-      --primary-dark: #3730a3;
-      --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #3b82f6 50%, #06b6d4 100%);
+      --text-muted: #a8a2ab;
+      --text-dim: #6f6873;
+      --primary: #ec4899;
+      --primary-light: #f472b6;
+      --primary-dark: #be185d;
+      --primary-gradient: linear-gradient(135deg, #f472b6 0%, #ec4899 45%, #d946ef 100%);
       --primary-text: #ffffff;
-      --primary-hover: #818cf8;
-      --azure: #38bdf8;
-      --discord-blue: #5865f2;
+      --primary-hover: #f9a8d4;
+      --azure: #f472b6;
+      --discord-blue: #d946ef;
       --danger: #ef4444;
       --danger-bg: rgba(239, 68, 68, 0.14);
       --success: #10b981;
@@ -62,10 +62,10 @@
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
       background: 
-        radial-gradient(circle at 15% 10%, rgba(79, 70, 229, 0.18) 0%, transparent 45%),
-        radial-gradient(circle at 85% 15%, rgba(56, 189, 248, 0.14) 0%, transparent 40%),
-        radial-gradient(circle at 50% 90%, rgba(99, 102, 241, 0.12) 0%, transparent 50%),
-        radial-gradient(circle at 75% 65%, rgba(14, 165, 233, 0.08) 0%, transparent 40%);
+        radial-gradient(circle at 15% 10%, rgba(236, 72, 153, 0.18) 0%, transparent 45%),
+        radial-gradient(circle at 85% 15%, rgba(217, 70, 239, 0.14) 0%, transparent 40%),
+        radial-gradient(circle at 50% 90%, rgba(236, 72, 153, 0.12) 0%, transparent 50%),
+        radial-gradient(circle at 75% 65%, rgba(219, 39, 119, 0.08) 0%, transparent 40%);
       pointer-events: none;
       z-index: 0;
     }
@@ -92,8 +92,8 @@
 
     /* Collapsible Sidebar (Compact & Frosted Glass) */
     aside#sidebar {
-      width: 204px;
-      min-width: 204px;
+      width: 176px;
+      min-width: 176px;
       background: rgba(11, 13, 19, 0.82);
       backdrop-filter: var(--glass-blur);
       -webkit-backdrop-filter: var(--glass-blur);
@@ -118,7 +118,7 @@
     }
 
     .brand-section {
-      padding: 12px 14px;
+      padding: 9px 10px;
       border-bottom: 1px solid var(--surface-border);
       display: flex;
       align-items: center;
@@ -142,7 +142,7 @@
 
     .brand-title {
       font-weight: 800;
-      font-size: 15px;
+      font-size: 13.5px;
       letter-spacing: -0.02em;
       color: #fff;
       display: flex;
@@ -161,8 +161,8 @@
       background: var(--surface);
       border: 1px solid var(--surface-border);
       color: #fff;
-      width: 32px;
-      height: 32px;
+      width: 26px;
+      height: 26px;
       border-radius: var(--radius-sm);
       display: inline-flex;
       align-items: center;
@@ -277,7 +277,7 @@
 
     /* Navigation Menu (Compact) */
     .nav-menu {
-      padding: 10px 8px;
+      padding: 8px 6px;
       flex: 1;
       overflow-y: auto;
       display: flex;
@@ -286,11 +286,11 @@
     }
 
     .nav-category {
-      font-size: 9px;
+      font-size: 8.5px;
       text-transform: uppercase;
       letter-spacing: 0.12em;
       color: var(--text-dim);
-      padding: 8px 8px 3px;
+      padding: 6px 8px 2px;
       font-weight: 800;
       font-family: var(--mono);
     }
@@ -298,15 +298,15 @@
     .nav-btn {
       display: flex;
       align-items: center;
-      gap: 9px;
+      gap: 8px;
       width: 100%;
-      padding: 7px 9px;
+      padding: 5.5px 8px;
       border-radius: var(--radius-sm);
       border: 1px solid transparent;
       background: transparent;
       color: var(--text-muted);
       font-family: var(--sans);
-      font-size: 12px;
+      font-size: 11.5px;
       font-weight: 500;
       cursor: pointer;
       text-align: left;
@@ -352,7 +352,7 @@
     }
 
     .sidebar-footer {
-      padding: 10px 10px;
+      padding: 8px 8px;
       border-top: 1px solid var(--surface-border);
       background: var(--bg-subtle);
     }
@@ -360,16 +360,16 @@
     .user-pill {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 8px 10px;
+      gap: 8px;
+      padding: 6px 8px;
       background: var(--surface);
       border: 1px solid var(--surface-border);
       border-radius: var(--radius-sm);
     }
 
     .user-avatar {
-      width: 26px;
-      height: 26px;
+      width: 22px;
+      height: 22px;
       background: var(--surface-border);
       border: 1px solid var(--border-bright);
       border-radius: 9999px;
@@ -377,7 +377,7 @@
       align-items: center;
       justify-content: center;
       font-weight: 700;
-      font-size: 11px;
+      font-size: 10px;
       color: var(--primary-light);
       font-family: var(--mono);
     }
@@ -399,12 +399,12 @@
 
     /* Topbar */
     header#top-bar {
-      height: 60px;
-      min-height: 60px;
+      height: 46px;
+      min-height: 46px;
       border-bottom: 1px solid var(--surface-border);
       background: rgba(15, 16, 20, 0.85);
       backdrop-filter: blur(14px);
-      padding: 0 24px;
+      padding: 0 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -424,8 +424,8 @@
       background: var(--surface);
       border: 1px solid var(--surface-border);
       color: var(--primary-light);
-      width: 34px;
-      height: 34px;
+      width: 28px;
+      height: 28px;
       border-radius: var(--radius-sm);
       display: inline-flex;
       align-items: center;
@@ -444,31 +444,31 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 13px;
+      font-size: 12px;
       color: var(--text-muted);
     }
 
     .breadcrumbs strong {
       color: #fff;
       font-weight: 700;
-      font-size: 15px;
+      font-size: 13px;
     }
 
     .top-actions {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
     }
 
     /* Buttons */
     .btn {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 8px 16px;
+      gap: 6px;
+      padding: 6px 12px;
       border-radius: var(--radius-sm);
       font-family: var(--sans);
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
       cursor: pointer;
       text-decoration: none;
@@ -494,7 +494,7 @@
 
     /* Cloud VPS Ultra Glowing Action Button */
     .btn-create-vps-glow {
-      background: linear-gradient(135deg, #d946ef 0%, #bd2e95 45%, #8b5cf6 100%) !important;
+      background: linear-gradient(135deg, #f472b6 0%, #ec4899 45%, #d946ef 100%) !important;
       color: #fff !important;
       font-weight: 800 !important;
       letter-spacing: -0.01em;
@@ -541,14 +541,14 @@
     }
 
     .btn-cyan, .btn-pella {
-      background: rgba(56, 189, 248, 0.12);
-      border-color: rgba(56, 189, 248, 0.4);
-      color: #38bdf8;
+      background: rgba(244, 114, 182, 0.12);
+      border-color: rgba(244, 114, 182, 0.4);
+      color: #f472b6;
     }
 
     .btn-cyan:hover, .btn-pella:hover {
-      background: rgba(56, 189, 248, 0.24);
-      box-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
+      background: rgba(244, 114, 182, 0.24);
+      box-shadow: 0 0 16px rgba(244, 114, 182, 0.4);
     }
 
     .btn-sm {
@@ -618,8 +618,8 @@
     /* Content Area */
     .tab-content {
       display: none;
-      padding: 24px;
-      max-width: 1280px;
+      padding: 16px 18px;
+      max-width: 1200px;
       width: 100%;
       margin: 0 auto;
     }
@@ -642,8 +642,8 @@
       border: 1px solid var(--surface-border);
       border-radius: var(--radius-md);
       box-shadow: var(--glass-shadow);
-      padding: 24px;
-      margin-bottom: 24px;
+      padding: 16px 18px;
+      margin-bottom: 16px;
       position: relative;
       transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
     }
@@ -672,33 +672,33 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 18px;
+      margin-bottom: 12px;
       flex-wrap: wrap;
-      gap: 12px;
+      gap: 10px;
     }
 
     .card-title {
-      font-size: 16px;
+      font-size: 14px;
       font-weight: 800;
       color: #fff;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       letter-spacing: -0.01em;
     }
 
     .card-desc {
-      font-size: 13px;
+      font-size: 12px;
       color: var(--text-muted);
-      margin-top: 4px;
+      margin-top: 3px;
     }
 
     /* 4-Stat Specs Grid */
     .specs-grid-4 {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 14px;
-      margin-bottom: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
     }
 
     .stat-card {
@@ -708,7 +708,7 @@
       border: 1px solid var(--surface-border);
       border-radius: var(--radius-md);
       box-shadow: var(--glass-shadow);
-      padding: 18px;
+      padding: 12px 14px;
       position: relative;
       overflow: hidden;
       transition: all 0.2s ease;
@@ -728,7 +728,7 @@
     }
 
     .stat-label {
-      font-size: 11px;
+      font-size: 10px;
       text-transform: uppercase;
       letter-spacing: 0.1em;
       color: var(--text-dim);
@@ -737,14 +737,14 @@
     }
 
     .stat-value {
-      font-size: 20px;
+      font-size: 15px;
       font-weight: 800;
       color: #fff;
-      margin: 4px 0 2px;
+      margin: 3px 0 2px;
     }
 
     .stat-sub {
-      font-size: 12px;
+      font-size: 11px;
       color: var(--primary-light);
       font-family: var(--mono);
     }
@@ -754,7 +754,7 @@
       border: 2px dashed rgba(189, 46, 149, 0.4);
       background: rgba(15, 16, 20, 0.6);
       border-radius: var(--radius-md);
-      padding: 32px 24px;
+      padding: 22px 18px;
       text-align: center;
       cursor: pointer;
       transition: all 0.2s ease;
@@ -818,12 +818,12 @@
     }
 
     .terminal-body {
-      padding: 16px;
-      height: 320px;
+      padding: 12px 14px;
+      height: 300px;
       overflow-y: auto;
       font-family: var(--mono);
-      font-size: 13px;
-      line-height: 1.6;
+      font-size: 12px;
+      line-height: 1.55;
       color: #e5e7eb;
     }
 
@@ -854,8 +854,8 @@
     }
 
     /* Forms & Cyber Inputs */
-    .form-group { margin-bottom: 16px; }
-    .form-label { display: block; font-size: 11.5px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .form-group { margin-bottom: 12px; }
+    .form-label { display: block; font-size: 10.5px; font-weight: 700; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.05em; }
     .form-input {
       width: 100%;
       background: rgba(8, 11, 20, 0.75);
@@ -863,10 +863,10 @@
       -webkit-backdrop-filter: blur(14px);
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: var(--radius-sm);
-      padding: 9px 12px;
+      padding: 7px 10px;
       color: #fff;
       font-family: var(--sans);
-      font-size: 13px;
+      font-size: 12.5px;
       transition: all 0.15s ease;
     }
     .form-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(217, 70, 239, 0.22), 0 0 16px rgba(217, 70, 239, 0.2); }
@@ -874,14 +874,14 @@
     /* Selection Cards for Create VPS Modal */
     .selection-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+      gap: 8px;
     }
     .tier-select-card {
       background: rgba(14, 18, 28, 0.7);
       border: 1px solid rgba(255, 255, 255, 0.09);
       border-radius: var(--radius-sm);
-      padding: 12px 10px;
+      padding: 9px 8px;
       cursor: pointer;
       transition: all 0.15s ease;
       display: flex;
@@ -904,22 +904,22 @@
     .file-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 13px;
-      margin-top: 12px;
+      font-size: 12px;
+      margin-top: 10px;
     }
 
     .file-table th {
       text-align: left;
-      padding: 8px 12px;
+      padding: 6px 10px;
       color: var(--text-dim);
       font-family: var(--mono);
-      font-size: 11px;
+      font-size: 10.5px;
       text-transform: uppercase;
       border-bottom: 1px solid var(--surface-border);
     }
 
     .file-table td {
-      padding: 10px 12px;
+      padding: 7px 10px;
       border-bottom: 1px solid rgba(38, 39, 43, 0.6);
       color: #fff;
     }
@@ -940,9 +940,9 @@
       border: 1px solid var(--primary);
       box-shadow: 0 4px 20px rgba(189, 46, 149, 0.35);
       color: #fff;
-      padding: 12px 18px;
+      padding: 10px 14px;
       border-radius: var(--radius-sm);
-      font-size: 13px;
+      font-size: 12px;
       display: flex;
       align-items: center;
       gap: 10px;
@@ -999,13 +999,13 @@
       align-items: center;
       gap: 6px;
       background: rgba(30, 58, 138, 0.35);
-      border: 1px solid rgba(96, 165, 250, 0.4);
+      border: 1px solid rgba(249, 168, 212, 0.4);
       padding: 3px 8px;
       border-radius: 6px;
       font-weight: 800;
       font-size: 12px;
       letter-spacing: 0.5px;
-      color: #93c5fd;
+      color: #fbcfe8;
     }
 
     .apponfly-status-pills {
@@ -1077,14 +1077,14 @@
     }
 
     .apponfly-btn.primary {
-      background: rgba(59, 130, 246, 0.2);
-      border-color: rgba(96, 165, 250, 0.45);
-      color: #93c5fd;
+      background: rgba(236, 72, 153, 0.2);
+      border-color: rgba(249, 168, 212, 0.45);
+      color: #fbcfe8;
     }
 
     .apponfly-btn.primary:hover {
-      background: rgba(59, 130, 246, 0.35);
-      border-color: #60a5fa;
+      background: rgba(236, 72, 153, 0.35);
+      border-color: #f9a8d4;
       color: #fff;
     }
 
@@ -1121,7 +1121,7 @@
       left: 35%;
       width: 500px;
       height: 500px;
-      background: radial-gradient(circle, rgba(99, 102, 241, 0.22) 0%, rgba(189, 46, 149, 0.16) 40%, rgba(0,0,0,0) 70%);
+      background: radial-gradient(circle, rgba(236, 72, 153, 0.22) 0%, rgba(189, 46, 149, 0.16) 40%, rgba(0,0,0,0) 70%);
       filter: blur(60px);
       pointer-events: none;
       z-index: 1;
@@ -1133,7 +1133,7 @@
       right: 25%;
       width: 450px;
       height: 450px;
-      background: radial-gradient(circle, rgba(14, 165, 233, 0.18) 0%, rgba(37, 217, 130, 0.1) 40%, rgba(0,0,0,0) 70%);
+      background: radial-gradient(circle, rgba(219, 39, 119, 0.18) 0%, rgba(37, 217, 130, 0.1) 40%, rgba(0,0,0,0) 70%);
       filter: blur(60px);
       pointer-events: none;
       z-index: 1;
@@ -1173,8 +1173,8 @@
     }
 
     .pc-desktop-icon.selected {
-      background: rgba(59, 130, 246, 0.24);
-      border-color: rgba(96, 165, 250, 0.5);
+      background: rgba(236, 72, 153, 0.24);
+      border-color: rgba(249, 168, 212, 0.5);
     }
 
     .pc-icon-svg {
@@ -1366,14 +1366,14 @@
       transform: translateX(-50%);
       width: 14px;
       height: 3px;
-      background: #60a5fa;
+      background: #f9a8d4;
       border-radius: 2px;
     }
 
     .pc-taskbar-item.active::after {
       width: 18px;
-      background: #38bdf8;
-      box-shadow: 0 0 6px rgba(56, 189, 248, 0.7);
+      background: #f472b6;
+      box-shadow: 0 0 6px rgba(244, 114, 182, 0.7);
     }
 
     .pc-taskbar-start-btn {
@@ -1390,11 +1390,11 @@
     }
 
     .pc-taskbar-start-btn:hover {
-      background: rgba(59, 130, 246, 0.25);
+      background: rgba(236, 72, 153, 0.25);
     }
 
     .pc-taskbar-start-btn.open {
-      background: rgba(59, 130, 246, 0.35);
+      background: rgba(236, 72, 153, 0.35);
     }
 
     .pc-taskbar-systray {
@@ -1487,8 +1487,8 @@
     }
 
     .pc-start-search-input:focus {
-      border-color: #60a5fa;
-      box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
+      border-color: #f9a8d4;
+      box-shadow: 0 0 0 2px rgba(249, 168, 212, 0.2);
     }
 
     .pc-start-pinned {
@@ -1644,8 +1644,8 @@
     }
 
     .pc-cad-option:hover {
-      background: rgba(59, 130, 246, 0.3);
-      border-color: #60a5fa;
+      background: rgba(236, 72, 153, 0.3);
+      border-color: #f9a8d4;
       transform: translateX(4px);
     }
 
@@ -1653,17 +1653,17 @@
     .manus-container {
       display: flex;
       flex-direction: column;
-      height: calc(100vh - 135px);
-      min-height: 600px;
+      height: calc(100vh - 92px);
+      min-height: 480px;
       background: rgba(14, 16, 22, 0.95);
       border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: var(--radius);
+      border-radius: var(--radius-md);
       overflow: hidden;
       position: relative;
     }
 
     .manus-header {
-      padding: 12px 18px;
+      padding: 9px 14px;
       background: rgba(20, 22, 30, 0.85);
       border-bottom: 1px solid rgba(255, 255, 255, 0.07);
       display: flex;
@@ -1680,14 +1680,14 @@
     }
 
     .manus-gem-icon {
-      width: 30px;
-      height: 30px;
+      width: 26px;
+      height: 26px;
       border-radius: 8px;
-      background: linear-gradient(135deg, #a855f7 0%, #3b82f6 100%);
+      background: linear-gradient(135deg, #d946ef 0%, #ec4899 100%);
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 0 16px rgba(168, 85, 247, 0.35);
+      box-shadow: 0 0 16px rgba(217, 70, 239, 0.35);
       position: relative;
     }
 
@@ -1696,7 +1696,7 @@
       position: absolute;
       inset: -2px;
       border-radius: 10px;
-      border: 1px solid rgba(168, 85, 247, 0.5);
+      border: 1px solid rgba(217, 70, 239, 0.5);
       animation: pulse-ring 2.5s infinite;
     }
 
@@ -1737,17 +1737,17 @@
     .manus-scroll-stream {
       flex: 1;
       overflow-y: auto;
-      padding: 20px;
+      padding: 14px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 12px;
     }
 
     .manus-starter-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-      gap: 12px;
-      margin-top: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
     }
 
     .manus-starter-card {
@@ -1764,16 +1764,16 @@
     }
 
     .manus-starter-card:hover {
-      background: rgba(168, 85, 247, 0.08);
-      border-color: rgba(168, 85, 247, 0.4);
+      background: rgba(217, 70, 239, 0.08);
+      border-color: rgba(217, 70, 239, 0.4);
       transform: translateY(-2px);
     }
 
     .manus-msg-user {
       align-self: flex-end;
       max-width: 82%;
-      background: linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, rgba(59, 130, 246, 0.2) 100%);
-      border: 1px solid rgba(168, 85, 247, 0.35);
+      background: linear-gradient(135deg, rgba(217, 70, 239, 0.25) 0%, rgba(236, 72, 153, 0.2) 100%);
+      border: 1px solid rgba(217, 70, 239, 0.35);
       border-radius: 16px 16px 4px 16px;
       padding: 12px 16px;
       color: #fff;
@@ -1881,8 +1881,8 @@
     }
 
     .manus-textarea:focus {
-      border-color: rgba(168, 85, 247, 0.6);
-      box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.15);
+      border-color: rgba(217, 70, 239, 0.6);
+      box-shadow: 0 0 0 3px rgba(217, 70, 239, 0.15);
     }
 
     .manus-toolbar {
@@ -1905,9 +1905,9 @@
     }
 
     .manus-chip:hover {
-      background: rgba(168, 85, 247, 0.15);
-      color: #c084fc;
-      border-color: rgba(168, 85, 247, 0.3);
+      background: rgba(217, 70, 239, 0.15);
+      color: #f0abfc;
+      border-color: rgba(217, 70, 239, 0.3);
     }
 
     /* Web Hosting & GitHub Manager */
@@ -1926,7 +1926,7 @@
 
     .live-browser-frame {
       width: 100%;
-      height: 480px;
+      height: 400px;
       border: none;
       border-radius: 0 0 12px 12px;
       background: #fff;
@@ -1943,7 +1943,7 @@
       background: var(--surface);
       border: 1px solid var(--surface-border);
       border-radius: var(--radius-md);
-      padding: 20px 24px;
+      padding: 14px 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -1959,12 +1959,12 @@
     }
 
     .pkg-icon-box {
-      width: 44px;
-      height: 44px;
+      width: 36px;
+      height: 36px;
       border-radius: 10px;
-      background: rgba(99, 102, 241, 0.15);
-      border: 1px solid rgba(99, 102, 241, 0.35);
-      color: #818cf8;
+      background: rgba(236, 72, 153, 0.15);
+      border: 1px solid rgba(236, 72, 153, 0.35);
+      color: #f9a8d4;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1972,14 +1972,14 @@
     }
 
     .pkg-heading {
-      font-size: 18px;
+      font-size: 15px;
       font-weight: 800;
       color: #fff;
       letter-spacing: -0.01em;
     }
 
     .pkg-subheading {
-      font-size: 13px;
+      font-size: 12px;
       color: var(--text-muted);
       margin-top: 2px;
       max-width: 650px;
@@ -2033,7 +2033,7 @@
       border: none;
       background: transparent;
       color: var(--text-muted);
-      padding: 6px 12px;
+      padding: 5px 10px;
       border-radius: 6px;
       font-size: 12px;
       font-weight: 600;
@@ -2047,7 +2047,7 @@
     .btn-runtime.active {
       background: var(--primary);
       color: #fff;
-      box-shadow: 0 2px 8px rgba(79, 70, 229, 0.35);
+      box-shadow: 0 2px 8px rgba(236, 72, 153, 0.35);
     }
 
     .runtime-badge-pip {
@@ -2082,21 +2082,21 @@
       background: rgba(10, 13, 22, 0.85);
       border: 1px solid var(--surface-border);
       color: #fff;
-      font-size: 13px;
-      padding: 9px 14px;
+      font-size: 12px;
+      padding: 7px 12px;
       border-radius: 8px;
       font-family: var(--mono);
     }
 
     .pkg-search-input:focus {
       border-color: var(--primary-light);
-      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25);
+      box-shadow: 0 0 0 2px rgba(236, 72, 153, 0.25);
     }
 
     .pkg-download-btn {
-      font-size: 12.5px;
+      font-size: 12px;
       font-weight: 700;
-      padding: 9px 18px;
+      padding: 7px 14px;
       white-space: nowrap;
       display: flex;
       align-items: center;
@@ -2111,8 +2111,8 @@
 
     .pkg-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 14px;
+      grid-template-columns: repeat(auto-fill, minmax(248px, 1fr));
+      gap: 10px;
     }
 
     .pkg-card {
@@ -2128,7 +2128,7 @@
     }
 
     .pkg-card:hover {
-      border-color: rgba(99, 102, 241, 0.45);
+      border-color: rgba(236, 72, 153, 0.45);
       transform: translateY(-2px);
       box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
     }
@@ -2177,9 +2177,9 @@
     }
 
     .btn-pkg-install {
-      background: rgba(99, 102, 241, 0.15);
-      color: #818cf8;
-      border: 1px solid rgba(99, 102, 241, 0.35);
+      background: rgba(236, 72, 153, 0.15);
+      color: #f9a8d4;
+      border: 1px solid rgba(236, 72, 153, 0.35);
       padding: 5px 12px;
       font-size: 11.5px;
       font-weight: 700;
@@ -2201,12 +2201,12 @@
       background: #07090e;
       border: 1px solid var(--surface-border);
       border-radius: var(--radius-sm);
-      padding: 14px 16px;
+      padding: 10px 12px;
       font-family: var(--mono);
       font-size: 12px;
       line-height: 1.6;
       color: #cbd5e1;
-      height: 220px;
+      height: 180px;
       overflow-y: auto;
       white-space: pre-wrap;
       word-break: break-all;
@@ -2220,7 +2220,7 @@
 
     .pkg-table th {
       text-align: left;
-      padding: 10px 14px;
+      padding: 7px 12px;
       color: var(--text-dim);
       font-weight: 700;
       font-size: 11px;
@@ -2231,7 +2231,7 @@
     }
 
     .pkg-table td {
-      padding: 10px 14px;
+      padding: 7px 12px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.04);
       color: var(--text);
     }
@@ -2288,11 +2288,11 @@
     }
 
     .saved-account-item:hover {
-      background: rgba(99, 102, 241, 0.18);
+      background: rgba(236, 72, 153, 0.18);
     }
 
     .saved-account-item.active {
-      background: rgba(99, 102, 241, 0.28);
+      background: rgba(236, 72, 153, 0.28);
       font-weight: 700;
     }
 
@@ -2316,7 +2316,7 @@
     }
 
     .dropdown-item:hover {
-      background: rgba(99, 102, 241, 0.12);
+      background: rgba(236, 72, 153, 0.12);
     }
   </style>
 </head>
@@ -2341,40 +2341,73 @@
 
     <nav class="nav-menu">
       <!-- QUICK CREATE VPS BUTTON -->
-      <div style="padding: 0 10px 10px;">
-        <button class="btn btn-primary btn-create-vps-glow" style="width: 100%; justify-content: center; padding: 8px 12px; font-size: 12px; font-weight: 800; border-radius: 8px;" onclick="openCreateVpsModal()">
+      <div style="padding: 0 6px 8px;">
+        <button class="btn btn-primary btn-create-vps-glow" style="width: 100%; justify-content: center; padding: 6px 10px; font-size: 11.5px; font-weight: 800; border-radius: 7px;" onclick="openCreateVpsModal()">
           + Create VPS
         </button>
       </div>
 
       <div class="nav-category">WORKSPACES</div>
-      
+
       <!-- TAB 1: MY VPS -->
       <button class="nav-btn active" id="nav-vps" onclick="switchTab('vps')">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
         <span>VPS Instances</span>
-        <span class="nav-badge" id="sidebar-vps-count">1</span>
+        <span class="nav-badge" id="sidebar-vps-count">0</span>
       </button>
 
       <!-- TAB 2: DISCORD BOT (24/7 ALWAYS-ON + FILES) -->
       <button class="nav-btn" id="nav-bot" onclick="switchTab('bot')">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><line x1="12" y1="7" x2="12" y2="11"/><line x1="8" y1="15" x2="8.01" y2="15"/><line x1="16" y1="15" x2="16.01" y2="15"/></svg>
         <span>Discord Bot (24/7)</span>
-        <span class="nav-badge" id="sidebar-bot-badge" style="background: rgba(37, 217, 130, 0.15); color: var(--success); border-color: rgba(37, 217, 130, 0.3);">ONLINE</span>
+        <span class="nav-badge" id="sidebar-bot-badge" style="background: rgba(148, 163, 184, 0.15); color: var(--text-muted); border-color: rgba(148, 163, 184, 0.3);">IDLE</span>
       </button>
 
       <!-- TAB GITHUB: GITHUB & WEB HOSTING & REAL FREE DOMAINS -->
       <button class="nav-btn" id="nav-github" onclick="switchTab('github')">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
         <span>Hosting & Domains</span>
-        <span class="nav-badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border-color: rgba(56, 189, 248, 0.3);">FREE SSL</span>
+        <span class="nav-badge" style="background: rgba(244, 114, 182, 0.15); color: #f472b6; border-color: rgba(244, 114, 182, 0.3);">FREE SSL</span>
+      </button>
+
+      <!-- TAB AI: MANUS AI AUTONOMOUS CLOUD ENGINEER -->
+      <button class="nav-btn" id="nav-ai" onclick="switchTab('ai')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <span>Manus AI Engineer</span>
+        <span class="nav-badge" style="background: rgba(217, 70, 239, 0.15); color: #f0abfc; border-color: rgba(217, 70, 239, 0.3);">AI</span>
+      </button>
+
+      <div class="nav-category">TOOLS</div>
+
+      <!-- TAB TERMINAL: ROOT TERMINAL SHELL -->
+      <button class="nav-btn" id="nav-terminal" onclick="switchTab('terminal')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+        <span>Root Terminal</span>
+      </button>
+
+      <!-- TAB SSH: ROOT SSH & TERMUX REMOTE -->
+      <button class="nav-btn" id="nav-ssh" onclick="switchTab('ssh')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span>SSH & Termux</span>
       </button>
 
       <!-- TAB PACKAGES: PACKAGE DOWNLOADER (WISPBYTE STYLE) -->
       <button class="nav-btn" id="nav-packages" onclick="switchTab('packages')">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
         <span>Package Downloader</span>
-        <span class="nav-badge" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; border-color: rgba(99, 102, 241, 0.3);">PIP/NPM</span>
+        <span class="nav-badge" style="background: rgba(236, 72, 153, 0.15); color: #f9a8d4; border-color: rgba(236, 72, 153, 0.3);">PIP/NPM</span>
+      </button>
+
+      <!-- TAB SOFTWARE: PC SOFTWARE, RUNTIMES & LUNE CENTER -->
+      <button class="nav-btn" id="nav-software" onclick="switchTab('software')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>
+        <span>Software Center</span>
+      </button>
+
+      <!-- TAB PC: REMOTE PC CONTROLLER (APPONFLY) -->
+      <button class="nav-btn" id="nav-pc" onclick="switchTab('pc')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><polygon points="10 7.5 15 10 10 12.5"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        <span>Remote PC</span>
       </button>
 
       <div class="nav-category">SETTINGS</div>
@@ -2419,7 +2452,7 @@
     </header>
 
     <!-- GUEST WELCOME BANNER (SHOWN WHEN NOT LOGGED IN) -->
-    <div id="guest-banner" style="display: none; background: linear-gradient(90deg, rgba(189, 46, 149, 0.16) 0%, rgba(53, 100, 220, 0.16) 100%); border-bottom: 1px solid rgba(189, 46, 149, 0.3); padding: 12px 24px; align-items: center; justify-content: space-between; gap: 14px;">
+    <div id="guest-banner" style="display: none; background: linear-gradient(90deg, rgba(189, 46, 149, 0.16) 0%, rgba(190, 24, 93, 0.16) 100%); border-bottom: 1px solid rgba(189, 46, 149, 0.3); padding: 9px 18px; align-items: center; justify-content: space-between; gap: 14px;">
       <div style="display: flex; align-items: center; gap: 10px;">
         <span style="font-size: 18px;"></span>
         <span style="font-size: 13px; color: #fff;"><strong>100% Forever Free:</strong> Welcome to Cloud VPS. Deploy high-performance virtual containers with root SSH/Termux access and keep Discord bots alive 24/7.</span>
@@ -2432,27 +2465,27 @@
 
     <!-- ==================== TAB 1: MY VPS INSTANCES ==================== -->
     <section class="tab-content active" id="tab-vps">
-      <!-- Hardware Telemetry Bar -->
+      <!-- Hardware Telemetry Bar (live host data from /api/hardware) -->
       <div class="specs-grid-4">
         <div class="stat-card">
-          <div class="stat-label">Virtualization Status</div>
-          <div class="stat-value" style="font-size: 16px;">Intel VT-x / AMD-V</div>
-          <div class="stat-sub" style="color: var(--success);">ENABLED in BIOS (KVM Active)</div>
+          <div class="stat-label">Host CPU</div>
+          <div class="stat-value" id="hw-cpu" style="font-size: 13px;">Loading…</div>
+          <div class="stat-sub" id="hw-cpu-sub">—</div>
         </div>
         <div class="stat-card">
           <div class="stat-label">RAM Pool</div>
-          <div class="stat-value">32.0 GB DDR4</div>
-          <div class="stat-sub">19.5 GB Available (8GB min req)</div>
+          <div class="stat-value" id="hw-ram">—</div>
+          <div class="stat-sub" id="hw-ram-sub">—</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">NVMe Storage Pool</div>
-          <div class="stat-value">2TB ZFS Mirror</div>
-          <div class="stat-sub">3,480 MB/s &bull; 450k IOPS</div>
+          <div class="stat-label">Platform</div>
+          <div class="stat-value" id="hw-platform" style="font-size: 13px;">—</div>
+          <div class="stat-sub" id="hw-platform-sub">—</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Network Bridge</div>
-          <div class="stat-value">vmbr0 (VirtIO)</div>
-          <div class="stat-sub">CGNAT Tunnel Active [ONLINE]</div>
+          <div class="stat-label">Host Uptime</div>
+          <div class="stat-value" id="hw-uptime">—</div>
+          <div class="stat-sub" id="hw-uptime-sub" style="color: var(--success);">Server online</div>
         </div>
       </div>
 
@@ -2469,7 +2502,7 @@
           <button class="btn btn-primary btn-sm btn-create-vps-glow" onclick="openCreateVpsModal()">+ Create VPS (Custom Name)</button>
         </div>
 
-        <div id="vps-list-container" style="display: flex; flex-direction: column; gap: 12px;">
+        <div id="vps-list-container" style="display: flex; flex-direction: column; gap: 9px;">
           <!-- Dynamically filled -->
         </div>
       </div>
@@ -2487,7 +2520,7 @@
             <div>
               <div style="font-weight: 700; font-size: 14px; color: #fff; display: flex; align-items: center; gap: 8px;">
                 Manus Cloud Agent
-                <span class="nav-badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border-color: rgba(168, 85, 247, 0.3);">Autonomous AI</span>
+                <span class="nav-badge" style="background: rgba(217, 70, 239, 0.15); color: #f0abfc; border-color: rgba(217, 70, 239, 0.3);">Autonomous AI</span>
               </div>
               <div style="font-size: 11px; color: #71717a; font-family: var(--mono);">VirtIO Container &bull; Gemini 3.8 Flash Engine</div>
             </div>
@@ -2512,7 +2545,7 @@
             <div class="manus-scroll-stream" id="manus-messages-stream">
               <!-- Welcome banner / Starters -->
               <div id="manus-welcome-banner" style="text-align: center; max-width: 620px; margin: 20px auto; padding: 20px;">
-                <div style="width: 52px; height: 52px; margin: 0 auto 16px; border-radius: 16px; background: linear-gradient(135deg, #a855f7 0%, #3b82f6 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 30px rgba(168, 85, 247, 0.4);">
+                <div style="width: 52px; height: 52px; margin: 0 auto 16px; border-radius: 16px; background: linear-gradient(135deg, #d946ef 0%, #ec4899 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 30px rgba(217, 70, 239, 0.4);">
                   <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                 </div>
                 <h2 style="font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 6px;">How can Manus AI assist your Cloud VPS today?</h2>
@@ -2522,7 +2555,7 @@
 
                 <div class="manus-starter-grid">
                   <div class="manus-starter-card" onclick="quickRunManus('Clone https://github.com/cloudvps/starter-site.git and deploy it to a free SSL domain')">
-                    <div style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #60a5fa; font-size: 13px;">
+                    <div style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #f9a8d4; font-size: 13px;">
                       <span>Clone & Host Website</span>
                     </div>
                     <div style="font-size: 11.5px; color: #71717a;">Clone any GitHub repo and bind to a free *.cloudvps.site domain.</div>
@@ -2536,7 +2569,7 @@
                   </div>
 
                   <div class="manus-starter-card" onclick="quickRunManus('Generate a modern responsive web portfolio in /site and publish it live')">
-                    <div style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #c084fc; font-size: 13px;">
+                    <div style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #f0abfc; font-size: 13px;">
                       <span>Build Modern Web App</span>
                     </div>
                     <div style="font-size: 11.5px; color: #71717a;">Generate Tailwind HTML/JS landing page with live preview.</div>
@@ -2606,7 +2639,7 @@
         <div class="card cyber-glow">
           <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
             <div style="display: flex; align-items: center; gap: 14px;">
-              <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); display: flex; align-items: center; justify-content: center; font-size: 22px;">
+              <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(244, 114, 182, 0.15); border: 1px solid rgba(244, 114, 182, 0.3); display: flex; align-items: center; justify-content: center; font-size: 22px;">
                 
               </div>
               <div>
@@ -2832,7 +2865,7 @@
             <button class="btn btn-secondary btn-sm" style="border-color: rgba(189,46,149,0.35);" onclick="loadBotTemplate('discord_py')">
               Python Discord.py Bot
             </button>
-            <button class="btn btn-secondary btn-sm" style="border-color: rgba(53,100,220,0.35); color: #60a5fa;" onclick="loadBotTemplate('discord_js')">
+            <button class="btn btn-secondary btn-sm" style="border-color: rgba(190, 24, 93,0.35); color: #f9a8d4;" onclick="loadBotTemplate('discord_js')">
                Node.js Discord.js Bot
             </button>
             <button class="btn btn-secondary btn-sm" style="border-color: rgba(189,46,149,0.35); color: #f472b6;" onclick="loadBotTemplate('media_logger')">
@@ -2904,7 +2937,7 @@
             <div style="font-weight: 800; color: #fff; font-size: 15px; display: flex; align-items: center; gap: 8px;">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
               <span>Bot Workspace Code Editor</span>
-              <span class="badge-cyber" style="color: #38bdf8; border-color: rgba(56, 189, 248, 0.3);">LIVE IN-CONTAINER</span>
+              <span class="badge-cyber" style="color: #f472b6; border-color: rgba(244, 114, 182, 0.3);">LIVE IN-CONTAINER</span>
             </div>
             <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
               <button type="button" class="btn btn-secondary btn-sm" onclick="openCreateFileModal()"> + New File</button>
@@ -2944,7 +2977,7 @@
               <div style="background: rgba(20, 24, 34, 0.96); border: 1px solid var(--surface-border); border-bottom: none; border-radius: var(--radius-sm) var(--radius-sm) 0 0; padding: 8px 14px; font-family: var(--mono); font-size: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                 <div style="display: flex; align-items: center; gap: 8px;">
                   <span id="editor-file-icon"></span>
-                  <strong id="editor-active-filename" style="color: #38bdf8;">bot.py</strong>
+                  <strong id="editor-active-filename" style="color: #f472b6;">bot.py</strong>
                   <span id="editor-dirty-indicator" style="font-size: 11px; color: var(--text-dim); padding: 1px 6px; border-radius: 4px; background: rgba(255,255,255,0.06);">Saved [OK]</span>
                 </div>
                 <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
@@ -3006,7 +3039,7 @@
             <span id="token-autosave-indicator" style="font-size: 11.5px; font-weight: 700; color: #10b981; font-family: var(--mono); display: none;">
                Auto-saved to .env
             </span>
-            <button type="button" class="btn btn-secondary btn-sm" id="btn-selfbot-guide-toggle" style="padding: 4px 10px; font-size: 11.5px; color: #38bdf8; border-color: rgba(56, 189, 248, 0.35);" onclick="toggleSelfbotGuide()">
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-selfbot-guide-toggle" style="padding: 4px 10px; font-size: 11.5px; color: #f472b6; border-color: rgba(244, 114, 182, 0.35);" onclick="toggleSelfbotGuide()">
                Selfbot Guide & Code
             </button>
           </div>
@@ -3029,7 +3062,7 @@
 
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; margin-bottom: 12px;">
             <div style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 10px;">
-              <div style="font-size: 11.5px; font-weight: 700; color: #38bdf8; margin-bottom: 4px;">Python: discord.py-self</div>
+              <div style="font-size: 11.5px; font-weight: 700; color: #f472b6; margin-bottom: 4px;">Python: discord.py-self</div>
               <pre style="margin: 0; font-family: var(--mono); font-size: 10.5px; color: #cbd5e1; line-height: 1.4; background: transparent; padding: 0; white-space: pre-wrap;">import os, discord
 TOKEN = os.getenv("DISCORD_USER_TOKEN") or os.getenv("TOKEN")
 client = discord.Client()
@@ -3054,7 +3087,7 @@ client.login(process.env.DISCORD_USER_TOKEN || process.env.TOKEN);</pre>
             <button type="button" class="btn btn-secondary btn-sm" style="font-size: 11.5px; color: #34d399; border-color: rgba(52, 211, 153, 0.3);" onclick="installSelfbotPackage('discord.py-self python-dotenv', 'python')">
                Install discord.py-self (pip)
             </button>
-            <button type="button" class="btn btn-secondary btn-sm" style="font-size: 11.5px; color: #38bdf8; border-color: rgba(56, 189, 248, 0.3);" onclick="installSelfbotPackage('discord.js-selfbot-v13 dotenv', 'node')">
+            <button type="button" class="btn btn-secondary btn-sm" style="font-size: 11.5px; color: #f472b6; border-color: rgba(244, 114, 182, 0.3);" onclick="installSelfbotPackage('discord.js-selfbot-v13 dotenv', 'node')">
                Install discord.js-selfbot-v13 (npm)
             </button>
           </div>
@@ -3066,7 +3099,7 @@ client.login(process.env.DISCORD_USER_TOKEN || process.env.TOKEN);</pre>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
               <label class="form-label" style="margin-bottom: 0; display: flex; align-items: center; gap: 6px;">
                 <span>Discord Bot Token</span>
-                <span class="badge-cyber" style="font-size: 9.5px; padding: 1px 6px; color: #a855f7; border-color: rgba(168, 85, 247, 0.3);">BOT APP</span>
+                <span class="badge-cyber" style="font-size: 9.5px; padding: 1px 6px; color: #d946ef; border-color: rgba(217, 70, 239, 0.3);">BOT APP</span>
               </label>
               <span id="bot-token-detection-badge" style="font-size: 10px; font-family: var(--mono); color: var(--text-dim); display: none;"></span>
             </div>
@@ -3150,8 +3183,8 @@ client.login(process.env.DISCORD_USER_TOKEN || process.env.TOKEN);</pre>
             </div>
           </div>
           <div style="display: flex; flex-wrap: wrap; gap: 6px; font-size: 11px; font-family: var(--mono);">
-            <span style="padding: 2px 8px; background: rgba(53, 100, 220, 0.12); border: 1px solid rgba(53, 100, 220, 0.25); border-radius: 4px; color: #60a5fa;">discord.py</span>
-            <span style="padding: 2px 8px; background: rgba(53, 100, 220, 0.12); border: 1px solid rgba(53, 100, 220, 0.25); border-radius: 4px; color: #60a5fa;">python-dotenv</span>
+            <span style="padding: 2px 8px; background: rgba(190, 24, 93, 0.12); border: 1px solid rgba(190, 24, 93, 0.25); border-radius: 4px; color: #f9a8d4;">discord.py</span>
+            <span style="padding: 2px 8px; background: rgba(190, 24, 93, 0.12); border: 1px solid rgba(190, 24, 93, 0.25); border-radius: 4px; color: #f9a8d4;">python-dotenv</span>
             <span style="padding: 2px 8px; background: rgba(189, 46, 149, 0.15); border: 1px solid rgba(189, 46, 149, 0.35); border-radius: 4px; color: #f472b6; font-weight: 700;">ofscraper (OnlyFans)</span>
             <span style="padding: 2px 8px; background: rgba(217, 210, 37, 0.12); border: 1px solid rgba(217, 210, 37, 0.3); border-radius: 4px; color: #facc15;">yt-dlp</span>
             <span style="padding: 2px 8px; background: rgba(37, 217, 130, 0.1); border: 1px solid rgba(37, 217, 130, 0.25); border-radius: 4px; color: #34d399;">cloudscraper</span>
@@ -3165,9 +3198,9 @@ client.login(process.env.DISCORD_USER_TOKEN || process.env.TOKEN);</pre>
             <span style="padding: 2px 8px; background: rgba(189, 46, 149, 0.1); border: 1px solid rgba(189, 46, 149, 0.25); border-radius: 4px; color: #f472b6;">ffmpeg-python</span>
             <span style="padding: 2px 8px; background: rgba(189, 46, 149, 0.1); border: 1px solid rgba(189, 46, 149, 0.25); border-radius: 4px; color: #f472b6;">pillow</span>
             <span style="padding: 2px 8px; background: rgba(189, 46, 149, 0.1); border: 1px solid rgba(189, 46, 149, 0.25); border-radius: 4px; color: #f472b6;">cryptography & numpy</span>
-            <span style="padding: 2px 8px; background: rgba(53, 100, 220, 0.1); border: 1px solid rgba(53, 100, 220, 0.25); border-radius: 4px; color: #a5b4fc;">discord.js</span>
-            <span style="padding: 2px 8px; background: rgba(53, 100, 220, 0.1); border: 1px solid rgba(53, 100, 220, 0.25); border-radius: 4px; color: #a5b4fc;">dotenv (Node)</span>
-            <span style="padding: 2px 8px; background: rgba(53, 100, 220, 0.1); border: 1px solid rgba(53, 100, 220, 0.25); border-radius: 4px; color: #a5b4fc;">axios & ws & express</span>
+            <span style="padding: 2px 8px; background: rgba(190, 24, 93, 0.1); border: 1px solid rgba(190, 24, 93, 0.25); border-radius: 4px; color: #fbcfe8;">discord.js</span>
+            <span style="padding: 2px 8px; background: rgba(190, 24, 93, 0.1); border: 1px solid rgba(190, 24, 93, 0.25); border-radius: 4px; color: #fbcfe8;">dotenv (Node)</span>
+            <span style="padding: 2px 8px; background: rgba(190, 24, 93, 0.1); border: 1px solid rgba(190, 24, 93, 0.25); border-radius: 4px; color: #fbcfe8;">axios & ws & express</span>
           </div>
         </div>
 
@@ -3263,7 +3296,7 @@ client.login(process.env.DISCORD_USER_TOKEN || process.env.TOKEN);</pre>
             </div>
             <button class="btn btn-secondary btn-sm" onclick="copySshCommand()">Copy SSH Command</button>
           </div>
-          <div style="background: #090a0d; border: 1px solid var(--surface-border); border-radius: 6px; padding: 12px 16px; font-family: var(--mono); font-size: 13px; color: #38bdf8; overflow-x: auto; white-space: nowrap; user-select: all;" id="ssh-code-block">ssh -p 2222 root@ssh.cloudvps.run</div>
+          <div style="background: #090a0d; border: 1px solid var(--surface-border); border-radius: 6px; padding: 12px 16px; font-family: var(--mono); font-size: 13px; color: #f472b6; overflow-x: auto; white-space: nowrap; user-select: all;" id="ssh-code-block">ssh -p 2222 root@ssh.cloudvps.run</div>
         </div>
 
         <!-- Instructions & Web Terminal Button -->
@@ -3323,7 +3356,7 @@ client.login(process.env.DISCORD_USER_TOKEN || process.env.TOKEN);</pre>
             <div class="stat-value" id="status-lune-ver" style="font-size: 16px; font-family: var(--mono);">v0.10.5 <span class="status-dot-green"></span></div>
             <div class="stat-sub" id="status-lune-desc">Standalone Luau VM & CLI active</div>
           </div>
-          <div class="stat-card" style="border-left: 3px solid #60a5fa;">
+          <div class="stat-card" style="border-left: 3px solid #f9a8d4;">
             <div class="stat-label">Python Environment</div>
             <div class="stat-value" id="status-python-ver" style="font-size: 16px; font-family: var(--mono);">3.11 + pip <span class="status-dot-green"></span></div>
             <div class="stat-sub">discord.py, aiohttp, dotenv installed</div>
@@ -3389,7 +3422,7 @@ client.login(process.env.DISCORD_USER_TOKEN || process.env.TOKEN);</pre>
             <button class="btn btn-primary btn-sm" onclick="runInstallBundle('luau-env')">
               ️ Setup Env Suite & Link Exec
             </button>
-            <button class="btn btn-secondary btn-sm" style="color: #60a5fa; border-color: rgba(96,165,250,0.4);" onclick="runSampleLuneTest()">
+            <button class="btn btn-secondary btn-sm" style="color: #f9a8d4; border-color: rgba(249, 168, 212,0.4);" onclick="runSampleLuneTest()">
               ▶ Run Sample Test with Lune
             </button>
           </div>
@@ -3479,6 +3512,10 @@ Try clicking "Reinstall / Update Lune v0.10.5" or "Run Sample Test with Lune" ab
 
     <!-- ==================== TAB PC: APPONFLY REMOTE PC CONTROLLER ==================== -->
     <section class="tab-content" id="tab-pc">
+      <div id="pc-no-vps-banner" style="display: none; align-items: center; justify-content: center; gap: 10px; padding: 10px 16px; margin-bottom: 12px; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: var(--radius-sm); color: #fbbf24; font-size: 12.5px; font-weight: 600;">
+        No VPS container selected — create or select a VPS to connect the Remote PC controller.
+        <button class="btn btn-primary btn-sm" onclick="openCreateVpsModal()">+ Create VPS</button>
+      </div>
       <div class="apponfly-wrapper" id="apponfly-root">
         <!-- AppOnFly Iconic Top Floating Controller Toolbar -->
         <header class="apponfly-topbar">
@@ -3547,7 +3584,7 @@ Try clicking "Reinstall / Update Lune v0.10.5" or "Run Sample Test with Lune" ab
             <!-- This PC -->
             <div class="pc-desktop-icon" onclick="selectDesktopIcon(this)" ondblclick="openPcWindow('win-thispc')">
               <div class="pc-icon-svg">
-                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/><circle cx="12" cy="10" r="2.5" fill="#3b82f6"/></svg>
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#f9a8d4" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/><circle cx="12" cy="10" r="2.5" fill="#ec4899"/></svg>
               </div>
               <div class="pc-icon-label">This PC</div>
             </div>
@@ -3579,7 +3616,7 @@ Try clicking "Reinstall / Update Lune v0.10.5" or "Run Sample Test with Lune" ab
             <!-- Notepad / Code Editor -->
             <div class="pc-desktop-icon" onclick="selectDesktopIcon(this)" ondblclick="openPcWindow('win-notepad')">
               <div class="pc-icon-svg">
-                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
               </div>
               <div class="pc-icon-label">Notepad</div>
             </div>
@@ -3611,7 +3648,7 @@ Try clicking "Reinstall / Update Lune v0.10.5" or "Run Sample Test with Lune" ab
             <!-- PC Software Store -->
             <div class="pc-desktop-icon" onclick="selectDesktopIcon(this)" ondblclick="openPcWindow('win-store')">
               <div class="pc-icon-svg">
-                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="1.8"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="1.8"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
               </div>
               <div class="pc-icon-label">Software Store</div>
             </div>
@@ -3619,7 +3656,7 @@ Try clicking "Reinstall / Update Lune v0.10.5" or "Run Sample Test with Lune" ab
             <!-- Web Browser -->
             <div class="pc-desktop-icon" onclick="selectDesktopIcon(this)" ondblclick="openPcWindow('win-browser')">
               <div class="pc-icon-svg">
-                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
               </div>
               <div class="pc-icon-label">Edge Browser</div>
             </div>
@@ -3673,7 +3710,7 @@ Type 'help', 'dir', 'lune --version', or enter commands below:
               <div class="pc-win-titlebar" onmousedown="startWindowDrag(event, 'win-explorer')">
                 <div class="pc-win-title">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="#fbbf24" stroke="#d97706" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-                  File Explorer — C:\vps_instances\vps-free-01
+                  File Explorer — C:\vps_instances\(no VPS selected)
                 </div>
                 <div class="pc-win-controls">
                   <button class="pc-win-btn min" onclick="minimizePcWindow('win-explorer')"></button>
@@ -3688,8 +3725,8 @@ Type 'help', 'dir', 'lune --version', or enter commands below:
                   <button class="apponfly-btn" style="font-size: 11px;" onclick="loadExplorerFiles()"> Refresh</button>
                 </div>
                 <!-- Breadcrumbs Address Bar -->
-                <div style="flex: 1; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 4px 10px; font-size: 11px; font-family: var(--mono); color: #93c5fd; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                  This PC &gt; Local Disk (C:) &gt; vps_instances &gt; vps-free-01
+                <div style="flex: 1; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 4px 10px; font-size: 11px; font-family: var(--mono); color: #fbcfe8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                  This PC &gt; Local Disk (C:) &gt; vps_instances
                 </div>
               </div>
               <!-- Explorer Body: Left Sidebar + Files Grid -->
@@ -3713,7 +3750,7 @@ Type 'help', 'dir', 'lune --version', or enter commands below:
             <div class="pc-window" id="win-notepad" style="top: 80px; left: 300px; width: 640px; height: 460px; z-index: 13;" onmousedown="focusPcWindow('win-notepad')">
               <div class="pc-win-titlebar" onmousedown="startWindowDrag(event, 'win-notepad')">
                 <div class="pc-win-title">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                   <span id="pc-notepad-title">Notepad — bot.py</span>
                 </div>
                 <div class="pc-win-controls">
@@ -3756,7 +3793,7 @@ Type 'help', 'dir', 'lune --version', or enter commands below:
                 <div class="pc-win-title">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="6 12 9 8 13 14 16 10 18 12"/></svg>
                   Task Manager — VirtIO KVM Process & Telemetry Engine
-                </div>
+                 </div>
                 <div class="pc-win-controls">
                   <button class="pc-win-btn min" onclick="minimizePcWindow('win-taskmgr')"></button>
                   <button class="pc-win-btn max" onclick="maximizePcWindow('win-taskmgr')"></button>
@@ -3798,7 +3835,7 @@ Type 'help', 'dir', 'lune --version', or enter commands below:
                   <!-- CPU Telemetry Box -->
                   <div style="background: #141620; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 14px;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                      <span style="font-weight: 700; color: #60a5fa;">CPU Usage</span>
+                      <span style="font-weight: 700; color: #f9a8d4;">CPU Usage</span>
                       <span id="tm-cpu-val" style="font-family: var(--mono); color: #fff; font-weight: 700;">4.2%</span>
                     </div>
                     <div style="height: 60px; background: #0a0c10; border-radius: 4px; display: flex; align-items: flex-end; padding: 4px; gap: 3px;" id="tm-cpu-bars">
@@ -3809,11 +3846,11 @@ Type 'help', 'dir', 'lune --version', or enter commands below:
                   <!-- RAM Telemetry Box -->
                   <div style="background: #141620; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 14px;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                      <span style="font-weight: 700; color: #a855f7;">Memory Usage</span>
+                      <span style="font-weight: 700; color: #d946ef;">Memory Usage</span>
                       <span id="tm-ram-val" style="font-family: var(--mono); color: #fff; font-weight: 700;">82 MB / 4096 MB (2%)</span>
                     </div>
                     <div style="height: 12px; background: #0a0c10; border-radius: 6px; overflow: hidden; margin-top: 14px;">
-                      <div id="tm-ram-bar" style="height: 100%; width: 5%; background: linear-gradient(90deg, #a855f7, #ec4899); border-radius: 6px; transition: width 0.3s;"></div>
+                      <div id="tm-ram-bar" style="height: 100%; width: 5%; background: linear-gradient(90deg, #d946ef, #ec4899); border-radius: 6px; transition: width 0.3s;"></div>
                     </div>
                     <div style="font-size: 10px; color: #9ca3af; margin-top: 16px; font-family: var(--mono);">Committed: 84 MB • Cached: 1.2 GB • Page pool: Non-paged</div>
                   </div>
@@ -3886,7 +3923,7 @@ Select a script and click 'Run Lune Engine' to execute Luau bytecode analysis or
             <div class="pc-window" id="win-store" style="top: 80px; left: 250px; width: 660px; height: 460px; z-index: 9;" onmousedown="focusPcWindow('win-store')">
               <div class="pc-win-titlebar" onmousedown="startWindowDrag(event, 'win-store')">
                 <div class="pc-win-title">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
                   PC Software Store & Runtimes
                 </div>
                 <div class="pc-win-controls">
@@ -3912,7 +3949,7 @@ Select a script and click 'Run Lune Engine' to execute Luau bytecode analysis or
 
                   <div style="background: #141620; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between;">
                     <div>
-                      <div style="font-weight: 700; color: #60a5fa; font-size: 13px;">Python 3.11 Bot Stack</div>
+                      <div style="font-weight: 700; color: #f9a8d4; font-size: 13px;">Python 3.11 Bot Stack</div>
                       <div style="font-size: 11px; color: #9ca3af; margin-top: 4px;">discord.py, aiohttp, requests, dotenv, psutil.</div>
                     </div>
                     <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center;">
@@ -3950,7 +3987,7 @@ Select a script and click 'Run Lune Engine' to execute Luau bytecode analysis or
             <div class="pc-window" id="win-thispc" style="top: 110px; left: 230px; width: 620px; height: 420px; z-index: 8;" onmousedown="focusPcWindow('win-thispc')">
               <div class="pc-win-titlebar" onmousedown="startWindowDrag(event, 'win-thispc')">
                 <div class="pc-win-title">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f9a8d4" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
                   This PC — System Properties
                 </div>
                 <div class="pc-win-controls">
@@ -3961,8 +3998,8 @@ Select a script and click 'Run Lune Engine' to execute Luau bytecode analysis or
               </div>
               <div class="pc-win-body" style="padding: 20px; gap: 16px; overflow-y: auto;">
                 <div style="display: flex; align-items: center; gap: 14px;">
-                  <div style="width: 50px; height: 50px; border-radius: 10px; background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(96, 165, 250, 0.4); display: flex; align-items: center; justify-content: center;">
-                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                  <div style="width: 50px; height: 50px; border-radius: 10px; background: rgba(236, 72, 153, 0.2); border: 1px solid rgba(249, 168, 212, 0.4); display: flex; align-items: center; justify-content: center;">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#f9a8d4" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
                   </div>
                   <div>
                     <div style="font-size: 16px; font-weight: 800; color: #fff;">CloudPC-VPS-FREE-01</div>
@@ -3977,7 +4014,7 @@ Select a script and click 'Run Lune Engine' to execute Luau bytecode analysis or
                   <div><span style="color: #9ca3af;">System Type:</span> <strong style="color: #fff;">64-bit operating system, x64</strong></div>
                   <div><span style="color: #9ca3af;">Pen and Touch:</span> <strong style="color: #fff;">Touch support with cursor</strong></div>
                   <div><span style="color: #9ca3af;">Virtualization:</span> <strong style="color: #34d399;">KVM / AppOnFly Container</strong></div>
-                  <div><span style="color: #9ca3af;">Network:</span> <strong style="color: #60a5fa;">1,000 Mbps Full Duplex</strong></div>
+                  <div><span style="color: #9ca3af;">Network:</span> <strong style="color: #f9a8d4;">1,000 Mbps Full Duplex</strong></div>
                 </div>
 
                 <!-- Drive C Bar -->
@@ -3987,7 +4024,7 @@ Select a script and click 'Run Lune Engine' to execute Luau bytecode analysis or
                     <span style="color: #9ca3af; font-family: var(--mono);">4.2 GB used of 50.0 GB</span>
                   </div>
                   <div style="height: 10px; background: #0a0c10; border-radius: 5px; overflow: hidden;">
-                    <div style="height: 100%; width: 8.4%; background: #3b82f6; border-radius: 5px;"></div>
+                    <div style="height: 100%; width: 8.4%; background: #ec4899; border-radius: 5px;"></div>
                   </div>
                 </div>
               </div>
@@ -3997,7 +4034,7 @@ Select a script and click 'Run Lune Engine' to execute Luau bytecode analysis or
             <div class="pc-window" id="win-browser" style="top: 75px; left: 240px; width: 680px; height: 460px; z-index: 7;" onmousedown="focusPcWindow('win-browser')">
               <div class="pc-win-titlebar" onmousedown="startWindowDrag(event, 'win-browser')">
                 <div class="pc-win-title">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
                   Web Browser — Edge Cloud View
                 </div>
                 <div class="pc-win-controls">
@@ -4046,10 +4083,10 @@ Select a script and click 'Run Lune Engine' to execute Luau bytecode analysis or
               <!-- Start Menu Button -->
               <button class="pc-taskbar-start-btn" id="pc-start-btn" onclick="toggleStartMenu()" title="Start">
                 <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
-                  <rect x="1" y="1" width="6.5" height="6.5" fill="#38bdf8"/>
-                  <rect x="8.5" y="1" width="6.5" height="6.5" fill="#38bdf8"/>
-                  <rect x="1" y="8.5" width="6.5" height="6.5" fill="#38bdf8"/>
-                  <rect x="8.5" y="8.5" width="6.5" height="6.5" fill="#38bdf8"/>
+                  <rect x="1" y="1" width="6.5" height="6.5" fill="#f472b6"/>
+                  <rect x="8.5" y="1" width="6.5" height="6.5" fill="#f472b6"/>
+                  <rect x="1" y="8.5" width="6.5" height="6.5" fill="#f472b6"/>
+                  <rect x="8.5" y="8.5" width="6.5" height="6.5" fill="#f472b6"/>
                 </svg>
               </button>
 
@@ -4068,7 +4105,7 @@ Select a script and click 'Run Lune Engine' to execute Luau bytecode analysis or
               </button>
 
               <button class="pc-taskbar-item" id="tb-win-notepad" onclick="togglePcWindowFromTaskbar('win-notepad')" title="Notepad">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
               </button>
 
               <button class="pc-taskbar-item" id="tb-win-taskmgr" onclick="togglePcWindowFromTaskbar('win-taskmgr')" title="Task Manager">
@@ -4084,7 +4121,7 @@ Select a script and click 'Run Lune Engine' to execute Luau bytecode analysis or
               </button>
 
               <button class="pc-taskbar-item" id="tb-win-store" onclick="togglePcWindowFromTaskbar('win-store')" title="Software Store">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
               </button>
             </div>
 
@@ -4112,7 +4149,7 @@ Select a script and click 'Run Lune Engine' to execute Luau bytecode analysis or
             <div class="pc-start-pinned">
               <div class="pc-start-section-title">
                 <span>Pinned</span>
-                <span style="font-size: 11px; color: #60a5fa; cursor: pointer;">All apps &gt;</span>
+                <span style="font-size: 11px; color: #f9a8d4; cursor: pointer;">All apps &gt;</span>
               </div>
               <div class="pc-start-grid">
                 <div class="pc-start-tile" onclick="openPcWindow('win-cmd'); toggleStartMenu();">
@@ -4131,7 +4168,7 @@ Select a script and click 'Run Lune Engine' to execute Luau bytecode analysis or
 
                 <div class="pc-start-tile" onclick="openPcWindow('win-notepad'); toggleStartMenu();">
                   <div class="pc-start-tile-icon">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                   </div>
                   <div class="pc-start-tile-label">Notepad</div>
                 </div>
@@ -4159,21 +4196,21 @@ Select a script and click 'Run Lune Engine' to execute Luau bytecode analysis or
 
                 <div class="pc-start-tile" onclick="openPcWindow('win-store'); toggleStartMenu();">
                   <div class="pc-start-tile-icon">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
                   </div>
                   <div class="pc-start-tile-label">Software Store</div>
                 </div>
 
                 <div class="pc-start-tile" onclick="openPcWindow('win-thispc'); toggleStartMenu();">
                   <div class="pc-start-tile-icon">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f9a8d4" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
                   </div>
                   <div class="pc-start-tile-label">This PC</div>
                 </div>
 
                 <div class="pc-start-tile" onclick="openPcWindow('win-browser'); toggleStartMenu();">
                   <div class="pc-start-tile-icon">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
                   </div>
                   <div class="pc-start-tile-label">Browser</div>
                 </div>
@@ -4225,7 +4262,7 @@ Select a script and click 'Run Lune Engine' to execute Luau bytecode analysis or
             <!-- Start Menu Footer -->
             <div class="pc-start-footer">
               <div class="pc-start-user" onclick="switchTab('settings')">
-                <div style="width: 28px; height: 28px; border-radius: 50%; background: #3b82f6; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; font-size: 12px;">C</div>
+                <div style="width: 28px; height: 28px; border-radius: 50%; background: #ec4899; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; font-size: 12px;">C</div>
                 <div>
                   <div style="font-size: 12px; font-weight: 600; color: #fff;" id="pc-start-username">CloudUser</div>
                   <div style="font-size: 10px; color: #9ca3af;">Host Administrator</div>
@@ -4346,7 +4383,7 @@ Select a script and click 'Run Lune Engine' to execute Luau bytecode analysis or
           <div class="card-header">
             <div style="display: flex; align-items: center; gap: 10px;">
               <div class="card-title">Download & Installation Console</div>
-              <span class="badge" id="pkg-install-status" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.4); font-size: 11px; padding: 2px 8px; border-radius: 4px;">IDLE</span>
+              <span class="badge" id="pkg-install-status" style="background: rgba(236, 72, 153, 0.2); color: #f9a8d4; border: 1px solid rgba(236, 72, 153, 0.4); font-size: 11px; padding: 2px 8px; border-radius: 4px;">IDLE</span>
             </div>
             <div style="display: flex; gap: 8px;">
               <button class="btn btn-secondary btn-sm" onclick="clearPkgConsole()">Clear Console</button>
@@ -4420,7 +4457,7 @@ Select a script and click 'Run Lune Engine' to execute Luau bytecode analysis or
 
 <!-- AUTH MODAL (SIGN UP & LOG IN) -->
 <div id="auth-modal" style="display: none; position: fixed; inset: 0; background: rgba(1, 1, 1, 0.88); backdrop-filter: blur(8px); z-index: 9999; align-items: center; justify-content: center; padding: 20px;">
-  <div class="card cyber-glow" style="width: 100%; max-width: 440px; margin: 0; background: #121316; border-color: rgba(189, 46, 149, 0.4); box-shadow: 0 20px 40px rgba(0,0,0,0.8), 0 0 35px rgba(189, 46, 149, 0.2);">
+  <div class="card cyber-glow" style="width: 100%; max-width: 400px; margin: 0; background: #121316; border-color: rgba(189, 46, 149, 0.4); box-shadow: 0 20px 40px rgba(0,0,0,0.8), 0 0 35px rgba(189, 46, 149, 0.2);">
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px;">
       <div style="display: flex; align-items: center; gap: 10px;">
         <svg width="24" height="24" viewBox="0 0 100 100" fill="none">
@@ -4478,7 +4515,7 @@ Select a script and click 'Run Lune Engine' to execute Luau bytecode analysis or
 
 <!-- FILE OPERATIONS MODAL (CREATE FILE / CREATE FOLDER / RENAME) -->
 <div id="file-ops-modal" style="display: none; position: fixed; inset: 0; background: rgba(2, 4, 8, 0.88); backdrop-filter: blur(12px); z-index: 10000; align-items: center; justify-content: center; padding: 20px;">
-  <div class="card cyber-glow" style="width: 100%; max-width: 480px; margin: 0; background: rgba(18, 21, 32, 0.98); border: 1px solid rgba(189, 46, 149, 0.45); box-shadow: 0 24px 48px rgba(0,0,0,0.85), 0 0 35px rgba(189, 46, 149, 0.25);">
+  <div class="card cyber-glow" style="width: 100%; max-width: 440px; margin: 0; background: rgba(18, 21, 32, 0.98); border: 1px solid rgba(189, 46, 149, 0.45); box-shadow: 0 24px 48px rgba(0,0,0,0.85), 0 0 35px rgba(189, 46, 149, 0.25);">
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
       <div style="display: flex; align-items: center; gap: 10px;">
         <span id="file-ops-icon" style="font-size: 22px;"></span>
@@ -4541,7 +4578,7 @@ Select a script and click 'Run Lune Engine' to execute Luau bytecode analysis or
 
 <!-- CREATE VPS MODAL (CUSTOM NAME, SUBDOMAIN, SPECS & OS) -->
 <div id="create-vps-modal" style="display: none; position: fixed; inset: 0; background: rgba(2, 4, 8, 0.9); backdrop-filter: blur(16px); z-index: 10000; align-items: center; justify-content: center; padding: 20px; overflow-y: auto;">
-  <div class="card cyber-glow" style="width: 100%; max-width: 580px; margin: auto; background: rgba(13, 16, 26, 0.94); border: 1px solid rgba(217, 70, 239, 0.45); box-shadow: 0 28px 60px rgba(0,0,0,0.9), 0 0 40px rgba(217, 70, 239, 0.22); max-height: 90vh; overflow-y: auto;">
+  <div class="card cyber-glow" style="width: 100%; max-width: 520px; margin: auto; background: rgba(13, 16, 26, 0.94); border: 1px solid rgba(217, 70, 239, 0.45); box-shadow: 0 28px 60px rgba(0,0,0,0.9), 0 0 40px rgba(217, 70, 239, 0.22); max-height: 90vh; overflow-y: auto;">
     
     <!-- Modal Header -->
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
@@ -4578,7 +4615,7 @@ Select a script and click 'Run Lune Engine' to execute Luau bytecode analysis or
           <div style="display: flex; align-items: center; gap: 6px; overflow: hidden;">
             <span style="color: #34d399;"></span>
             <span style="color: var(--text-dim);">Live Domain:</span>
-            <span id="modal-vps-domain-preview" style="color: #38bdf8; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">https://my-discord-bot.cloudvps.site</span>
+            <span id="modal-vps-domain-preview" style="color: #f472b6; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">https://my-discord-bot.cloudvps.site</span>
           </div>
           <span class="nav-badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.3);">TLS 1.3</span>
         </div>
@@ -4730,6 +4767,14 @@ Select a script and click 'Run Lune Engine' to execute Luau bytecode analysis or
     botStatus: null,
   };
 
+  // Resolve the VPS to operate on: explicit selection, else the first
+  // container in the list. Returns null when the account has no VPS yet.
+  function getActiveVpsId() {
+    if (STATE.activeVpsId) return STATE.activeVpsId;
+    if (STATE.vpsList && STATE.vpsList.length > 0) return STATE.vpsList[0].id;
+    return null;
+  }
+
   // TOAST NOTIFICATIONS
   function showToast(msg) {
     const c = document.getElementById('toast-container');
@@ -4756,10 +4801,6 @@ Select a script and click 'Run Lune Engine' to execute Luau bytecode analysis or
     if (key) {
       options.headers['X-API-Key'] = key;
       options.headers['Authorization'] = 'Bearer ' + key;
-    }
-    const savedUser = (STATE.user && STATE.user.username) || localStorage.getItem('cloudvps_last_user');
-    if (savedUser) {
-      options.headers['X-CloudVPS-User'] = savedUser;
     }
     if (options.body && typeof options.body === 'object' && !(options.body instanceof FormData)) {
       options.headers['Content-Type'] = 'application/json';
@@ -4902,15 +4943,15 @@ Select a script and click 'Run Lune Engine' to execute Luau bytecode analysis or
       }
     } catch (e) {}
 
-    if (accounts.length === 0) {
-      try {
-        accounts = JSON.parse(localStorage.getItem('cloudvps_saved_accounts') || '[]');
-      } catch (e) {}
-    }
-
-    if (!accounts.find(a => a.username === 'brittainjaden347')) {
-      accounts.unshift({ username: 'brittainjaden347' });
-    }
+    // Fall back to locally remembered accounts (from this browser)
+    try {
+      const local = JSON.parse(localStorage.getItem('cloudvps_saved_accounts') || '[]');
+      for (const acc of local) {
+        if (!accounts.find(a => a.username.toLowerCase() === acc.username.toLowerCase())) {
+          accounts.push({ username: acc.username });
+        }
+      }
+    } catch (e) {}
 
     listEl.innerHTML = accounts.map(acc => {
       const isCurrent = STATE.user && STATE.user.username.toLowerCase() === acc.username.toLowerCase();
@@ -4918,7 +4959,7 @@ Select a script and click 'Run Lune Engine' to execute Luau bytecode analysis or
         <div class="saved-account-item ${isCurrent ? 'active' : ''}" onclick="switchToAccount('${escapeHtml(acc.username)}')">
           <div style="display: flex; align-items: center; gap: 8px;">
             <span style="font-family: var(--mono); font-weight: 700;">${escapeHtml(acc.username)}</span>
-            ${isCurrent ? '<span style="font-size: 10px; background: rgba(99,102,241,0.3); color: #818cf8; padding: 1px 6px; border-radius: 4px;">ACTIVE</span>' : ''}
+            ${isCurrent ? '<span style="font-size: 10px; background: rgba(236, 72, 153,0.3); color: #f9a8d4; padding: 1px 6px; border-radius: 4px;">ACTIVE</span>' : ''}
           </div>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </div>
@@ -4943,23 +4984,22 @@ Select a script and click 'Run Lune Engine' to execute Luau bytecode analysis or
       saveAccountToLocal(STATE.user.username, STATE.user.api_key);
       updateAuthUI();
       await loadVpsList();
+      loadHardwareBar();
+      showToast(`Switched account to ${STATE.user.username}`);
+    } else if (res.ok && res.data.api_key) {
+      // /api/users/switch returns the key directly (no user object)
+      STATE.user = {
+        id: res.data.user_id,
+        username: res.data.username || username,
+        api_key: res.data.api_key
+      };
+      saveAccountToLocal(STATE.user.username, STATE.user.api_key);
+      updateAuthUI();
+      await loadVpsList();
+      loadHardwareBar();
       showToast(`Switched account to ${STATE.user.username}`);
     } else {
-      const loginRes = await api('/api/login', {
-        method: 'POST',
-        body: { username, password: 'password123' }
-      });
-      if (loginRes.ok && loginRes.data.user_id) {
-        STATE.user = {
-          id: loginRes.data.user_id,
-          username: loginRes.data.username,
-          api_key: loginRes.data.api_key
-        };
-        saveAccountToLocal(STATE.user.username, STATE.user.api_key);
-        updateAuthUI();
-        await loadVpsList();
-        showToast(`Logged in as ${STATE.user.username}`);
-      }
+      showToast(res.data.error || `Could not switch to ${username}`, true);
     }
     const panel = document.getElementById('accounts-dropdown-panel');
     if (panel) panel.style.display = 'none';
@@ -4967,14 +5007,14 @@ Select a script and click 'Run Lune Engine' to execute Luau bytecode analysis or
 
   async function handleLogout() {
     await api('/api/logout', { method: 'POST' });
-    showToast('Switched to guest mode.');
-    const saved = JSON.parse(localStorage.getItem('cloudvps_saved_accounts') || '[]');
-    const next = saved.find(s => s.username !== (STATE.user && STATE.user.username));
-    if (next) {
-      switchToAccount(next.username);
-    } else {
-      switchToAccount('brittainjaden347');
-    }
+    try { localStorage.removeItem('cloudvps_key'); } catch (e) {}
+    STATE.user = null;
+    STATE.vpsList = [];
+    STATE.activeVpsId = null;
+    updateAuthUI();
+    renderVpsList();
+    updateBotVpsStatusCard();
+    showToast('Logged out — you are now in guest mode.');
   }
 
   function handleUserPillClick() {
@@ -5125,7 +5165,7 @@ Select a script and click 'Run Lune Engine' to execute Luau bytecode analysis or
     };
     document.getElementById('header-section-title').textContent = titles[tabId] || 'Cloud VPS';
 
-    if (tabId === 'vps') loadVpsList();
+    if (tabId === 'vps') { loadVpsList(); loadHardwareBar(); }
     if (tabId === 'packages') initPackageDownloaderTab();
     if (tabId === 'ai') initManusAiTab();
     if (tabId === 'github') initGitHubTab();
@@ -5215,7 +5255,7 @@ Select a script and click 'Run Lune Engine' to execute Luau bytecode analysis or
               <div style="font-size: 11.5px; color: var(--text-muted); font-family: var(--mono); margin-top: 3px;">
                 ${coreText} &bull; ${ramText} &bull; ${osText} &bull; ID: ${v.id}
               </div>
-              <div style="font-size: 11px; color: #38bdf8; font-family: var(--mono); margin-top: 3px; display: flex; align-items: center; gap: 6px;">
+              <div style="font-size: 11px; color: #f472b6; font-family: var(--mono); margin-top: 3px; display: flex; align-items: center; gap: 6px;">
                 <span> https://${escapeHtml(domainName)}</span>
                 <a href="/sites/${v.id}" target="_blank" style="color: var(--primary-light); text-decoration: underline; font-size: 10.5px; font-weight: 600;">[Open Site ↗]</a>
                 <button onclick="runDomainDiagnostics('${escapeHtml(domainName)}')" class="btn-icon-subtle" style="font-size: 10px; padding: 1px 4px; color: #34d399;" title="Run live SSL and latency test"> Ping</button>
@@ -5583,7 +5623,8 @@ Select a script and click 'Run Lune Engine' to execute Luau bytecode analysis or
   // LIVE REAL-TIME DOMAIN DIAGNOSTICS & VERIFICATION
   // =========================================================================
   async function runDomainDiagnostics(domainToCheck) {
-    const vpsId = STATE.activeVpsId || (STATE.vpsList && STATE.vpsList[0] ? STATE.vpsList[0].id : 'vps-free-01');
+    const vpsId = getActiveVpsId();
+    if (!vpsId) { showToast('Please create or select a VPS container first.'); return; }
     const domain = domainToCheck || (document.getElementById('custom-subdomain-input')?.value || '') + (document.getElementById('custom-domain-suffix')?.value || '.cloudvps.site');
     showToast(`Checking SSL certificate & DNS for ${domain}...`);
 
@@ -5780,13 +5821,13 @@ Select a script and click 'Run Lune Engine' to execute Luau bytecode analysis or
   }
 
   function getFileBadge(name, isDir) {
-    if (isDir) return '<span class="badge-cyber" style="color: #c084fc; border-color: rgba(192, 132, 252, 0.35);">FOLDER</span>';
+    if (isDir) return '<span class="badge-cyber" style="color: #f0abfc; border-color: rgba(240, 171, 252, 0.35);">FOLDER</span>';
     const lower = (name || '').toLowerCase();
     if (lower === 'bot.py' || lower === 'main.py' || lower === 'app.py') {
       return '<span class="badge-cyber" style="color: var(--success); border-color: var(--success);">ENTRYPOINT (Python)</span>';
     }
     if (lower === 'index.js' || lower === 'bot.js' || lower === 'main.js') {
-      return '<span class="badge-cyber" style="color: #38bdf8; border-color: #38bdf8;">ENTRYPOINT (Node)</span>';
+      return '<span class="badge-cyber" style="color: #f472b6; border-color: #f472b6;">ENTRYPOINT (Node)</span>';
     }
     if (lower.endsWith('.luau') || lower.endsWith('.lua')) {
       return '<span class="badge-cyber" style="color: #f43f5e; border-color: rgba(244, 63, 94, 0.4);">LUNE RUNTIME</span>';
@@ -6099,7 +6140,7 @@ async def on_message(message):
     # Selfbot Ping command
     if message.content == ">ping":
         latency_ms = round(client.latency * 1000)
-        await message.edit(content=f" **Selfbot Pong!** Latency: `{latency_ms}ms` | Cloud VPS 24/7 Host")
+        await message.edit(content=f" **Selfbot Pong!** Latency: \`{latency_ms}ms\` | Cloud VPS 24/7 Host")
 
     # Selfbot Info command
     elif message.content == ">info":
@@ -6512,7 +6553,27 @@ if (!userToken) {
     const badge = document.getElementById('bot-live-badge');
     const detailText = document.getElementById('bot-status-detail-text');
     const liveDot = document.getElementById('bot-log-live-dot');
+    const sidebarBadge = document.getElementById('sidebar-bot-badge');
     const isRunning = b.running === true || b.status === 'running';
+
+    if (sidebarBadge) {
+      if (isRunning) {
+        sidebarBadge.textContent = 'ONLINE';
+        sidebarBadge.style.background = 'rgba(37, 217, 130, 0.15)';
+        sidebarBadge.style.color = 'var(--success)';
+        sidebarBadge.style.borderColor = 'rgba(37, 217, 130, 0.3)';
+      } else if (b.status === 'error') {
+        sidebarBadge.textContent = 'ERROR';
+        sidebarBadge.style.background = 'rgba(239, 68, 68, 0.15)';
+        sidebarBadge.style.color = '#f87171';
+        sidebarBadge.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+      } else {
+        sidebarBadge.textContent = 'IDLE';
+        sidebarBadge.style.background = 'rgba(148, 163, 184, 0.15)';
+        sidebarBadge.style.color = 'var(--text-muted)';
+        sidebarBadge.style.borderColor = 'rgba(148, 163, 184, 0.3)';
+      }
+    }
 
     if (badge) {
       if (isRunning) {
@@ -6630,7 +6691,7 @@ if (!userToken) {
       if (detected) {
         badge.textContent = detected;
         badge.style.display = 'inline-block';
-        badge.style.color = type === 'user' ? '#ec4899' : '#a855f7';
+        badge.style.color = type === 'user' ? '#ec4899' : '#d946ef';
       } else {
         badge.style.display = 'none';
       }
@@ -7141,7 +7202,7 @@ if (!userToken) {
               const sizeLabel = isDir ? '' : `<span style="font-size: 10px; color: var(--text-dim); margin-left: auto;">${formatBytes(f.size)}</span>`;
 
               const activeStyle = isActive 
-                ? 'background: rgba(56, 189, 248, 0.16); border: 1px solid rgba(56, 189, 248, 0.4); color: #fff; font-weight: 700;' 
+                ? 'background: rgba(244, 114, 182, 0.16); border: 1px solid rgba(244, 114, 182, 0.4); color: #fff; font-weight: 700;' 
                 : 'background: transparent; border: 1px solid transparent; color: var(--text-muted);';
 
               return `
@@ -7268,8 +7329,8 @@ if (!userToken) {
         const itemFilename = decodeURIComponent(row.dataset.filename || '');
         if (itemFilename === filename && row.dataset.isdir !== 'true') {
           row.classList.add('active-item');
-          row.style.background = 'rgba(56, 189, 248, 0.16)';
-          row.style.borderColor = 'rgba(56, 189, 248, 0.4)';
+          row.style.background = 'rgba(244, 114, 182, 0.16)';
+          row.style.borderColor = 'rgba(244, 114, 182, 0.4)';
           row.style.color = '#fff';
           row.style.fontWeight = '700';
         } else {
@@ -7626,9 +7687,12 @@ if __name__ == "__main__":
       showToast('Please deploy a VPS container first.');
       return;
     }
-    const entry = document.getElementById('webapp-entry-input').value.trim() || 'main.py';
-    document.getElementById('bot-script-file').value = entry;
-    document.getElementById('bot-runtime-select').value = entry.endsWith('.js') ? 'node' : 'python';
+    const entryEl = document.getElementById('webapp-entry-input');
+    const entry = (entryEl && entryEl.value.trim()) || 'main.py';
+    const scriptFileEl = document.getElementById('bot-script-file');
+    const runtimeEl = document.getElementById('bot-runtime-select');
+    if (scriptFileEl) scriptFileEl.value = entry;
+    if (runtimeEl) runtimeEl.value = entry.endsWith('.js') ? 'node' : 'python';
     showToast(`Deploying Web Service (${entry}) in 24/7 Supervisor...`);
     switchTab('bot');
     await startBotSupervisor();
@@ -7639,7 +7703,8 @@ if __name__ == "__main__":
     if (!STATE.activeVpsId && STATE.vpsList.length > 0) {
       STATE.activeVpsId = STATE.vpsList[0].id;
     }
-    const vpsId = STATE.activeVpsId || 'vps-free-01';
+    const vpsId = getActiveVpsId();
+    if (!vpsId) { showToast('Please create or select a VPS container first.'); return; }
     const res = await api(`/api/vps/${vpsId}/packages/status`);
     if (res.ok && res.data.runtimes) {
       const r = res.data.runtimes;
@@ -7670,7 +7735,8 @@ if __name__ == "__main__":
     if (!STATE.activeVpsId && STATE.vpsList.length > 0) {
       STATE.activeVpsId = STATE.vpsList[0].id;
     }
-    const vpsId = STATE.activeVpsId || 'vps-free-01';
+    const vpsId = getActiveVpsId();
+    if (!vpsId) { showToast('Please create or select a VPS container first.'); return; }
     appendPcTerminal(`\n[PC Center] Requesting installation for bundle: "${bundle}"...`);
     showToast(`Installing ${bundle} bundle...`);
 
@@ -7693,7 +7759,8 @@ if __name__ == "__main__":
     if (!STATE.activeVpsId && STATE.vpsList.length > 0) {
       STATE.activeVpsId = STATE.vpsList[0].id;
     }
-    const vpsId = STATE.activeVpsId || 'vps-free-01';
+    const vpsId = getActiveVpsId();
+    if (!vpsId) { showToast('Please create or select a VPS container first.'); return; }
     appendPcTerminal(`\n$ ${cmd}`);
     const res = await api(`/api/vps/${vpsId}/terminal/exec`, {
       method: 'POST',
@@ -7755,6 +7822,12 @@ if __name__ == "__main__":
     if (!PC_STATE.clockTimer) {
       PC_STATE.clockTimer = setInterval(updatePcClock, 1000);
     }
+    const noVpsBanner = document.getElementById('pc-no-vps-banner');
+    if (!getActiveVpsIdForPc()) {
+      if (noVpsBanner) noVpsBanner.style.display = 'flex';
+      return;
+    }
+    if (noVpsBanner) noVpsBanner.style.display = 'none';
     openPcWindow('win-cmd');
     fetchPcSystemTelemetry();
     if (!PC_STATE.telemetryTimer) {
@@ -7785,7 +7858,7 @@ if __name__ == "__main__":
   function getActiveVpsIdForPc() {
     if (STATE.activeVpsId) return STATE.activeVpsId;
     if (STATE.vpsList && STATE.vpsList.length > 0) return STATE.vpsList[0].id;
-    return 'vps-free-01';
+    return null;
   }
 
   // --- WINDOW MANAGEMENT ---
@@ -8043,7 +8116,7 @@ if __name__ == "__main__":
       const bar = document.createElement('div');
       bar.style.width = '12px';
       bar.style.height = `${barHeight}%`;
-      bar.style.background = '#60a5fa';
+      bar.style.background = '#f9a8d4';
       bar.style.borderRadius = '2px';
       if (cpuBars.children.length > 20) {
         cpuBars.removeChild(cpuBars.children[0]);
@@ -8124,10 +8197,10 @@ if __name__ == "__main__":
         item.onmouseenter = () => item.style.background = 'rgba(255,255,255,0.08)';
         item.onmouseleave = () => item.style.background = 'rgba(255,255,255,0.03)';
 
-        let iconColor = '#60a5fa';
+        let iconColor = '#f9a8d4';
         let iconEmoji = '';
         if (f.name.endsWith('.luau') || f.name.endsWith('.lua')) { iconEmoji = ''; iconColor = '#eab308'; }
-        else if (f.name.endsWith('.py')) { iconEmoji = 'Python '; iconColor = '#3b82f6'; }
+        else if (f.name.endsWith('.py')) { iconEmoji = 'Python '; iconColor = '#ec4899'; }
         else if (f.name.endsWith('.sh')) { iconEmoji = ''; iconColor = '#34d399'; }
         else if (f.name.endsWith('.json') || f.name.endsWith('.env')) { iconEmoji = ''; iconColor = '#f472b6'; }
 
@@ -8296,7 +8369,7 @@ if __name__ == "__main__":
         tr.style.cursor = 'pointer';
         tr.onclick = () => {
           document.querySelectorAll('#pc-taskmgr-tbody tr').forEach(r => r.style.background = 'transparent');
-          tr.style.background = 'rgba(59, 130, 246, 0.2)';
+          tr.style.background = 'rgba(236, 72, 153, 0.2)';
           PC_STATE.selectedPid = p.pid;
         };
 
@@ -8310,7 +8383,7 @@ if __name__ == "__main__":
           <td style="padding: 6px 12px; font-family: var(--mono); color: #9ca3af;">${p.pid}</td>
           <td style="padding: 6px 12px; color: ${statusColor}; font-size: 10px;">${p.status}</td>
           <td style="padding: 6px 12px; font-family: var(--mono);">${p.cpu}</td>
-          <td style="padding: 6px 12px; font-family: var(--mono); color: #93c5fd;">${p.mem}</td>
+          <td style="padding: 6px 12px; font-family: var(--mono); color: #fbcfe8;">${p.mem}</td>
           <td style="padding: 6px 12px;">
             <button class="apponfly-btn danger" style="padding: 1px 6px; font-size: 10px;" onclick="killProcessByPid(${p.pid})">End</button>
           </td>
@@ -8479,7 +8552,7 @@ if __name__ == "__main__":
         color: #fff; font-family: var(--sans);
       `;
       overlay.innerHTML = `
-        <div style="width: 48px; height: 48px; border: 3px solid rgba(56, 189, 248, 0.2); border-top-color: #38bdf8; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 16px;"></div>
+        <div style="width: 48px; height: 48px; border: 3px solid rgba(244, 114, 182, 0.2); border-top-color: #f472b6; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 16px;"></div>
         <div style="font-size: 16px; font-weight: 600;">Restarting Cloud PC...</div>
         <div style="font-size: 11px; color: #9ca3af; margin-top: 6px;">VirtIO Hypervisor KVM reloading kernel modules</div>
       `;
@@ -8602,17 +8675,19 @@ if __name__ == "__main__":
     if (tab === 'site') {
       iframe.style.display = 'block';
       termArea.style.display = 'none';
-      const vpsId = STATE.activeVpsId || 'vps-free-01';
+      const vpsId = getActiveVpsId();
+    if (!vpsId) { showToast('Please create or select a VPS container first.'); return; }
       iframe.src = `/sites/${vpsId}`;
     } else if (tab === 'term') {
       iframe.style.display = 'none';
       termArea.style.display = 'block';
-      termArea.innerHTML = `<div style="color: #34d399;">root@cloudvps:~# Terminal stream active for ${STATE.activeVpsId || 'vps-free-01'}</div>
-<div style="color: #60a5fa; margin-top: 4px;">Type commands in Root Terminal tab or ask Manus AI to execute bash commands autonomously.</div>`;
+      const pcTermVps = getActiveVpsId();
+      termArea.innerHTML = `<div style="color: #34d399;">root@cloudvps:~# Terminal stream active for ${pcTermVps || 'your VPS container'}</div>
+<div style="color: #f9a8d4; margin-top: 4px;">Type commands in Root Terminal tab or ask Manus AI to execute bash commands autonomously.</div>`;
     } else if (tab === 'bot') {
       iframe.style.display = 'none';
       termArea.style.display = 'block';
-      termArea.innerHTML = `<div style="color: #a855f7;">[Bot Watchdog Daemon] Attached to container supervisor.</div>
+      termArea.innerHTML = `<div style="color: #d946ef;">[Bot Watchdog Daemon] Attached to container supervisor.</div>
 <div style="color: #e4e4e7; margin-top: 4px;">Status: ACTIVE <span class="status-dot-green"></span> (Auto-restart on disconnection enabled)</div>`;
     }
   }
@@ -8647,7 +8722,7 @@ if __name__ == "__main__":
     if (!stream) return;
     stream.innerHTML = `
       <div id="manus-welcome-banner" style="text-align: center; max-width: 620px; margin: 20px auto; padding: 20px;">
-        <div style="width: 52px; height: 52px; margin: 0 auto 16px; border-radius: 16px; background: linear-gradient(135deg, #a855f7 0%, #3b82f6 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 30px rgba(168, 85, 247, 0.4);">
+        <div style="width: 52px; height: 52px; margin: 0 auto 16px; border-radius: 16px; background: linear-gradient(135deg, #d946ef 0%, #ec4899 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 30px rgba(217, 70, 239, 0.4);">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
         </div>
         <h2 style="font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 6px;">How can Manus AI assist your Cloud VPS today?</h2>
@@ -8657,7 +8732,7 @@ if __name__ == "__main__":
 
         <div class="manus-starter-grid">
           <div class="manus-starter-card" onclick="quickRunManus('Clone https://github.com/cloudvps/starter-site.git and deploy it to a free SSL domain')">
-            <div style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #60a5fa; font-size: 13px;">
+            <div style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #f9a8d4; font-size: 13px;">
               <span>Clone & Host Website</span>
             </div>
             <div style="font-size: 11.5px; color: #71717a;">Clone any GitHub repo and bind to a free *.cloudvps.site domain.</div>
@@ -8671,7 +8746,7 @@ if __name__ == "__main__":
           </div>
 
           <div class="manus-starter-card" onclick="quickRunManus('Generate a modern responsive web portfolio in /site and publish it live')">
-            <div style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #c084fc; font-size: 13px;">
+            <div style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #f0abfc; font-size: 13px;">
               <span>Build Modern Web App</span>
             </div>
             <div style="font-size: 11.5px; color: #71717a;">Generate Tailwind HTML/JS landing page with live preview.</div>
@@ -8718,7 +8793,7 @@ if __name__ == "__main__":
     const placeholderId = `ai_pending_${Date.now()}`;
     aiDiv.id = placeholderId;
     aiDiv.innerHTML = `
-      <div style="display: flex; align-items: center; gap: 10px; color: #c084fc; font-size: 13px; font-weight: 600;">
+      <div style="display: flex; align-items: center; gap: 10px; color: #f0abfc; font-size: 13px; font-weight: 600;">
         <span class="manus-gem-icon" style="width: 22px; height: 22px; font-size: 10px;"></span>
         <span>Manus is analyzing request & synthesizing cloud execution steps...</span>
       </div>
@@ -8729,7 +8804,8 @@ if __name__ == "__main__":
     stream.appendChild(aiDiv);
     stream.scrollTop = stream.scrollHeight;
 
-    const vpsId = STATE.activeVpsId || (STATE.vpsList && STATE.vpsList[0] ? STATE.vpsList[0].id : 'vps-free-01');
+    const vpsId = getActiveVpsId();
+    if (!vpsId) { showToast('Please create or select a VPS container first.'); return; }
 
     try {
       const res = await api('/api/ai/agent', {
@@ -8757,12 +8833,12 @@ if __name__ == "__main__":
           <div class="manus-thinking-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'flex' : 'none'">
             <div style="display: flex; align-items: center; gap: 8px;">
               <span> Thinking Process</span>
-              <span style="font-family: var(--mono); font-size: 10.5px; color: #818cf8;">(${data.duration_seconds || '1.2'}s)</span>
+              <span style="font-family: var(--mono); font-size: 10.5px; color: #f9a8d4;">(${data.duration_seconds || '1.2'}s)</span>
             </div>
             <span style="font-size: 10px; color: #71717a;">[toggle]</span>
           </div>
           <div class="manus-thinking-steps">
-            ${data.thinking.split('\n').filter(Boolean).map((step, idx) => `<div><span style="color: #a855f7;">${idx + 1}.</span> ${escapeHtml(step)}</div>`).join('')}
+            ${data.thinking.split('\n').filter(Boolean).map((step, idx) => `<div><span style="color: #d946ef;">${idx + 1}.</span> ${escapeHtml(step)}</div>`).join('')}
           </div>
         </div>
       ` : '';
@@ -8789,7 +8865,7 @@ if __name__ == "__main__":
         .replace(/### (.*?)\n/g, '<div style="font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 6px;">$1</div>')
         .replace(/\*\*(.*?)\*\*/g, '<strong style="color: #fff;">$1</strong>')
         .replace(/`([^`]+)`/g, '<code class="text-cyan-400 bg-zinc-800 px-1.5 py-0.5 rounded font-mono text-xs">$1</code>')
-        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color: #38bdf8; text-decoration: underline;">$1</a>')
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color: #f472b6; text-decoration: underline;">$1</a>')
         .replace(/\n/g, '<br>');
 
       // Action buttons
@@ -8835,7 +8911,8 @@ if __name__ == "__main__":
   // ==========================================
 
   function initGitHubTab() {
-    const vpsId = STATE.activeVpsId || (STATE.vpsList && STATE.vpsList[0] ? STATE.vpsList[0].id : 'vps-free-01');
+    const vpsId = getActiveVpsId();
+    if (!vpsId) { showToast('Please create or select a VPS container first.'); return; }
     loadGitHubInfo();
     loadDomainsList();
     reloadPreviewFrame();
@@ -8860,7 +8937,8 @@ if __name__ == "__main__":
       return;
     }
 
-    const vpsId = STATE.activeVpsId || (STATE.vpsList && STATE.vpsList[0] ? STATE.vpsList[0].id : 'vps-free-01');
+    const vpsId = getActiveVpsId();
+    if (!vpsId) { showToast('Please create or select a VPS container first.'); return; }
     cloneBtn.disabled = true;
     cloneBtn.innerHTML = `
       <span class="spinner" style="width: 14px; height: 14px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; display: inline-block; animation: spin 0.8s linear infinite;"></span>
@@ -8902,7 +8980,8 @@ if __name__ == "__main__":
   }
 
   async function pullGitHubUpdates() {
-    const vpsId = STATE.activeVpsId || (STATE.vpsList && STATE.vpsList[0] ? STATE.vpsList[0].id : 'vps-free-01');
+    const vpsId = getActiveVpsId();
+    if (!vpsId) { showToast('Please create or select a VPS container first.'); return; }
     showToast('Pulling latest commits from GitHub...');
     try {
       const res = await api(`/api/vps/${vpsId}/github/pull`, {
@@ -8922,7 +9001,8 @@ if __name__ == "__main__":
   }
 
   async function loadGitHubInfo() {
-    const vpsId = STATE.activeVpsId || (STATE.vpsList && STATE.vpsList[0] ? STATE.vpsList[0].id : 'vps-free-01');
+    const vpsId = getActiveVpsId();
+    if (!vpsId) { showToast('Please create or select a VPS container first.'); return; }
     const container = document.getElementById('github-repo-info-container');
     if (!container) return;
 
@@ -8934,7 +9014,7 @@ if __name__ == "__main__":
           <div style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 14px; font-size: 12px; display: flex; flex-direction: column; gap: 8px;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <span style="color: #71717a;">Remote:</span>
-              <a href="${escapeHtml(d.remote_url)}" target="_blank" style="color: #60a5fa; font-family: var(--mono); text-decoration: underline; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(d.remote_url)}</a>
+              <a href="${escapeHtml(d.remote_url)}" target="_blank" style="color: #f9a8d4; font-family: var(--mono); text-decoration: underline; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(d.remote_url)}</a>
             </div>
             <div style="display: flex; justify-content: space-between;">
               <span style="color: #71717a;">Branch:</span>
@@ -8965,7 +9045,8 @@ if __name__ == "__main__":
   }
 
   async function loadDomainsList() {
-    const vpsId = STATE.activeVpsId || (STATE.vpsList && STATE.vpsList[0] ? STATE.vpsList[0].id : 'vps-free-01');
+    const vpsId = getActiveVpsId();
+    if (!vpsId) { showToast('Please create or select a VPS container first.'); return; }
     const container = document.getElementById('vps-domains-list');
     const liveLink = document.getElementById('github-primary-live-link');
     const urlDisplay = document.getElementById('preview-url-display');
@@ -9008,7 +9089,8 @@ if __name__ == "__main__":
       return;
     }
 
-    const vpsId = STATE.activeVpsId || (STATE.vpsList && STATE.vpsList[0] ? STATE.vpsList[0].id : 'vps-free-01');
+    const vpsId = getActiveVpsId();
+    if (!vpsId) { showToast('Please create or select a VPS container first.'); return; }
     try {
       const res = await api(`/api/vps/${vpsId}/domains/allocate`, {
         method: 'POST',
@@ -9032,7 +9114,8 @@ if __name__ == "__main__":
   }
 
   async function deleteCustomDomain(sub) {
-    const vpsId = STATE.activeVpsId || (STATE.vpsList && STATE.vpsList[0] ? STATE.vpsList[0].id : 'vps-free-01');
+    const vpsId = getActiveVpsId();
+    if (!vpsId) { showToast('Please create or select a VPS container first.'); return; }
     try {
       await api(`/api/vps/${vpsId}/domains/${sub}`, { method: 'DELETE' });
       showToast('Domain removed');
@@ -9042,7 +9125,8 @@ if __name__ == "__main__":
 
   function reloadPreviewFrame() {
     const frame = document.getElementById('main-site-preview-frame');
-    const vpsId = STATE.activeVpsId || (STATE.vpsList && STATE.vpsList[0] ? STATE.vpsList[0].id : 'vps-free-01');
+    const vpsId = getActiveVpsId();
+    if (!vpsId) { showToast('Please create or select a VPS container first.'); return; }
     if (frame) {
       frame.src = `/sites/${vpsId}?t=${Date.now()}`;
     }
@@ -9067,7 +9151,8 @@ if __name__ == "__main__":
   }
 
   function openPreviewNewTab() {
-    const vpsId = STATE.activeVpsId || (STATE.vpsList && STATE.vpsList[0] ? STATE.vpsList[0].id : 'vps-free-01');
+    const vpsId = getActiveVpsId();
+    if (!vpsId) { showToast('Please create or select a VPS container first.'); return; }
     window.open(`/sites/${vpsId}`, '_blank');
   }
 
@@ -9304,7 +9389,8 @@ if __name__ == "__main__":
   }
 
   async function executePackageDownload(packageName, runtime) {
-    const vpsId = STATE.activeVpsId || (STATE.vpsList && STATE.vpsList[0] ? STATE.vpsList[0].id : 'vps-free-01');
+    const vpsId = getActiveVpsId();
+    if (!vpsId) { showToast('Please create or select a VPS container first.'); return; }
     const name = (packageName || document.getElementById('pkg-input-name')?.value || '').trim();
     const run = runtime || currentPkgRuntime;
 
@@ -9382,7 +9468,8 @@ if __name__ == "__main__":
   }
 
   async function fetchInstalledPackages() {
-    const vpsId = STATE.activeVpsId || (STATE.vpsList && STATE.vpsList[0] ? STATE.vpsList[0].id : 'vps-free-01');
+    const vpsId = getActiveVpsId();
+    if (!vpsId) { showToast('Please create or select a VPS container first.'); return; }
     const container = document.getElementById('pkg-installed-table-container');
     if (!container) return;
 
@@ -9463,7 +9550,8 @@ if __name__ == "__main__":
 
   async function uninstallPackage(pkgName, runtime) {
     if (!confirm(`Are you sure you want to uninstall "${pkgName}"?`)) return;
-    const vpsId = STATE.activeVpsId || (STATE.vpsList && STATE.vpsList[0] ? STATE.vpsList[0].id : 'vps-free-01');
+    const vpsId = getActiveVpsId();
+    if (!vpsId) { showToast('Please create or select a VPS container first.'); return; }
     try {
       const res = await api(`/api/vps/${vpsId}/packages/uninstall`, {
         method: 'POST',
@@ -9487,13 +9575,51 @@ if __name__ == "__main__":
     }
   }
 
-  // INITIALIZATION & HARDENED PERSISTENCE
+  // LIVE HARDWARE TELEMETRY (real host metrics from /api/hardware)
+  function formatHostUptime(sec) {
+    if (!sec && sec !== 0) return '—';
+    const d = Math.floor(sec / 86400);
+    const h = Math.floor((sec % 86400) / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    if (d > 0) return `${d}d ${h}h ${m}m`;
+    if (h > 0) return `${h}h ${m}m`;
+    return `${m}m ${sec % 60}s`;
+  }
+
+  async function loadHardwareBar() {
+    try {
+      const res = await api('/api/hardware');
+      if (!res.ok || !res.data.hardware) return;
+      const hw = res.data.hardware;
+      const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+
+      const model = (hw.cpu_model || 'CPU').split(' ').slice(0, 3).join(' ');
+      set('hw-cpu', model);
+      set('hw-cpu-sub', `${hw.cpu_cores || '?'} cores available`);
+
+      const totalGb = Math.round((parseInt(hw.total_memory, 10) || 0) / 1024 * 10) / 10;
+      const freeGb = Math.round((parseInt(hw.free_memory, 10) || 0) / 1024 * 10) / 10;
+      set('hw-ram', `${totalGb} GB`);
+      set('hw-ram-sub', `${freeGb} GB free`);
+
+      set('hw-platform', `${hw.platform || ''}`.trim());
+      set('hw-platform-sub', `Kernel ${hw.kernel || ''} • ${hw.virtualization || ''}`);
+
+      set('hw-uptime', formatHostUptime(hw.uptime_seconds));
+    } catch (e) { /* bar keeps placeholder */ }
+  }
+
+  // INITIALIZATION — restore a real session if the browser still holds a
+  // valid API key/cookie; otherwise start in guest mode with the sign-up
+  // banner. No fake accounts, no silent auto-login.
   async function init() {
-    let savedUser = localStorage.getItem('cloudvps_last_user');
-    if (!savedUser) {
-      savedUser = 'brittainjaden347';
-      localStorage.setItem('cloudvps_last_user', savedUser);
-    }
+    // Drop stale keys from previous versions so guests stay guests.
+    try {
+      const storedKey = localStorage.getItem('cloudvps_key');
+      if (storedKey && (storedKey.includes('cvps_live_free_key') || storedKey.includes('cvps_live_bj347'))) {
+        localStorage.removeItem('cloudvps_key');
+      }
+    } catch (e) {}
 
     const res = await api('/api/session');
 
@@ -9502,32 +9628,13 @@ if __name__ == "__main__":
       saveAccountToLocal(STATE.user.username, STATE.user.api_key);
       updateAuthUI();
       await loadVpsList();
+      loadHardwareBar();
     } else {
-      // Auto-recover session with saved username to prevent lockouts
-      const loginRes = await api('/api/login', {
-        method: 'POST',
-        body: { username: savedUser, password: 'password123' }
-      });
-
-      if (loginRes.ok && loginRes.data && loginRes.data.user_id) {
-        STATE.user = {
-          id: loginRes.data.user_id,
-          username: loginRes.data.username,
-          api_key: loginRes.data.api_key
-        };
-        saveAccountToLocal(STATE.user.username, STATE.user.api_key);
-        updateAuthUI();
-        await loadVpsList();
-      } else {
-        STATE.user = {
-          id: 'usr-brittain',
-          username: savedUser,
-          api_key: 'cvps_live_' + savedUser + '_key'
-        };
-        saveAccountToLocal(STATE.user.username, STATE.user.api_key);
-        updateAuthUI();
-        await loadVpsList();
-      }
+      STATE.user = null;
+      STATE.vpsList = [];
+      STATE.activeVpsId = null;
+      updateAuthUI();
+      loadVpsList();
     }
   }
 

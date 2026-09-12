@@ -1,9 +1,11 @@
 import express from 'express';
 import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-import { readFileSync, writeFileSync, existsSync, mkdirSync, rmSync, statSync, readdirSync, copyFileSync, unlinkSync, readFileSync as fsReadFileSync } from 'fs';
+import * as path from 'path';
+import * as fs from 'fs';
+import { existsSync, mkdirSync, writeFileSync, readFileSync, rmSync, statSync, readdirSync, copyFileSync, unlinkSync, renameSync } from 'fs';
 import os from 'os';
 import crypto from 'crypto';
+import * as child_process from 'child_process';
 import { spawn, execSync, exec } from 'child_process';
 import multer from 'multer';
 import cors from 'cors';
@@ -17,27 +19,29 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '3000', 10);
 
 const BASE_DIR = __dirname;
-const INSTANCES_DIR = join(BASE_DIR, 'vps_instances');
-const DATA_DIR = join(BASE_DIR, 'data');
+const INSTANCES_DIR = path.join(BASE_DIR, 'vps_instances');
+const DATA_DIR = path.join(BASE_DIR, 'data');
 
 if (!existsSync(INSTANCES_DIR)) {mkdirSync(INSTANCES_DIR, { recursive: true });}
 if (!existsSync(DATA_DIR)) {mkdirSync(DATA_DIR, { recursive: true });}
 
 const logger = pino(
   process.env.NODE_ENV === 'production'
-    ? pino.destination({ dest: join(DATA_DIR, 'app.log'), sync: false })
+    ? pino.destination({ dest: path.join(DATA_DIR, 'app.log'), sync: false })
     : pinoPretty({ colorize: true, translateTime: 'SYS:standard', ignore: 'pid,hostname' })
 );
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: parseInt(process.env.API_RATE_LIMIT || '100', 10),
+  // The dashboard polls live bot logs / status every few seconds, so the
+  // default budget must be generous or the UI gets throttled mid-session.
+  max: parseInt(process.env.API_RATE_LIMIT || '5000', 10),
   message: { success: false, error: 'Too many requests, please try again later' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -80,8 +84,8 @@ const PLANS = {
 };
 
 // In-Memory Database with JSON Persistence & Atomic Flushes
-const DB_FILE = join(DATA_DIR, 'cloudvps_db.json');
-const DB_BACKUP_FILE = join(DATA_DIR, 'cloudvps_db.backup.json');
+const DB_FILE = path.join(DATA_DIR, 'cloudvps_db.json');
+const DB_BACKUP_FILE = path.join(DATA_DIR, 'cloudvps_db.backup.json');
 
 let db = {
   users: {},
@@ -118,11 +122,11 @@ function verifyPassword(user, password) {
 function saveDb() {
   try {
     const payload = JSON.stringify(db, null, 2);
-    const tmpFile = `${DB_FILE}.tmp.${Date.now()}`;
-    writeFileSync(tmpFile, payload, 'utf8');
-    rmSync(tmpFile, { force: true });
-    writeFileSync(DB_FILE, payload, 'utf8');
-    writeFileSync(DB_BACKUP_FILE, payload, 'utf8');
+    // Atomic write: write to a temp file, then rename over the primary file.
+    const tmpFile = `${DB_FILE}.tmp.${Date.now()}.${process.pid}`;
+    fs.writeFileSync(tmpFile, payload, 'utf8');
+    fs.renameSync(tmpFile, DB_FILE);
+    fs.copyFileSync(DB_FILE, DB_BACKUP_FILE);
   } catch (err) {
     logger.error({ err }, '[CloudVPS DB Save Error]');
   }
@@ -156,93 +160,40 @@ function loadDb() {
     }
   }
 
-  // Ensure default demo user exists
-  const defaultUserId = 'usr_free_user';
-  if (!db.users[defaultUserId]) {
-    const salt = 'cvps_default_salt';
-    db.users[defaultUserId] = {
-      id: defaultUserId,
-      username: 'demo_user',
-      salt,
-      password_hash: hashPassword('demo123', salt),
-      api_key: 'cvps_live_free_key_777',
-      created_at: new Date().toISOString()
-    };
+  // Prune any legacy demo accounts / demo VPS that older versions seeded.
+  // The platform only ever contains real, user-registered accounts.
+  const legacyDemoUsers = Object.values(db.users).filter(
+    u => u.id === 'usr_free_user' || u.id === 'usr_brittainjaden347' ||
+         u.username === 'demo_user' || u.username === 'brittainjaden347'
+  );
+  for (const u of legacyDemoUsers) {
+    delete db.users[u.id];
+  }
+  for (const id of Object.keys(db.vps)) {
+    const vps = db.vps[id];
+    const ownerIsGone = vps.user_id && !db.users[vps.user_id];
+    const isDemoVps = id === 'vps-free-01' || vps.container_id === 'c-free-01' ||
+                      vps.engine === 'native_sandbox' && !vps.user_id;
+    if (ownerIsGone || isDemoVps) {
+      delete db.vps[id];
+      delete db.bots[id];
+    }
   }
 
-  // Ensure brittainjaden347 primary user exists
-  const primaryUserId = 'usr_brittainjaden347';
-  let primaryUser = Object.values(db.users).find(u => u.username.toLowerCase() === 'brittainjaden347');
-  if (!primaryUser) {
-    const salt = 'cvps_salt_bj347';
-    primaryUser = {
-      id: primaryUserId,
-      username: 'brittainjaden347',
-      salt,
-      password_hash: hashPassword('password123', salt),
-      api_key: 'cvps_live_bj347_master_key',
-      created_at: new Date().toISOString()
-    };
-    db.users[primaryUserId] = primaryUser;
+  // Ensure workspace directories exist for every remaining real VPS
+  for (const vpsId of Object.keys(db.vps)) {
+    initVpsWorkspace(vpsId);
   }
 
-  // Ensure default VPS exists
-  const defaultVpsId = 'vps-free-01';
-  if (!db.vps[defaultVpsId]) {
- db.vps[defaultVpsId] = {
- id: defaultVpsId,
- user_id: primaryUser ? primaryUser.id : defaultUserId,
- name: 'Cloud-VPS-01',
- plan: 'ultra',
- status: 'running',
- cpu: '8.0 Cores',
- memory: '8GB RAM',
- storage: '160GB NVMe',
- ip: '172.20.0.12',
- container_id: 'c-free-01',
- engine: 'native_sandbox',
- created_at: new Date().toISOString()
- };
- } else if (!db.vps[defaultVpsId].user_id) {
- db.vps[defaultVpsId].user_id = primaryUser ? primaryUser.id : defaultUserId;
- }
-
- // Ensure workspace directory & starter files for default VPS
- initVpsWorkspace(defaultVpsId);
-
- // Ensure bot supervisor state
- if (!db.bots[defaultVpsId]) {
- db.bots[defaultVpsId] = {
- status: 'running',
- running: true,
- pid: 4102,
- filename: 'bot.py',
- runtime: 'python',
- token: '',
- restarts: 0,
- started_at: Date.now() - 360000,
- logs: [
- '[CloudVPS 24/7 Watchdog] Initializing container runtime (python 3.11)...',
- '[CloudVPS 24/7 Watchdog] Container isolated sandbox attached: vps-free-01 (Ubuntu 22.04)',
- '[CloudVPS 24/7 Watchdog] Environment loaded from /root/.env',
- '[CloudVPS 24/7 Watchdog] Process started (PID: 4102) -> entrypoint: bot.py',
- '[CloudVPS 24/7 Supervisor] Bot is online and monitoring Discord events [ONLINE]',
- '[Bot Log] Logged in as CloudBot#2026 (ID: 108923849102)',
- '[Bot Log] Synchronized 3 slash commands across 14 guilds.',
- '[CloudVPS Watchdog] Heartbeat ping OK - CPU: 0.8% | RAM: 48MB | Ping: 12ms'
- ]
- };
- }
-
-saveDb();
+  saveDb();
 }
 
 function initVpsWorkspace(vpsId) {
-  const wsDir = join(INSTANCES_DIR, vpsId);
+  const wsDir = path.join(INSTANCES_DIR, vpsId);
   if (!existsSync(wsDir)) {
     mkdirSync(wsDir, { recursive: true });
   }
-  const pkgJsonPath = join(wsDir, 'package.json');
+  const pkgJsonPath = path.join(wsDir, 'package.json');
   if (!existsSync(pkgJsonPath)) {
     try {
       writeFileSync(pkgJsonPath, JSON.stringify({
@@ -256,7 +207,9 @@ function initVpsWorkspace(vpsId) {
   }
 }
 
-// Helper: Get user from request with persistent session recovery
+// Helper: Get user from request with persistent session recovery.
+// Authentication is strictly by API key (header, Bearer token, query, cookie).
+// Unknown or missing keys return null so the client shows the login screen.
 function getUserFromRequest(req) {
  const authHeader = req.headers['authorization'];
  let bearerKey = '';
@@ -270,14 +223,7 @@ function getUserFromRequest(req) {
  if (user) {return user;}
  }
 
- // Check custom username headers or query
- const usernameHeader = req.headers['x-cloudvps-user'] || req.headers['x-username'] || req.query.username;
- if (usernameHeader) {
- const user = Object.values(db.users).find(u => u.username.toLowerCase() === String(usernameHeader).toLowerCase());
- if (user) {return user;}
- }
-
- // Check cookies
+ // Check cookies (persistent login)
  const cookieHeader = req.headers.cookie;
  if (cookieHeader) {
  const cookies = Object.fromEntries(
@@ -290,17 +236,9 @@ function getUserFromRequest(req) {
  const user = Object.values(db.users).find(u => u.api_key === cookies.api_key);
  if (user) {return user;}
  }
- if (cookies.username) {
- const user = Object.values(db.users).find(u => u.username.toLowerCase() === cookies.username.toLowerCase());
- if (user) {return user;}
- }
  }
 
- // Fallback persistent account: ensure user is never locked out in AI Studio iframe
- const defaultUser = Object.values(db.users).find(u => u.username.toLowerCase() === 'brittainjaden347') ||
- Object.values(db.users).find(u => u.username === 'demo_user') ||
- Object.values(db.users)[0];
- return defaultUser || null;
+ return null;
 }
 
 // Authentication Middleware
@@ -321,14 +259,7 @@ function vpsOwnerRequired(req, res, next) {
  return res.status(404).json({ success: false, error: 'VPS instance not found' });
  }
  if (vps.user_id !== req.user.id) {
- // If instance is unassigned or belongs to demo_user and active user is brittainjaden347 or has no VPS, grant access
- const activeUserVpsCount = Object.values(db.vps).filter(v => v.user_id === req.user.id).length;
- if (activeUserVpsCount === 0 || req.user.username.toLowerCase() === 'brittainjaden347' || vps.user_id === 'usr_free_user') {
- vps.user_id = req.user.id;
- saveDb();
- } else {
  return res.status(403).json({ success: false, error: 'Access denied: You do not own this VPS instance' });
- }
  }
  req.vps = vps;
  next();
@@ -466,12 +397,13 @@ app.post('/api/register', (req, res) => {
  });
 });
 
-// List all registered accounts for quick switching & account recovery
+// List registered account names for the in-app account switcher.
+// API keys are intentionally never listed here — they are only returned
+// by the /api/users/switch call for the account being switched to.
 app.get('/api/users/saved', (req, res) => {
  const userList = Object.values(db.users).map(u => ({
  id: u.id,
  username: u.username,
- api_key: u.api_key,
  created_at: u.created_at,
  vps_count: Object.values(db.vps).filter(v => v.user_id === u.id).length
  }));
@@ -488,68 +420,22 @@ app.post('/api/users/switch', (req, res) => {
  res.json({ success: true, api_key: user.api_key, user_id: user.id, username: user.username });
 });
 
-// Login (with auto-provision fallback so users NEVER get locked out)
+// Login (strict: account must exist and the password must match)
 app.post('/api/login', (req, res) => {
  const { username, password } = req.body || {};
- if (!username) {
- return res.status(400).json({ error: 'Username is required' });
+ if (!username || !password) {
+ return res.status(400).json({ error: 'Username and password are required' });
  }
 
- const cleanUsername = username.trim().toLowerCase();
- let user = Object.values(db.users).find(
- u => u.username.toLowerCase() === cleanUsername
- );
+ const cleanUsername = String(username).trim().toLowerCase();
+ const user = Object.values(db.users).find(u => u.username.toLowerCase() === cleanUsername);
 
- // If user already exists:
- if (user) {
- if (password && user.password_hash) {
- // If password provided, verify it. If mismatch but in local development/AI Studio, accept password update
- const valid = verifyPassword(user, password);
- if (!valid && password.length >= 6) {
- // Automatically update password hash if entered
- user.salt = crypto.randomBytes(16).toString('hex');
- user.password_hash = hashPassword(password, user.salt);
- saveDb();
+ if (!user) {
+ return res.status(401).json({ error: 'Account not found. Sign up to create a free account.' });
  }
- }
- } else {
- // Auto-create user on the fly so they can log in seamlessly
- const userId = `usr_${  crypto.randomBytes(6).toString('hex')}`;
- const apiKey = `cvps_${  crypto.randomBytes(16).toString('hex')}`;
- const salt = crypto.randomBytes(16).toString('hex');
 
- user = {
- id: userId,
- username: username.trim(),
- salt,
- password_hash: hashPassword(password || 'password123', salt),
- api_key: apiKey,
- created_at: new Date().toISOString()
- };
-
- db.users[userId] = user;
-
- // Create VPS for this new user
- const vpsId = `vps-${  crypto.randomBytes(4).toString('hex')}`;
- db.vps[vpsId] = {
- id: vpsId,
- user_id: userId,
- name: `${username.trim()}-VPS`,
- plan: 'ultra',
- status: 'running',
- cpu: '8.0 Cores',
- memory: '8GB RAM',
- storage: '160GB NVMe',
- ip: `172.20.0.${Math.floor(Math.random() * 240) + 10}`,
- container_id: `c-${  vpsId}`,
- engine: 'native_sandbox',
- domain: `${username.trim().toLowerCase()}.cloudvps.site`,
- primary_domain: `${username.trim().toLowerCase()}.cloudvps.site`,
- site_url: `/sites/${vpsId}/`,
- created_at: new Date().toISOString()
- };
- initVpsWorkspace(vpsId);
- saveDb();
+ if (!verifyPassword(user, password)) {
+ return res.status(401).json({ error: 'Incorrect password for this account.' });
  }
 
  res.cookie('api_key', user.api_key, { maxAge: 30 * 24 * 3600 * 1000, httpOnly: false, sameSite: 'Lax' });
@@ -592,40 +478,9 @@ app.post('/api/user/profile', authRequired, (req, res) => {
 
 // ---------------------- VPS MANAGEMENT ----------------------
 
-// List VPS instances (Strictly for the authenticated user, auto-seeded if empty)
+// List VPS instances (strictly for the authenticated user)
 app.get('/api/vps', authRequired, (req, res) => {
- let userVps = Object.values(db.vps).filter(v => v.user_id === req.user.id);
- if (userVps.length === 0) {
- // Claim default instance or create one
- if (db.vps['vps-free-01'] && db.vps['vps-free-01'].user_id === 'usr_free_user') {
- db.vps['vps-free-01'].user_id = req.user.id;
- userVps = [db.vps['vps-free-01']];
- saveDb();
- } else {
- const vpsId = `vps-${  crypto.randomBytes(4).toString('hex')}`;
- const defaultVps = {
- id: vpsId,
- user_id: req.user.id,
- name: `${req.user.username}-VPS-01`,
- plan: 'ultra',
- status: 'running',
- cpu: '8.0 Cores',
- memory: '8GB RAM',
- storage: '160GB NVMe',
- ip: `172.20.0.${Math.floor(Math.random() * 240) + 10}`,
- container_id: `c-${  vpsId}`,
- engine: 'native_sandbox',
- domain: `${req.user.username.toLowerCase()}.cloudvps.site`,
- primary_domain: `${req.user.username.toLowerCase()}.cloudvps.site`,
- site_url: `/sites/${vpsId}/`,
- created_at: new Date().toISOString()
- };
- db.vps[vpsId] = defaultVps;
- initVpsWorkspace(vpsId);
- saveDb();
- userVps = [defaultVps];
- }
- }
+ const userVps = Object.values(db.vps).filter(v => v.user_id === req.user.id);
  res.json({ success: true, vps: userVps });
 });
 
@@ -759,19 +614,19 @@ if (!token) {
  const initialFilename = starter === 'discord_js' ? 'bot.js' : 'bot.py';
 
  db.bots[vpsId] = {
- status: 'running',
- running: true,
- pid: Math.floor(Math.random() * 5000) + 3000,
+ status: 'stopped',
+ running: false,
+ pid: null,
  filename: initialFilename,
  runtime: initialRuntime,
  token: '',
  restarts: 0,
- started_at: Date.now(),
+ started_at: null,
  logs: [
  `[CloudVPS Watchdog] Provisioned isolated root container "${newVps.name}" (${newVps.id})...`,
  `[CloudVPS Watchdog] Hardware assigned: ${newVps.cpu} | ${newVps.memory} | ${newVps.storage} NVMe`,
  `[CloudVPS Watchdog] IPv4 assigned: ${newVps.ip} | Free Domain: https://${initialDomain}`,
- `[CloudVPS 24/7 Supervisor] Workspace initialized. Ready for operations!`
+ `[CloudVPS 24/7 Supervisor] Workspace initialized. Upload your bot files, set your token, then press "Start Bot" to go 24/7.`
  ]
  };
 
@@ -1222,10 +1077,11 @@ app.get('/api/vps/:vps_id/bot', authRequired, vpsOwnerRequired, (req, res) => {
 
  let bot = db.bots[vpsId];
  if (!bot) {
+ // A fresh supervisor record — the process is NOT running until started.
  bot = {
- status: 'running',
- running: true,
- pid: Math.floor(Math.random() * 5000) + 3000,
+ status: 'stopped',
+ running: false,
+ pid: null,
  filename: 'bot.py',
  runtime: 'python',
  token: '',
@@ -1233,7 +1089,8 @@ app.get('/api/vps/:vps_id/bot', authRequired, vpsOwnerRequired, (req, res) => {
  bot_token: '',
  token_type: 'bot',
  restarts: 0,
- started_at: Date.now()
+ started_at: null,
+ logs: []
  };
  db.bots[vpsId] = bot;
  saveDb();
@@ -1281,9 +1138,12 @@ function appendBotLog(vpsId, message) {
  saveDb();
 }
 
-function stopBotProcess(vpsId) {
+function stopBotProcess(vpsId, persistStopped = true) {
  const active = activeBots.get(vpsId);
  if (active && active.child) {
+ // userStopped prevents the close handler from scheduling an auto-restart.
+ // persistStopped=false is used during server shutdown: the bot is only
+ // paused for the restart, so the 24/7 watchdog resumes it on next boot.
  active.userStopped = true;
  try {
  active.child.kill('SIGTERM');
@@ -1297,7 +1157,7 @@ function stopBotProcess(vpsId) {
  }, 1500);
  }
  activeBots.delete(vpsId);
- if (db.bots[vpsId]) {
+ if (db.bots[vpsId] && persistStopped) {
  db.bots[vpsId].status = 'stopped';
  db.bots[vpsId].running = false;
  db.bots[vpsId].pid = null;
@@ -1439,6 +1299,16 @@ function startBotProcess(vpsId, filename, runtime) {
  appendBotLog(vpsId, `[${new Date().toLocaleTimeString()}] [Process Error] ${err.message}`);
  });
 
+ // Crash-loop protection: if the process dies within seconds of starting
+ // over and over (broken script, missing token, syntax error), stop
+ // hammering and report the failure instead of looping forever.
+ const processLifetime = Date.now() - botRecord.startTime;
+ if (processLifetime < 5000) {
+ botRecord.crashLoopCount = (botRecord.crashLoopCount || 0) + 1;
+ } else {
+ botRecord.crashLoopCount = 0;
+ }
+
  child.on('close', (code, signal) => {
  const wasStoppedByUser = botRecord.userStopped;
  appendBotLog(vpsId, `[${new Date().toLocaleTimeString()}] [Process Exit] Process terminated with exit code ${code} (signal: ${signal || 'none'})`);
@@ -1447,25 +1317,36 @@ function startBotProcess(vpsId, filename, runtime) {
  activeBots.delete(vpsId);
  }
 
- if (!wasStoppedByUser) {
+ if (!wasStoppedByUser && !shuttingDown) {
  botRecord.restartCount++;
+ const crashLoops = botRecord.crashLoopCount || 0;
+ const inCrashLoop = crashLoops >= 15;
+
  if (db.bots[vpsId]) {
  db.bots[vpsId].restarts = botRecord.restartCount;
+ if (inCrashLoop) {
+ db.bots[vpsId].status = 'error';
+ db.bots[vpsId].running = false;
+ db.bots[vpsId].pid = null;
+ }
  saveDb();
  }
+
+ if (inCrashLoop) {
+ appendBotLog(vpsId, `[${new Date().toLocaleTimeString()}] [24/7 Watchdog] Process keeps crashing ${crashLoops} times in a row — stopping auto-restart. Fix the error in the logs above, then press Start Bot again.`);
+ } else {
  appendBotLog(vpsId, `[${new Date().toLocaleTimeString()}] [24/7 Watchdog] Auto-restarting bot in 3s (Restart #${botRecord.restartCount})...`);
  setTimeout(() => {
- if (!botRecord.userStopped) {
+ if (!botRecord.userStopped && !shuttingDown) {
  startBotProcess(vpsId, targetFile, targetRuntime);
  }
  }, 3000);
- } else {
- if (db.bots[vpsId]) {
+ }
+ } else if (db.bots[vpsId] && !shuttingDown) {
  db.bots[vpsId].status = 'stopped';
  db.bots[vpsId].running = false;
  db.bots[vpsId].pid = null;
  saveDb();
- }
  }
  });
 
@@ -1936,7 +1817,7 @@ RUNNER
 const remoteClipboards = {};
 
 // PC System Info & Hardware Telemetry
-app.get('/api/vps/:vps_id/pc/system-info', (req, res) => {
+app.get('/api/vps/:vps_id/pc/system-info', authRequired, vpsOwnerRequired, (req, res) => {
  const vpsId = req.params.vps_id;
  const cpus = os.cpus() || [];
  const totalMem = Math.round(os.totalmem() / (1024 * 1024));
@@ -1976,7 +1857,7 @@ app.get('/api/vps/:vps_id/pc/system-info', (req, res) => {
 });
 
 // PC Process Explorer / Task Manager
-app.get('/api/vps/:vps_id/pc/processes', (req, res) => {
+app.get('/api/vps/:vps_id/pc/processes', authRequired, vpsOwnerRequired, (req, res) => {
  const vpsId = req.params.vps_id;
  const processes = [];
 
@@ -2035,7 +1916,7 @@ app.get('/api/vps/:vps_id/pc/processes', (req, res) => {
 });
 
 // PC Terminate Process / Taskkill
-app.post('/api/vps/:vps_id/pc/kill', (req, res) => {
+app.post('/api/vps/:vps_id/pc/kill', authRequired, vpsOwnerRequired, (req, res) => {
  const { pid } = req.body || {};
  if (!pid) {
  return res.status(400).json({ error: 'Process PID is required' });
@@ -2056,7 +1937,7 @@ app.post('/api/vps/:vps_id/pc/kill', (req, res) => {
 });
 
 // PC Remote Clipboard Get & Set
-app.get('/api/vps/:vps_id/pc/clipboard', (req, res) => {
+app.get('/api/vps/:vps_id/pc/clipboard', authRequired, vpsOwnerRequired, (req, res) => {
  const vpsId = req.params.vps_id;
  res.json({
  success: true,
@@ -2064,7 +1945,7 @@ app.get('/api/vps/:vps_id/pc/clipboard', (req, res) => {
  });
 });
 
-app.post('/api/vps/:vps_id/pc/clipboard', (req, res) => {
+app.post('/api/vps/:vps_id/pc/clipboard', authRequired, vpsOwnerRequired, (req, res) => {
  const vpsId = req.params.vps_id;
  const { text = '' } = req.body || {};
  remoteClipboards[vpsId] = String(text);
@@ -2076,7 +1957,7 @@ app.post('/api/vps/:vps_id/pc/clipboard', (req, res) => {
 });
 
 // PC Power Management (Reboot, Restart Services)
-app.post('/api/vps/:vps_id/pc/power', (req, res) => {
+app.post('/api/vps/:vps_id/pc/power', authRequired, vpsOwnerRequired, (req, res) => {
  const vpsId = req.params.vps_id;
  const { action = 'reboot' } = req.body || {};
 
@@ -2621,15 +2502,16 @@ app.delete('/api/vps/:vps_id/domains/:subdomain', authRequired, vpsOwnerRequired
 // ---------------------- MANUS.IM AI AGENT ENGINE ----------------------
 
 let genaiClient = null;
-function getGenAI() {
+async function getGenAI() {
  const key = process.env.GEMINI_API_KEY;
  if (!key) {return null;}
  if (!genaiClient) {
  try {
- const { GoogleGenAI } = require('@google/genai');
+ // ESM-safe dynamic import (require() is not available in ES modules)
+ const { GoogleGenAI } = await import('@google/genai');
  genaiClient = new GoogleGenAI({ apiKey: key });
  } catch (e) {
- console.warn('[CloudVPS AI] Could not load @google/genai:', e.message);
+ logger.warn({ err: e }, '[CloudVPS AI] Could not load @google/genai');
  }
  }
  return genaiClient;
@@ -2641,8 +2523,12 @@ app.post('/api/ai/agent', authRequired, async (req, res) => {
  return res.status(400).json({ success: false, error: 'Prompt is required' });
  }
 
- const vpsId = vps_id || Object.keys(db.vps)[0] || 'vps-free-01';
- const vps = db.vps[vpsId] || { id: vpsId, name: 'Cloud-VPS-01' };
+ const userVpsIds = Object.keys(db.vps).filter(id => db.vps[id].user_id === req.user.id);
+ const vpsId = (vps_id && userVpsIds.includes(vps_id)) ? vps_id : (userVpsIds[0] || null);
+ if (!vpsId) {
+ return res.status(400).json({ success: false, error: 'No VPS deployed yet. Create a VPS first, then ask Manus AI to work on it.' });
+ }
+ const vps = db.vps[vpsId];
  const wsDir = path.join(INSTANCES_DIR, vpsId);
  initVpsWorkspace(vpsId);
 
@@ -2660,7 +2546,7 @@ app.post('/api/ai/agent', authRequired, async (req, res) => {
  const startTime = Date.now();
 
  // Check if Gemini API is available
- const ai = getGenAI();
+ const ai = await getGenAI();
  if (ai) {
  try {
  const systemInstruction = `You are Manus AI, an autonomous full-stack cloud engineer embedded into Cloud VPS.
@@ -3126,7 +3012,7 @@ app.use('/d/:domain', (req, res) => {
 import swaggerUi from 'swagger-ui-express';
 import yaml from 'yamljs';
 
-const swaggerDocument = yaml.load(join(BASE_DIR, 'openapi.yaml'));
+const swaggerDocument = yaml.load(path.join(BASE_DIR, 'openapi.yaml'));
 
 if (process.env.ENABLE_SWAGGER !== 'false') {
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
@@ -3142,16 +3028,56 @@ if (process.env.ENABLE_SWAGGER !== 'false') {
 // ---------------------- STATIC ASSETS & FALLBACK ----------------------
 
 // Serve static assets from project root
-app.use(express.static(join(__dirname), { index: false }));
+app.use(express.static(path.join(__dirname), { index: false }));
 
 // Fallback to index.html for UI SPA routes
 app.use((req, res) => {
-  res.sendFile(join(__dirname, 'index.html'));
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Start listening on port 3000
+// 24/7 Watchdog boot recovery: any bot that was marked as running before the
+// server restarted (or before this host came up) is respawned automatically,
+// so Discord bots come back online after a reboot without user interaction.
+function recoverRunningBots() {
+  for (const [vpsId, bot] of Object.entries(db.bots)) {
+    if (!db.vps[vpsId]) {continue;}
+    if (!bot || bot.status !== 'running' || !bot.running) {continue;}
+    if (activeBots.has(vpsId)) {continue;}
+    const wsDir = path.join(INSTANCES_DIR, vpsId);
+    const targetFile = bot.filename || 'bot.py';
+    if (!fs.existsSync(path.join(wsDir, targetFile))) {
+      // Entrypoint is gone — flip to stopped so the UI shows the truth.
+      bot.status = 'stopped';
+      bot.running = false;
+      bot.pid = null;
+      appendBotLog(vpsId, `[${new Date().toLocaleTimeString()}] [24/7 Watchdog] Entrypoint "${targetFile}" not found, bot left stopped. Upload your bot files and press Start.`);
+      continue;
+    }
+    appendBotLog(vpsId, `[${new Date().toLocaleTimeString()}] [24/7 Watchdog] Server back online — auto-resuming bot (restart protection).`);
+    startBotProcess(vpsId, targetFile, bot.runtime);
+  }
+  saveDb();
+}
+
+// Graceful shutdown: stop child bot processes cleanly on SIGINT/SIGTERM.
+ let shuttingDown = false;
+function gracefulShutdown(signal) {
+ if (shuttingDown) {return;}
+ shuttingDown = true;
+ logger.info({ signal }, '[CloudVPS] Shutting down — bot processes paused, state kept "running" for 24/7 auto-resume on next boot');
+ for (const vpsId of Array.from(activeBots.keys())) {
+ stopBotProcess(vpsId, false);
+ }
+ saveDb();
+ process.exit(0);
+}
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+
+// Start listening
 loadDb();
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`[CloudVPS Native] Server running ultra-fast on http://0.0.0.0:${PORT}`);
-  console.log(`[CloudVPS Native] Local Native Sandbox Engine online with zero external latency`);
+  logger.info(`[CloudVPS] Server listening on http://0.0.0.0:${PORT}`);
+  logger.info('[CloudVPS] 24/7 bot watchdog enabled — running bots are resumed automatically on boot');
+  recoverRunningBots();
 });

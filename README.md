@@ -1,10 +1,34 @@
 # CloudVPS
 
-A real, Docker-backed VPS control panel. Each "VPS" you create is an actual
-Docker container (Ubuntu) provisioned with real CPU, memory and disk limits,
-a real container ID and a real IP address. There is no fake/placeholder data —
-the web app records ownership metadata and the Docker daemon is the source of
-truth for container state.
+A 24/7 VPS + Discord bot hosting platform. Users sign up (no demo accounts —
+every account is one you actually registered), create VPS workspaces, upload
+bot files, set their Discord token, and the 24/7 watchdog keeps the bot
+process alive: auto-restart on crash and auto-resume when the server comes
+back up.
+
+## Quick start (main Node.js platform)
+
+```bash
+npm install
+npm start        # node server.js, listens on :3000 (override with PORT)
+```
+
+Then open <http://localhost:3000>, create a free account, deploy a VPS, and
+go to the **Discord Bot (24/7)** tab to start your bot.
+
+- 24/7 watchdog: crashed bots are respawned automatically (with crash-loop
+  protection), and bots marked as running are resumed on server boot.
+- Live bot logs, file manager, terminal, package installer (pip/npm),
+  GitHub clone + free-domain hosting, and a Remote PC controller live in the
+  dashboard (pink theme).
+- `GEMINI_API_KEY` (optional) enables the Manus AI agent; without it a
+  built-in autonomous fallback is used.
+
+## Legacy Python backend (Docker-backed)
+
+`app.py` is the original Docker-backed VPS control panel. Each "VPS" you
+create is an actual Docker container (Ubuntu) provisioned with real CPU,
+memory and disk limits. See "Requirements" and "Run (Python)" below.
 
 ## Features
 - User registration / login with hashed passwords (Werkzeug `pbkdf2:sha256`).
@@ -27,12 +51,12 @@ truth for container state.
 - `docker-py >= 7.1.0` (pinned in `requirements.txt`); 7.0.0 is incompatible
   with modern `requests` and fails with "Not supported URL scheme http+docker".
 
-## Install
+## Install (Python)
 ```bash
 pip install -r requirements.txt
 ```
 
-## Run
+## Run (Python)
 ```bash
 python app.py          # listens on :5000 (override with PORT env var)
 ```
