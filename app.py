@@ -12,11 +12,25 @@ import uuid
 import hashlib
 import zipfile
 import subprocess
+import logging
+import threading
+import secrets
+import re
 from pathlib import Path
+from functools import wraps
+from typing import Optional, Dict, Any, List
 from flask import Flask, request, jsonify, send_file, send_from_directory, make_response
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__, static_folder=None)
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).resolve().parent
 INSTANCES_DIR = BASE_DIR / "vps_instances"
@@ -26,6 +40,7 @@ INSTANCES_DIR.mkdir(parents=True, exist_ok=True)
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 DB_FILE = DATA_DIR / "cloudvps_db.json"
+DB_LOCK = threading.RLock()
 
 PLANS = {
     "starter": {"cpu": "1.0 Core", "memory": "1GB RAM", "storage": "20GB NVMe", "price": "FREE", "tier": "Free Community"},
@@ -42,7 +57,53 @@ db = {
 }
 
 def hash_password(password: str) -> str:
-    return hashlib.sha256((password + "_cvps_salt").encode("utf-8")).hexdigest()
+    return generate_password_hash(password)
+
+def verify_password(password: str, password_hash: str) -> bool:
+    return check_password_hash(password_hash, password)
+
+def validate_username(username: str) -> Optional[str]:
+    if not username or not username.strip():
+        return "Username is required"
+    username = username.strip()
+    if len(username) < 3:
+        return "Username must be at least 3 characters"
+    if len(username) > 32:
+        return "Username must be at most 32 characters"
+    if not re.match(r'^[a-zA-Z0-9_-]+$', username):
+        return "Username can only contain letters, numbers, underscore, and hyphen"
+    return None
+
+def validate_password(password: str) -> Optional[str]:
+    if not password:
+        return "Password is required"
+    if len(password) < 8:
+        return "Password must be at least 8 characters"
+    if len(password) > 128:
+        return "Password must be at most 128 characters"
+    return None
+
+def validate_plan(plan: str) -> bool:
+    return plan in PLANS
+
+def sanitize_path(path: str, base_dir: Path) -> Optional[Path]:
+    try:
+        target = (base_dir / path).resolve()
+        base_resolved = base_dir.resolve()
+        if not str(target).startswith(str(base_resolved)):
+            return None
+        return target
+    except Exception:
+        return None
+
+def validate_vps_id(vps_id: str) -> bool:
+    return bool(re.match(r'^vps-[a-f0-9]{8}$', vps_id))
+
+def validate_user_id(user_id: str) -> bool:
+    return bool(re.match(r'^usr_[a-f0-9]{12}$', user_id))
+
+def validate_api_key(api_key: str) -> bool:
+    return bool(re.match(r'^cvps_[a-f0-9]{32}$', api_key))
 
 def init_workspace(vps_id: str):
     ws_dir = INSTANCES_DIR / vps_id
@@ -96,85 +157,117 @@ if __name__ == "__main__":
 
 def load_db():
     global db
-    if DB_FILE.exists():
-        try:
-            with open(DB_FILE, "r", encoding="utf-8") as f:
-                loaded = json.load(f)
-                db.update(loaded)
-        except Exception:
-            pass
+    with DB_LOCK:
+        if DB_FILE.exists():
+            try:
+                with open(DB_FILE, "r", encoding="utf-8") as f:
+                    loaded = json.load(f)
+                    db.update(loaded)
+                    logger.info("Database loaded successfully")
+            except Exception as e:
+                logger.error(f"Failed to load database: {e}")
 
-    # Ensure default user
-    def_user = "usr_free_user"
-    if def_user not in db["users"]:
-        db["users"][def_user] = {
-            "id": def_user,
-            "username": "demo_user",
-            "password_hash": hash_password("demo123"),
-            "api_key": "cvps_live_free_key_777",
-            "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ")
-        }
+        def_user = "usr_free_user"
+        if def_user not in db["users"]:
+            db["users"][def_user] = {
+                "id": def_user,
+                "username": "demo_user",
+                "password_hash": hash_password("demo123"),
+                "api_key": "cvps_live_free_key_777",
+                "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ")
+            }
 
-    # Ensure default VPS
-    def_vps = "vps-free-01"
-    if def_vps not in db["vps"]:
-        db["vps"][def_vps] = {
-            "id": def_vps,
-            "user_id": def_user,
-            "name": "Cloud-VPS-01",
-            "plan": "ultra",
-            "status": "running",
-            "cpu": "8.0 Cores",
-            "memory": "8GB RAM",
-            "storage": "160GB NVMe",
-            "ip": "172.20.0.12",
-            "container_id": "c-free-01",
-            "engine": "native_sandbox",
-            "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ")
-        }
-    else:
-        db["vps"][def_vps]["user_id"] = def_user
-        db["vps"][def_vps]["name"] = "Cloud-VPS-01"
+        def_vps = "vps-free-01"
+        if def_vps not in db["vps"]:
+            db["vps"][def_vps] = {
+                "id": def_vps,
+                "user_id": def_user,
+                "name": "Cloud-VPS-01",
+                "plan": "ultra",
+                "status": "running",
+                "cpu": "8.0 Cores",
+                "memory": "8GB RAM",
+                "storage": "160GB NVMe",
+                "ip": "172.20.0.12",
+                "container_id": "c-free-01",
+                "engine": "native_sandbox",
+                "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ")
+            }
+        else:
+            db["vps"][def_vps]["user_id"] = def_user
+            db["vps"][def_vps]["name"] = "Cloud-VPS-01"
 
-    init_workspace(def_vps)
+        init_workspace(def_vps)
 
-    if def_vps not in db["bots"]:
-        db["bots"][def_vps] = {
-            "status": "running",
-            "running": True,
-            "pid": 4102,
-            "filename": "bot.py",
-            "runtime": "python",
-            "token": "",
-            "restarts": 0,
-            "started_at": int(time.time()) - 360,
-            "logs": [
-                "[CloudVPS 24/7 Watchdog] Initializing container runtime (python 3.11)...",
-                "[CloudVPS 24/7 Watchdog] Container isolated sandbox attached: vps-free-01 (Ubuntu 22.04)",
-                "[CloudVPS 24/7 Watchdog] Environment loaded from /root/.env",
-                "[CloudVPS 24/7 Watchdog] Process started (PID: 4102) -> entrypoint: bot.py",
-                "[CloudVPS 24/7 Supervisor] Bot is online and monitoring Discord events 🟢",
-                "[Bot Log] Logged in as CloudBot#2026 (ID: 108923849102)",
-                "[CloudVPS Watchdog] Heartbeat ping OK - CPU: 0.8% | RAM: 48MB | Ping: 12ms"
-            ]
-        }
+        if def_vps not in db["bots"]:
+            db["bots"][def_vps] = {
+                "status": "running",
+                "running": True,
+                "pid": 4102,
+                "filename": "bot.py",
+                "runtime": "python",
+                "token": "",
+                "restarts": 0,
+                "started_at": int(time.time()) - 360,
+                "logs": [
+                    "[CloudVPS 24/7 Watchdog] Initializing container runtime (python 3.11)...",
+                    "[CloudVPS 24/7 Watchdog] Container isolated sandbox attached: vps-free-01 (Ubuntu 22.04)",
+                    "[CloudVPS 24/7 Watchdog] Environment loaded from /root/.env",
+                    "[CloudVPS 24/7 Watchdog] Process started (PID: 4102) -> entrypoint: bot.py",
+                    "[CloudVPS 24/7 Supervisor] Bot is online and monitoring Discord events 🟢",
+                    "[Bot Log] Logged in as CloudBot#2026 (ID: 108923849102)",
+                    "[CloudVPS Watchdog] Heartbeat ping OK - CPU: 0.8% | RAM: 48MB | Ping: 12ms"
+                ]
+            }
 
-    save_db()
+        save_db()
 
 def save_db():
-    try:
-        with open(DB_FILE, "w", encoding="utf-8") as f:
-            json.dump(db, f, indent=2)
-    except Exception:
-        pass
+    with DB_LOCK:
+        try:
+            tmp_file = DB_FILE.with_suffix('.tmp')
+            with open(tmp_file, "w", encoding="utf-8") as f:
+                json.dump(db, f, indent=2)
+            tmp_file.replace(DB_FILE)
+            logger.debug("Database saved successfully")
+        except Exception as e:
+            logger.error(f"Failed to save database: {e}")
 
-def get_user():
+def get_user() -> Optional[Dict[str, Any]]:
     key = request.headers.get("X-API-Key") or request.args.get("api_key") or request.cookies.get("api_key")
-    if key:
+    if key and validate_api_key(key):
         for u in db["users"].values():
             if u.get("api_key") == key:
                 return u
     return None
+
+def require_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        user = get_user()
+        if not user:
+            return jsonify({"success": False, "error": "Authentication required"}), 401
+        request.user = user
+        return f(*args, **kwargs)
+    return decorated
+
+def require_vps_ownership(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        vps_id = kwargs.get('vps_id')
+        if not vps_id or not validate_vps_id(vps_id):
+            return jsonify({"success": False, "error": "Invalid VPS ID"}), 400
+        vps = db["vps"].get(vps_id)
+        if not vps:
+            return jsonify({"success": False, "error": "VPS not found"}), 404
+        user = get_user()
+        if not user:
+            return jsonify({"success": False, "error": "Authentication required"}), 401
+        if vps.get("user_id") != user["id"]:
+            return jsonify({"success": False, "error": "Access denied: You do not own this VPS"}), 403
+        request.vps = vps
+        return f(*args, **kwargs)
+    return decorated
 
 # ----------------- ROUTES -----------------
 
@@ -225,12 +318,14 @@ def api_register():
     data = request.get_json(silent=True) or {}
     username = (data.get("username") or "").strip()
     password = data.get("password") or ""
-    if not username or not password:
-        return jsonify({"error": "Username and password required"}), 400
-    if len(username) < 3:
-        return jsonify({"error": "Username must be at least 3 characters"}), 400
-    if len(password) < 6:
-        return jsonify({"error": "Password must be at least 6 characters"}), 400
+
+    username_error = validate_username(username)
+    if username_error:
+        return jsonify({"error": username_error}), 400
+
+    password_error = validate_password(password)
+    if password_error:
+        return jsonify({"error": password_error}), 400
 
     for u in db["users"].values():
         if u["username"].lower() == username.lower():
@@ -249,7 +344,7 @@ def api_register():
     save_db()
 
     resp = make_response(jsonify({"success": True, "api_key": api_key, "user_id": uid, "username": username}))
-    resp.set_cookie("api_key", api_key, max_age=30*86400)
+    resp.set_cookie("api_key", api_key, max_age=30*86400, httponly=True, samesite='Lax')
     return resp
 
 @app.route("/api/login", methods=["POST"])
@@ -257,14 +352,16 @@ def api_login():
     data = request.get_json(silent=True) or {}
     username = (data.get("username") or "").strip()
     password = data.get("password") or ""
-    pw_hash = hash_password(password)
 
-    clean_u = username.lower()
-    user = next((u for u in db["users"].values() if u["username"].lower() == clean_u and u["password_hash"] == pw_hash), None)
-    if not user:
+    if not username:
+        return jsonify({"error": "Username is required"}), 400
+
+    user = next((u for u in db["users"].values() if u["username"].lower() == username.lower()), None)
+    if not user or not verify_password(password, user["password_hash"]):
         return jsonify({"error": "Invalid username or password"}), 401
+
     resp = make_response(jsonify({"success": True, "api_key": user["api_key"], "user_id": user["id"], "username": user["username"]}))
-    resp.set_cookie("api_key", user["api_key"], max_age=30*86400)
+    resp.set_cookie("api_key", user["api_key"], max_age=30*86400, httponly=True, samesite='Lax')
     return resp
 
 @app.route("/api/logout", methods=["POST"])
@@ -274,25 +371,27 @@ def api_logout():
     return resp
 
 @app.route("/api/vps", methods=["GET"])
+@require_auth
 def api_vps_list():
-    user = get_user()
-    if not user:
-        return jsonify({"success": False, "error": "Authentication required"}), 401
-    vps_list = [v for v in db["vps"].values() if v.get("user_id") == user["id"]]
+    vps_list = [v for v in db["vps"].values() if v.get("user_id") == request.user["id"]]
     return jsonify({"success": True, "vps": vps_list})
 
 @app.route("/api/vps", methods=["POST"])
+@require_auth
 def api_vps_create():
-    user = get_user()
     data = request.get_json(silent=True) or {}
     plan = data.get("plan", "performance")
-    plan_info = PLANS.get(plan, PLANS["performance"])
+    if not validate_plan(plan):
+        return jsonify({"error": "Invalid plan"}), 400
+    plan_info = PLANS[plan]
     vps_id = "vps-" + uuid.uuid4().hex[:8]
     name = (data.get("name") or "").strip() or f"Discord-Bot-{vps_id[-4:]}"
+    if len(name) > 64:
+        name = name[:64]
 
     new_vps = {
         "id": vps_id,
-        "user_id": user["id"],
+        "user_id": request.user["id"],
         "name": name,
         "plan": plan,
         "status": "running",
@@ -325,13 +424,14 @@ def api_vps_create():
     return jsonify({"success": True, "vps": new_vps}), 201
 
 @app.route("/api/vps/<vps_id>", methods=["GET"])
+@require_auth
+@require_vps_ownership
 def api_vps_get(vps_id):
-    v = db["vps"].get(vps_id)
-    if not v:
-        return jsonify({"error": "Not found"}), 404
-    return jsonify({"success": True, "vps": v})
+    return jsonify({"success": True, "vps": request.vps})
 
 @app.route("/api/vps/<vps_id>/files")
+@require_auth
+@require_vps_ownership
 def api_vps_files(vps_id):
     init_workspace(vps_id)
     ws_dir = INSTANCES_DIR / vps_id
@@ -346,17 +446,21 @@ def api_vps_files(vps_id):
     return jsonify({"success": True, "files": files})
 
 @app.route("/api/vps/<vps_id>/file", methods=["GET"])
+@require_auth
+@require_vps_ownership
 def api_vps_file_get(vps_id):
     init_workspace(vps_id)
     filename = request.args.get("path", "bot.py")
     ws_dir = (INSTANCES_DIR / vps_id).resolve()
-    target = (ws_dir / filename).resolve()
-    if not str(target).startswith(str(ws_dir)):
+    target = sanitize_path(filename, ws_dir)
+    if not target:
         return jsonify({"error": "Access denied"}), 403
     content = target.read_text(encoding="utf-8") if target.exists() else ""
     return jsonify({"success": True, "path": filename, "content": content})
 
 @app.route("/api/vps/<vps_id>/file", methods=["POST"])
+@require_auth
+@require_vps_ownership
 def api_vps_file_post(vps_id):
     init_workspace(vps_id)
     data = request.get_json(silent=True) or {}
@@ -365,27 +469,31 @@ def api_vps_file_post(vps_id):
     if not filename:
         return jsonify({"error": "Filename required"}), 400
     ws_dir = (INSTANCES_DIR / vps_id).resolve()
-    target = (ws_dir / filename).resolve()
-    if not str(target).startswith(str(ws_dir)):
+    target = sanitize_path(filename, ws_dir)
+    if not target:
         return jsonify({"error": "Access denied"}), 403
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(content, encoding="utf-8")
     return jsonify({"success": True, "path": filename, "message": "File saved"})
 
 @app.route("/api/vps/<vps_id>/file", methods=["DELETE"])
+@require_auth
+@require_vps_ownership
 def api_vps_file_delete(vps_id):
     filename = request.args.get("path") or (request.get_json(silent=True) or {}).get("path")
     if not filename:
         return jsonify({"error": "Filename required"}), 400
     ws_dir = (INSTANCES_DIR / vps_id).resolve()
-    target = (ws_dir / filename).resolve()
-    if not str(target).startswith(str(ws_dir)):
+    target = sanitize_path(filename, ws_dir)
+    if not target:
         return jsonify({"error": "Access denied"}), 403
     if target.exists():
         target.unlink()
     return jsonify({"success": True, "path": filename, "message": "File deleted"})
 
 @app.route("/api/vps/<vps_id>/bot/upload", methods=["POST"])
+@require_auth
+@require_vps_ownership
 def api_vps_bot_upload(vps_id):
     init_workspace(vps_id)
     ws_dir = INSTANCES_DIR / vps_id
@@ -436,21 +544,21 @@ def api_vps_bot_upload(vps_id):
         "detected_runtime": detected_runtime
     })
 
-# Active python processes
-import threading
 
 active_proc_threads = {}
+active_proc_lock = threading.Lock()
 
 def append_py_log(vps_id: str, text: str):
-    b = db["bots"].setdefault(vps_id, {"logs": []})
-    logs = b.setdefault("logs", [])
-    for line in text.split("\n"):
-        line = line.strip()
-        if line:
-            logs.append(line)
-    if len(logs) > 600:
-        b["logs"] = logs[-600:]
-    save_db()
+    with DB_LOCK:
+        b = db["bots"].setdefault(vps_id, {"logs": []})
+        logs = b.setdefault("logs", [])
+        for line in text.split("\n"):
+            line = line.strip()
+            if line:
+                logs.append(line)
+        if len(logs) > 600:
+            b["logs"] = logs[-600:]
+        save_db()
 
 def stream_pipe(pipe, vps_id):
     try:
@@ -507,7 +615,8 @@ def start_py_bot(vps_id: str, filename: str = None, runtime: str = None):
         append_py_log(vps_id, f"[Error] Failed to spawn process: {e}")
         return None
 
-    active_proc_threads[vps_id] = proc
+    with active_proc_lock:
+        active_proc_threads[vps_id] = proc
 
     b = db["bots"].setdefault(vps_id, {"logs": []})
     b["status"] = "running"
@@ -528,7 +637,8 @@ def start_py_bot(vps_id: str, filename: str = None, runtime: str = None):
     return proc
 
 def stop_py_bot(vps_id: str):
-    proc = active_proc_threads.pop(vps_id, None)
+    with active_proc_lock:
+        proc = active_proc_threads.pop(vps_id, None)
     if proc:
         try:
             proc.terminate()
@@ -545,42 +655,62 @@ def stop_py_bot(vps_id: str):
     save_db()
 
 @app.route("/api/vps/<vps_id>/bot", methods=["GET"])
+@require_auth
+@require_vps_ownership
 def api_vps_bot_get(vps_id):
     init_workspace(vps_id)
     b = db["bots"].get(vps_id, {})
-    proc = active_proc_threads.get(vps_id)
+    with active_proc_lock:
+        proc = active_proc_threads.get(vps_id)
     is_running = bool(proc and proc.poll() is None)
     return jsonify({"success": True, "bot": {**b, "running": is_running, "status": "running" if is_running else "stopped"}})
 
 @app.route("/api/vps/<vps_id>/bot/start", methods=["POST"])
+@require_auth
+@require_vps_ownership
 def api_vps_bot_start(vps_id):
     data = request.get_json(silent=True) or {}
     filename = data.get("filename")
     runtime = data.get("runtime")
+    if filename and not re.match(r'^[a-zA-Z0-9_.-]+$', filename):
+        return jsonify({"error": "Invalid filename"}), 400
+    if runtime and runtime not in ("python", "node"):
+        return jsonify({"error": "Invalid runtime"}), 400
     proc = start_py_bot(vps_id, filename, runtime)
     b = db["bots"].get(vps_id, {})
     return jsonify({"success": True, "message": "Bot process started on live host! 🟢", "bot_status": b})
 
 @app.route("/api/vps/<vps_id>/bot/stop", methods=["POST"])
+@require_auth
+@require_vps_ownership
 def api_vps_bot_stop(vps_id):
     stop_py_bot(vps_id)
     append_py_log(vps_id, f"[{time.strftime('%H:%M:%S')}] [24/7 Watchdog] Bot stopped by user.")
     return jsonify({"success": True, "message": "Bot stopped"})
 
 @app.route("/api/vps/<vps_id>/bot/restart", methods=["POST"])
+@require_auth
+@require_vps_ownership
 def api_vps_bot_restart(vps_id):
     data = request.get_json(silent=True) or {}
     cur = db["bots"].get(vps_id, {})
     filename = data.get("filename") or cur.get("filename")
     runtime = data.get("runtime") or cur.get("runtime")
+    if filename and not re.match(r'^[a-zA-Z0-9_.-]+$', filename):
+        return jsonify({"error": "Invalid filename"}), 400
+    if runtime and runtime not in ("python", "node"):
+        return jsonify({"error": "Invalid runtime"}), 400
     start_py_bot(vps_id, filename, runtime)
     b = db["bots"].get(vps_id, {})
     return jsonify({"success": True, "message": "Bot restarted on live host 🟢", "bot_status": b})
 
 @app.route("/api/vps/<vps_id>/bot/logs", methods=["GET"])
+@require_auth
+@require_vps_ownership
 def api_vps_bot_logs(vps_id):
     b = db["bots"].get(vps_id, {})
-    proc = active_proc_threads.get(vps_id)
+    with active_proc_lock:
+        proc = active_proc_threads.get(vps_id)
     is_running = bool(proc and proc.poll() is None)
     return jsonify({
         "success": True,
@@ -595,17 +725,21 @@ def api_vps_bot_logs(vps_id):
     })
 
 @app.route("/api/vps/<vps_id>/bot/packages/install", methods=["POST"])
+@require_auth
+@require_vps_ownership
 def api_vps_bot_packages(vps_id):
     data = request.get_json(silent=True) or {}
     pkgs = (data.get("packages") or "").strip()
     rt = data.get("runtime")
     if not pkgs:
         return jsonify({"error": "No packages specified"}), 400
+    if not re.match(r'^[a-zA-Z0-9_.\- ]+$', pkgs):
+        return jsonify({"error": "Invalid package name"}), 400
     ws_dir = str(INSTANCES_DIR / vps_id)
-    cmd = f"npm install {pkgs}" if rt == "node" else f"pip install --break-system-packages {pkgs}"
-    append_py_log(vps_id, f"[{time.strftime('%H:%M:%S')}] [Package Installer] Executing: {cmd}...")
+    cmd = ["npm", "install", "--save"] + pkgs.split() if rt == "node" else [sys.executable, "-m", "pip", "install", "--break-system-packages"] + pkgs.split()
+    append_py_log(vps_id, f"[{time.strftime('%H:%M:%S')}] [Package Installer] Executing: {' '.join(cmd)}...")
     try:
-        res = subprocess.run(cmd, shell=True, cwd=ws_dir, capture_output=True, text=True, timeout=60)
+        res = subprocess.run(cmd, cwd=ws_dir, capture_output=True, text=True, timeout=60)
         append_py_log(vps_id, res.stdout + res.stderr)
         return jsonify({"success": True, "message": f"Installed {pkgs}"})
     except Exception as e:
@@ -613,6 +747,9 @@ def api_vps_bot_packages(vps_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route("/api/vps/<vps_id>/bot/token", methods=["POST"])
+@app.route("/api/vps/<vps_id>/bot/token", methods=["POST"])
+@require_auth
+@require_vps_ownership
 def api_vps_bot_token(vps_id):
     data = request.get_json(silent=True) or {}
     token = data.get("token", "")
@@ -625,13 +762,19 @@ def api_vps_bot_token(vps_id):
 
 @app.route("/api/vps/<vps_id>/terminal/exec", methods=["POST"])
 @app.route("/api/vps/<vps_id>/exec", methods=["POST"])
+@require_auth
+@require_vps_ownership
 def api_vps_exec(vps_id):
     cmd = ((request.get_json(silent=True) or {}).get("command") or "").strip()
     ws_dir = str(INSTANCES_DIR / vps_id)
     if not cmd:
         return jsonify({"success": True, "output": "", "exit_code": 0})
+    allowed_commands = ['ls', 'cat', 'pwd', 'python3', 'node', 'npm', 'pip', 'git', 'uptime', 'uname', 'df', 'free', 'ps', 'echo', 'whoami', 'python', 'python3', 'pip3', 'pip', 'node', 'npm', 'npx']
+    cmd_parts = cmd.split()
+    if cmd_parts[0] not in allowed_commands:
+        return jsonify({"success": False, "error": "Command not allowed"}), 403
     try:
-        res = subprocess.run(cmd, shell=True, cwd=ws_dir, capture_output=True, text=True, timeout=10)
+        res = subprocess.run(cmd_parts, cwd=ws_dir, capture_output=True, text=True, timeout=10)
         output = res.stdout + res.stderr
         return jsonify({"success": True, "output": output, "exit_code": res.returncode})
     except Exception as e:
@@ -662,6 +805,7 @@ def api_benchmark():
     })
 
 @app.route("/api/hardware/cgnat-tunnel", methods=["POST"])
+@require_auth
 def api_tunnel():
     port = 22022
     return jsonify({
@@ -674,12 +818,36 @@ def api_tunnel():
         }
     })
 
+# Error handlers
+@app.errorhandler(400)
+def bad_request(e):
+    return jsonify({"success": False, "error": "Bad request"}), 400
+
+@app.errorhandler(401)
+def unauthorized(e):
+    return jsonify({"success": False, "error": "Unauthorized"}), 401
+
+@app.errorhandler(403)
+def forbidden(e):
+    return jsonify({"success": False, "error": "Forbidden"}), 403
+
+@app.errorhandler(404)
+def not_found(e):
+    return jsonify({"success": False, "error": "Not found"}), 404
+
+@app.errorhandler(500)
+def internal_error(e):
+    logger.error(f"Internal server error: {e}")
+    return jsonify({"success": False, "error": "Internal server error"}), 500
+
 # Serve Frontend
 @app.route("/")
 @app.route("/<path:subpath>")
 def serve_index(subpath=None):
-    if subpath and (BASE_DIR / subpath).exists() and (BASE_DIR / subpath).is_file():
-        return send_from_directory(str(BASE_DIR), subpath)
+    if subpath:
+        safe_path = sanitize_path(subpath, BASE_DIR)
+        if safe_path and safe_path.exists() and safe_path.is_file():
+            return send_from_directory(str(BASE_DIR), subpath)
     return send_file(str(BASE_DIR / "index.html"))
 
 load_db()
@@ -687,4 +855,4 @@ load_db()
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 3000))
     print(f"[CloudVPS Unified] Serving on http://0.0.0.0:{port}")
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=port, debug=False)

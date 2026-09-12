@@ -1,6 +1,6 @@
 {
   "name": "cloudvps",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Real VPS hosting platform with Discord bot hosting, interactive terminal, and process manager",
   "main": "server.js",
   "scripts": {
@@ -23,6 +23,8 @@
     "discord.js": "^14.27.0",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "express-rate-limit": "^7.4.1",
+    "helmet": "^8.0.0",
     "multer": "^2.3.0",
     "ws": "^8.21.3"
   }
