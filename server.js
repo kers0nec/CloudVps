@@ -1,29 +1,74 @@
-const express = require('express');
-const path = require('path');
-const fs = require('fs');
-const os = require('os');
-const crypto = require('crypto');
-const child_process = require('child_process');
-const multer = require('multer');
+import express from 'express';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, rmSync, statSync, readdirSync, copyFileSync, unlinkSync, readFileSync as fsReadFileSync } from 'fs';
+import os from 'os';
+import crypto from 'crypto';
+import { spawn, execSync, exec } from 'child_process';
+import multer from 'multer';
+import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import pino from 'pino';
+import pinoPretty from 'pino-pretty';
+import { z } from 'zod';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = express();
-const PORT = 3000;
+const PORT = parseInt(process.env.PORT || '3000', 10);
 
 const BASE_DIR = __dirname;
-const INSTANCES_DIR = path.join(BASE_DIR, 'vps_instances');
-const DATA_DIR = path.join(BASE_DIR, 'data');
+const INSTANCES_DIR = join(BASE_DIR, 'vps_instances');
+const DATA_DIR = join(BASE_DIR, 'data');
 
-if (!fs.existsSync(INSTANCES_DIR)) fs.mkdirSync(INSTANCES_DIR, { recursive: true });
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+if (!existsSync(INSTANCES_DIR)) {mkdirSync(INSTANCES_DIR, { recursive: true });}
+if (!existsSync(DATA_DIR)) {mkdirSync(DATA_DIR, { recursive: true });}
 
-// Middleware
+const logger = pino(
+  process.env.NODE_ENV === 'production'
+    ? pino.destination({ dest: join(DATA_DIR, 'app.log'), sync: false })
+    : pinoPretty({ colorize: true, translateTime: 'SYS:standard', ignore: 'pid,hostname' })
+);
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: parseInt(process.env.API_RATE_LIMIT || '100', 10),
+  message: { success: false, error: 'Too many requests, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false,
+}));
+app.use(cors({
+  origin: process.env.FRONTEND_URL || '*',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'X-Username', 'X-CloudVPS-User'],
+}));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(apiLimiter);
 
-// Multer for file uploads
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    logger.info({ method: req.method, url: req.url, status: res.statusCode, duration }, 'HTTP request');
+  });
+  next();
+});
+
 const upload = multer({
- storage: multer.memoryStorage(),
- limits: { fileSize: 100 * 1024 * 1024 } // 100MB
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 100 * 1024 * 1024 },
 });
 
 // Plans Catalog
@@ -35,102 +80,115 @@ const PLANS = {
 };
 
 // In-Memory Database with JSON Persistence & Atomic Flushes
-const DB_FILE = path.join(DATA_DIR, 'cloudvps_db.json');
-const DB_BACKUP_FILE = path.join(DATA_DIR, 'cloudvps_db.backup.json');
+const DB_FILE = join(DATA_DIR, 'cloudvps_db.json');
+const DB_BACKUP_FILE = join(DATA_DIR, 'cloudvps_db.backup.json');
 
 let db = {
- users: {},
- vps: {},
- bots: {},
- services: {}
+  users: {},
+  vps: {},
+  bots: {},
+  services: {}
 };
 
 function hashPassword(password, salt = 'cvps_default_salt') {
- try {
- return crypto.scryptSync(password, salt, 32).toString('hex');
- } catch (e) {
- return crypto.createHash('sha256').update(password + salt).digest('hex');
- }
+  try {
+    return crypto.scryptSync(password, salt, 32).toString('hex');
+  } catch (e) {
+    return crypto.createHash('sha256').update(password + salt).digest('hex');
+  }
 }
 
 function verifyPassword(user, password) {
- if (!user || !user.password_hash) return false;
- if (user.salt) {
- const computed = hashPassword(password, user.salt);
- return computed === user.password_hash;
- }
- // Legacy SHA-256 fallback + automatic upgrade
- const legacy = crypto.createHash('sha256').update(password + '_cvps_salt').digest('hex');
- if (legacy === user.password_hash) {
- user.salt = crypto.randomBytes(16).toString('hex');
- user.password_hash = hashPassword(password, user.salt);
- saveDb();
- return true;
- }
- return false;
+  if (!user || !user.password_hash) {return false;}
+  if (user.salt) {
+    const computed = hashPassword(password, user.salt);
+    return computed === user.password_hash;
+  }
+  // Legacy SHA-256 fallback + automatic upgrade
+  const legacy = crypto.createHash('sha256').update(`${password  }_cvps_salt`).digest('hex');
+  if (legacy === user.password_hash) {
+    user.salt = crypto.randomBytes(16).toString('hex');
+    user.password_hash = hashPassword(password, user.salt);
+    saveDb();
+    return true;
+  }
+  return false;
+}
+
+function saveDb() {
+  try {
+    const payload = JSON.stringify(db, null, 2);
+    const tmpFile = `${DB_FILE}.tmp.${Date.now()}`;
+    writeFileSync(tmpFile, payload, 'utf8');
+    rmSync(tmpFile, { force: true });
+    writeFileSync(DB_FILE, payload, 'utf8');
+    writeFileSync(DB_BACKUP_FILE, payload, 'utf8');
+  } catch (err) {
+    logger.error({ err }, '[CloudVPS DB Save Error]');
+  }
 }
 
 function loadDb() {
- let loaded = false;
- try {
- if (fs.existsSync(DB_FILE)) {
- const raw = fs.readFileSync(DB_FILE, 'utf8');
- if (raw.trim()) {
- const data = JSON.parse(raw);
- db = { ...db, ...data };
- loaded = true;
- }
- }
- } catch (err) {
- console.warn('[CloudVPS DB] Could not read primary db file, attempting backup recovery:', err.message);
- }
+  let loaded = false;
+  try {
+    if (existsSync(DB_FILE)) {
+      const raw = readFileSync(DB_FILE, 'utf8');
+      if (raw.trim()) {
+        const data = JSON.parse(raw);
+        db = { ...db, ...data };
+        loaded = true;
+      }
+    }
+  } catch (err) {
+    logger.warn({ err }, '[CloudVPS DB] Could not read primary db file, attempting backup recovery');
+  }
 
- if (!loaded && fs.existsSync(DB_BACKUP_FILE)) {
- try {
- const bkpRaw = fs.readFileSync(DB_BACKUP_FILE, 'utf8');
- if (bkpRaw.trim()) {
- const bkpData = JSON.parse(bkpRaw);
- db = { ...db, ...bkpData };
- console.log('[CloudVPS DB] Restored database state from backup snapshot.');
- }
- } catch (e) {
- console.warn('[CloudVPS DB] Backup recovery failed:', e.message);
- }
- }
+  if (!loaded && existsSync(DB_BACKUP_FILE)) {
+    try {
+      const bkpRaw = readFileSync(DB_BACKUP_FILE, 'utf8');
+      if (bkpRaw.trim()) {
+        const bkpData = JSON.parse(bkpRaw);
+        db = { ...db, ...bkpData };
+        logger.info('[CloudVPS DB] Restored database state from backup snapshot.');
+      }
+    } catch (e) {
+      logger.warn({ err: e }, '[CloudVPS DB] Backup recovery failed');
+    }
+  }
 
- // Ensure default demo user exists
- const defaultUserId = 'usr_free_user';
- if (!db.users[defaultUserId]) {
- const salt = 'cvps_default_salt';
- db.users[defaultUserId] = {
- id: defaultUserId,
- username: 'demo_user',
- salt,
- password_hash: hashPassword('demo123', salt),
- api_key: 'cvps_live_free_key_777',
- created_at: new Date().toISOString()
- };
- }
+  // Ensure default demo user exists
+  const defaultUserId = 'usr_free_user';
+  if (!db.users[defaultUserId]) {
+    const salt = 'cvps_default_salt';
+    db.users[defaultUserId] = {
+      id: defaultUserId,
+      username: 'demo_user',
+      salt,
+      password_hash: hashPassword('demo123', salt),
+      api_key: 'cvps_live_free_key_777',
+      created_at: new Date().toISOString()
+    };
+  }
 
- // Ensure brittainjaden347 primary user exists
- const primaryUserId = 'usr_brittainjaden347';
- let primaryUser = Object.values(db.users).find(u => u.username.toLowerCase() === 'brittainjaden347');
- if (!primaryUser) {
- const salt = 'cvps_salt_bj347';
- primaryUser = {
- id: primaryUserId,
- username: 'brittainjaden347',
- salt,
- password_hash: hashPassword('password123', salt),
- api_key: 'cvps_live_bj347_master_key',
- created_at: new Date().toISOString()
- };
- db.users[primaryUserId] = primaryUser;
- }
+  // Ensure brittainjaden347 primary user exists
+  const primaryUserId = 'usr_brittainjaden347';
+  let primaryUser = Object.values(db.users).find(u => u.username.toLowerCase() === 'brittainjaden347');
+  if (!primaryUser) {
+    const salt = 'cvps_salt_bj347';
+    primaryUser = {
+      id: primaryUserId,
+      username: 'brittainjaden347',
+      salt,
+      password_hash: hashPassword('password123', salt),
+      api_key: 'cvps_live_bj347_master_key',
+      created_at: new Date().toISOString()
+    };
+    db.users[primaryUserId] = primaryUser;
+  }
 
- // Ensure default VPS exists
- const defaultVpsId = 'vps-free-01';
- if (!db.vps[defaultVpsId]) {
+  // Ensure default VPS exists
+  const defaultVpsId = 'vps-free-01';
+  if (!db.vps[defaultVpsId]) {
  db.vps[defaultVpsId] = {
  id: defaultVpsId,
  user_id: primaryUser ? primaryUser.id : defaultUserId,
@@ -176,43 +234,31 @@ function loadDb() {
  };
  }
 
- saveDb();
-}
-
-function saveDb() {
- try {
- const payload = JSON.stringify(db, null, 2);
- const tmpFile = `${DB_FILE}.tmp.${Date.now()}`;
- fs.writeFileSync(tmpFile, payload, 'utf8');
- fs.renameSync(tmpFile, DB_FILE);
- fs.writeFileSync(DB_BACKUP_FILE, payload, 'utf8');
- } catch (err) {
- console.error('[CloudVPS DB Save Error]:', err.message);
- }
+saveDb();
 }
 
 function initVpsWorkspace(vpsId) {
- const wsDir = path.join(INSTANCES_DIR, vpsId);
- if (!fs.existsSync(wsDir)) {
-  fs.mkdirSync(wsDir, { recursive: true });
- }
- const pkgJsonPath = path.join(wsDir, 'package.json');
- if (!fs.existsSync(pkgJsonPath)) {
-  try {
-   fs.writeFileSync(pkgJsonPath, JSON.stringify({
-    name: `vps-${String(vpsId).toLowerCase()}`,
-    version: '1.0.0',
-    description: 'VPS Workspace Node Environment',
-    main: 'index.js',
-    dependencies: {}
-   }, null, 2), 'utf8');
-  } catch (e) {}
- }
+  const wsDir = join(INSTANCES_DIR, vpsId);
+  if (!existsSync(wsDir)) {
+    mkdirSync(wsDir, { recursive: true });
+  }
+  const pkgJsonPath = join(wsDir, 'package.json');
+  if (!existsSync(pkgJsonPath)) {
+    try {
+      writeFileSync(pkgJsonPath, JSON.stringify({
+        name: `vps-${String(vpsId).toLowerCase()}`,
+        version: '1.0.0',
+        description: 'VPS Workspace Node Environment',
+        main: 'index.js',
+        dependencies: {}
+      }, null, 2), 'utf8');
+    } catch (e) {}
+  }
 }
 
 // Helper: Get user from request with persistent session recovery
 function getUserFromRequest(req) {
- let authHeader = req.headers['authorization'];
+ const authHeader = req.headers['authorization'];
  let bearerKey = '';
  if (authHeader && authHeader.startsWith('Bearer ')) {
  bearerKey = authHeader.slice(7).trim();
@@ -221,14 +267,14 @@ function getUserFromRequest(req) {
  const key = req.headers['x-api-key'] || bearerKey || req.query.api_key || req.body?.api_key;
  if (key) {
  const user = Object.values(db.users).find(u => u.api_key === key || u.id === key);
- if (user) return user;
+ if (user) {return user;}
  }
 
  // Check custom username headers or query
  const usernameHeader = req.headers['x-cloudvps-user'] || req.headers['x-username'] || req.query.username;
  if (usernameHeader) {
  const user = Object.values(db.users).find(u => u.username.toLowerCase() === String(usernameHeader).toLowerCase());
- if (user) return user;
+ if (user) {return user;}
  }
 
  // Check cookies
@@ -242,11 +288,11 @@ function getUserFromRequest(req) {
  );
  if (cookies.api_key) {
  const user = Object.values(db.users).find(u => u.api_key === cookies.api_key);
- if (user) return user;
+ if (user) {return user;}
  }
  if (cookies.username) {
  const user = Object.values(db.users).find(u => u.username.toLowerCase() === cookies.username.toLowerCase());
- if (user) return user;
+ if (user) {return user;}
  }
  }
 
@@ -357,8 +403,8 @@ app.post('/api/register', (req, res) => {
  return res.status(400).json({ error: 'Username already exists' });
  }
 
- const userId = 'usr_' + crypto.randomBytes(6).toString('hex');
- const apiKey = 'cvps_' + crypto.randomBytes(16).toString('hex');
+ const userId = `usr_${  crypto.randomBytes(6).toString('hex')}`;
+ const apiKey = `cvps_${  crypto.randomBytes(16).toString('hex')}`;
  const salt = crypto.randomBytes(16).toString('hex');
 
  const newUser = {
@@ -373,7 +419,7 @@ app.post('/api/register', (req, res) => {
  db.users[userId] = newUser;
 
  // Auto-provision an isolated starter VPS for this new user
- const vpsId = 'vps-' + crypto.randomBytes(4).toString('hex');
+ const vpsId = `vps-${  crypto.randomBytes(4).toString('hex')}`;
  const userVps = {
  id: vpsId,
  user_id: userId,
@@ -384,7 +430,7 @@ app.post('/api/register', (req, res) => {
  memory: '4GB RAM',
  storage: '80GB NVMe',
  ip: `172.20.0.${Math.floor(Math.random() * 240) + 10}`,
- container_id: 'c-' + vpsId,
+ container_id: `c-${  vpsId}`,
  engine: 'native_sandbox',
  hostname: `vps-${vpsId}`,
  domain: `cloudvps.app/${vpsId}`,
@@ -435,9 +481,9 @@ app.get('/api/users/saved', (req, res) => {
 // Quick Switch User
 app.post('/api/users/switch', (req, res) => {
  const { username } = req.body || {};
- if (!username) return res.status(400).json({ error: 'Username required' });
+ if (!username) {return res.status(400).json({ error: 'Username required' });}
  const user = Object.values(db.users).find(u => u.username.toLowerCase() === username.trim().toLowerCase());
- if (!user) return res.status(404).json({ error: 'User not found' });
+ if (!user) {return res.status(404).json({ error: 'User not found' });}
  res.cookie('api_key', user.api_key, { maxAge: 30 * 24 * 3600 * 1000, httpOnly: false, sameSite: 'Lax' });
  res.json({ success: true, api_key: user.api_key, user_id: user.id, username: user.username });
 });
@@ -468,8 +514,8 @@ app.post('/api/login', (req, res) => {
  }
  } else {
  // Auto-create user on the fly so they can log in seamlessly
- const userId = 'usr_' + crypto.randomBytes(6).toString('hex');
- const apiKey = 'cvps_' + crypto.randomBytes(16).toString('hex');
+ const userId = `usr_${  crypto.randomBytes(6).toString('hex')}`;
+ const apiKey = `cvps_${  crypto.randomBytes(16).toString('hex')}`;
  const salt = crypto.randomBytes(16).toString('hex');
 
  user = {
@@ -484,7 +530,7 @@ app.post('/api/login', (req, res) => {
  db.users[userId] = user;
 
  // Create VPS for this new user
- const vpsId = 'vps-' + crypto.randomBytes(4).toString('hex');
+ const vpsId = `vps-${  crypto.randomBytes(4).toString('hex')}`;
  db.vps[vpsId] = {
  id: vpsId,
  user_id: userId,
@@ -495,7 +541,7 @@ app.post('/api/login', (req, res) => {
  memory: '8GB RAM',
  storage: '160GB NVMe',
  ip: `172.20.0.${Math.floor(Math.random() * 240) + 10}`,
- container_id: 'c-' + vpsId,
+ container_id: `c-${  vpsId}`,
  engine: 'native_sandbox',
  domain: `${username.trim().toLowerCase()}.cloudvps.site`,
  primary_domain: `${username.trim().toLowerCase()}.cloudvps.site`,
@@ -556,7 +602,7 @@ app.get('/api/vps', authRequired, (req, res) => {
  userVps = [db.vps['vps-free-01']];
  saveDb();
  } else {
- const vpsId = 'vps-' + crypto.randomBytes(4).toString('hex');
+ const vpsId = `vps-${  crypto.randomBytes(4).toString('hex')}`;
  const defaultVps = {
  id: vpsId,
  user_id: req.user.id,
@@ -567,7 +613,7 @@ app.get('/api/vps', authRequired, (req, res) => {
  memory: '8GB RAM',
  storage: '160GB NVMe',
  ip: `172.20.0.${Math.floor(Math.random() * 240) + 10}`,
- container_id: 'c-' + vpsId,
+ container_id: `c-${  vpsId}`,
  engine: 'native_sandbox',
  domain: `${req.user.username.toLowerCase()}.cloudvps.site`,
  primary_domain: `${req.user.username.toLowerCase()}.cloudvps.site`,
@@ -588,7 +634,7 @@ app.post('/api/vps', authRequired, (req, res) => {
  const { plan = 'performance', name, os = 'ubuntu', starter = 'blank', subdomain } = req.body || {};
  const planInfo = PLANS[plan] || PLANS.performance;
 
- const vpsId = 'vps-' + crypto.randomBytes(4).toString('hex');
+ const vpsId = `vps-${  crypto.randomBytes(4).toString('hex')}`;
  const rawName = (name || '').trim();
  const vpsName = rawName || `Discord-Bot-${vpsId.slice(-4)}`;
  const randomIp = `172.20.0.${Math.floor(Math.random() * 240) + 10}`;
@@ -601,15 +647,15 @@ app.post('/api/vps', authRequired, (req, res) => {
  id: vpsId,
  user_id: req.user.id,
  name: vpsName,
- plan: plan,
- os: os,
- starter: starter,
+ plan,
+ os,
+ starter,
  status: 'running',
  cpu: planInfo.cpu,
  memory: planInfo.memory,
  storage: planInfo.storage,
  ip: randomIp,
- container_id: 'c-' + vpsId,
+ container_id: `c-${  vpsId}`,
  engine: 'native_sandbox',
  hostname: `${requestedSub}.node`,
  domain: initialDomain,
@@ -736,7 +782,7 @@ if (!token) {
 // Rename VPS
 app.post('/api/vps/:vps_id/rename', authRequired, vpsOwnerRequired, (req, res) => {
  const { name } = req.body || {};
- if (!name || !name.trim()) return res.status(400).json({ error: 'Name is required' });
+ if (!name || !name.trim()) {return res.status(400).json({ error: 'Name is required' });}
  req.vps.name = name.trim();
  saveDb();
  res.json({ success: true, vps: req.vps, message: 'VPS renamed successfully' });
@@ -745,14 +791,14 @@ app.post('/api/vps/:vps_id/rename', authRequired, vpsOwnerRequired, (req, res) =
 // Patch VPS settings
 app.patch('/api/vps/:vps_id', authRequired, vpsOwnerRequired, (req, res) => {
  const { name, plan, os } = req.body || {};
- if (name && name.trim()) req.vps.name = name.trim();
+ if (name && name.trim()) {req.vps.name = name.trim();}
  if (plan && PLANS[plan]) {
  req.vps.plan = plan;
  req.vps.cpu = PLANS[plan].cpu;
  req.vps.memory = PLANS[plan].memory;
  req.vps.storage = PLANS[plan].storage;
  }
- if (os) req.vps.os = os;
+ if (os) {req.vps.os = os;}
  saveDb();
  res.json({ success: true, vps: req.vps });
 });
@@ -801,7 +847,7 @@ app.delete('/api/vps/:vps_id', authRequired, vpsOwnerRequired, (req, res) => {
 
 // VPS Stats
 app.get('/api/vps/:vps_id/stats', authRequired, vpsOwnerRequired, (req, res) => {
- const vps = req.vps;
+ const {vps} = req;
 
  const cpuPct = (Math.random() * 3.5 + 0.5).toFixed(1);
  const memMb = Math.floor(Math.random() * 40 + 45);
@@ -824,11 +870,11 @@ app.get('/api/vps/:vps_id/stats', authRequired, vpsOwnerRequired, (req, res) => 
 // Helper to list files and folders recursively
 function getFileList(dir, rootDir = dir) {
  let results = [];
- if (!fs.existsSync(dir)) return results;
+ if (!fs.existsSync(dir)) {return results;}
  const entries = fs.readdirSync(dir, { withFileTypes: true });
 
  for (const entry of entries) {
- if (entry.name === '.git' || entry.name === 'node_modules' || entry.name === '__pycache__') continue;
+ if (entry.name === '.git' || entry.name === 'node_modules' || entry.name === '__pycache__') {continue;}
  const fullPath = path.join(dir, entry.name);
  const relPath = path.relative(rootDir, fullPath);
 
@@ -895,7 +941,7 @@ app.get('/api/vps/:vps_id/file', authRequired, vpsOwnerRequired, (req, res) => {
 app.post('/api/vps/:vps_id/file', authRequired, vpsOwnerRequired, (req, res) => {
  const vpsId = req.params.vps_id;
  const { path: filePath, content = '' } = req.body || {};
- if (!filePath) return res.status(400).json({ error: 'File path required' });
+ if (!filePath) {return res.status(400).json({ error: 'File path required' });}
 
  const wsDir = path.join(INSTANCES_DIR, vpsId);
  initVpsWorkspace(vpsId);
@@ -907,7 +953,7 @@ app.post('/api/vps/:vps_id/file', authRequired, vpsOwnerRequired, (req, res) => 
 
  try {
  const parentDir = path.dirname(safePath);
- if (!fs.existsSync(parentDir)) fs.mkdirSync(parentDir, { recursive: true });
+ if (!fs.existsSync(parentDir)) {fs.mkdirSync(parentDir, { recursive: true });}
  fs.writeFileSync(safePath, content, 'utf8');
  res.json({ success: true, path: filePath, message: 'File saved' });
  } catch (err) {
@@ -919,7 +965,7 @@ app.post('/api/vps/:vps_id/file', authRequired, vpsOwnerRequired, (req, res) => 
 app.post('/api/vps/:vps_id/folder', authRequired, vpsOwnerRequired, (req, res) => {
  const vpsId = req.params.vps_id;
  const { path: folderPath } = req.body || {};
- if (!folderPath) return res.status(400).json({ error: 'Folder path required' });
+ if (!folderPath) {return res.status(400).json({ error: 'Folder path required' });}
 
  const wsDir = path.join(INSTANCES_DIR, vpsId);
  initVpsWorkspace(vpsId);
@@ -944,7 +990,7 @@ app.post('/api/vps/:vps_id/folder', authRequired, vpsOwnerRequired, (req, res) =
 app.post('/api/vps/:vps_id/file/rename', authRequired, vpsOwnerRequired, (req, res) => {
  const vpsId = req.params.vps_id;
  const { oldPath, newPath } = req.body || {};
- if (!oldPath || !newPath) return res.status(400).json({ error: 'Both oldPath and newPath are required' });
+ if (!oldPath || !newPath) {return res.status(400).json({ error: 'Both oldPath and newPath are required' });}
 
  const wsDir = path.join(INSTANCES_DIR, vpsId);
  initVpsWorkspace(vpsId);
@@ -967,7 +1013,7 @@ app.post('/api/vps/:vps_id/file/rename', authRequired, vpsOwnerRequired, (req, r
 
  try {
  const parentDir = path.dirname(safeNew);
- if (!fs.existsSync(parentDir)) fs.mkdirSync(parentDir, { recursive: true });
+ if (!fs.existsSync(parentDir)) {fs.mkdirSync(parentDir, { recursive: true });}
  fs.renameSync(safeOld, safeNew);
  res.json({ success: true, oldPath, newPath, message: 'Renamed successfully' });
  } catch (err) {
@@ -979,7 +1025,7 @@ app.post('/api/vps/:vps_id/file/rename', authRequired, vpsOwnerRequired, (req, r
 app.post('/api/vps/:vps_id/file/duplicate', authRequired, vpsOwnerRequired, (req, res) => {
  const vpsId = req.params.vps_id;
  const { path: filePath } = req.body || {};
- if (!filePath) return res.status(400).json({ error: 'File path required' });
+ if (!filePath) {return res.status(400).json({ error: 'File path required' });}
 
  const wsDir = path.join(INSTANCES_DIR, vpsId);
  initVpsWorkspace(vpsId);
@@ -1023,7 +1069,7 @@ app.post('/api/vps/:vps_id/file/duplicate', authRequired, vpsOwnerRequired, (req
 app.get('/api/vps/:vps_id/file/download', authRequired, vpsOwnerRequired, (req, res) => {
  const vpsId = req.params.vps_id;
  const filePath = req.query.path;
- if (!filePath) return res.status(400).json({ error: 'File path required' });
+ if (!filePath) {return res.status(400).json({ error: 'File path required' });}
 
  const wsDir = path.join(INSTANCES_DIR, vpsId);
  initVpsWorkspace(vpsId);
@@ -1050,7 +1096,7 @@ app.get('/api/vps/:vps_id/file/download', authRequired, vpsOwnerRequired, (req, 
 app.delete('/api/vps/:vps_id/file', authRequired, vpsOwnerRequired, (req, res) => {
  const vpsId = req.params.vps_id;
  const filePath = req.query.path || req.body?.path;
- if (!filePath) return res.status(400).json({ error: 'File or folder path required' });
+ if (!filePath) {return res.status(400).json({ error: 'File or folder path required' });}
 
  const wsDir = path.join(INSTANCES_DIR, vpsId);
  const base = path.resolve(wsDir);
@@ -1106,7 +1152,7 @@ app.post('/api/vps/:vps_id/bot/upload', authRequired, vpsOwnerRequired, upload.a
  return res.status(400).json({ success: false, error: 'No files provided for upload' });
  }
 
- let uploaded = [];
+ const uploaded = [];
  let detectedEntry = null;
  let detectedRuntime = null;
 
@@ -1148,8 +1194,8 @@ app.post('/api/vps/:vps_id/bot/upload', authRequired, vpsOwnerRequired, upload.a
 
  // Update bot supervisor if entrypoint detected
  if (db.bots[vpsId]) {
- if (detectedEntry) db.bots[vpsId].filename = detectedEntry;
- if (detectedRuntime) db.bots[vpsId].runtime = detectedRuntime;
+ if (detectedEntry) {db.bots[vpsId].filename = detectedEntry;}
+ if (detectedRuntime) {db.bots[vpsId].runtime = detectedRuntime;}
  saveDb();
  }
 
@@ -1207,10 +1253,10 @@ app.get('/api/vps/:vps_id/bot', authRequired, vpsOwnerRequired, (req, res) => {
 app.post('/api/vps/:vps_id/bot', authRequired, vpsOwnerRequired, (req, res) => {
  const vpsId = req.params.vps_id;
  const { filename, runtime } = req.body || {};
- if (!db.bots[vpsId]) db.bots[vpsId] = {};
+ if (!db.bots[vpsId]) {db.bots[vpsId] = {};}
 
- if (filename) db.bots[vpsId].filename = filename;
- if (runtime) db.bots[vpsId].runtime = runtime;
+ if (filename) {db.bots[vpsId].filename = filename;}
+ if (runtime) {db.bots[vpsId].runtime = runtime;}
  saveDb();
 
  res.json({ success: true, bot: db.bots[vpsId] });
@@ -1220,8 +1266,8 @@ app.post('/api/vps/:vps_id/bot', authRequired, vpsOwnerRequired, (req, res) => {
 const activeBots = new Map();
 
 function appendBotLog(vpsId, message) {
- if (!db.bots[vpsId]) db.bots[vpsId] = { logs: [] };
- if (!db.bots[vpsId].logs) db.bots[vpsId].logs = [];
+ if (!db.bots[vpsId]) {db.bots[vpsId] = { logs: [] };}
+ if (!db.bots[vpsId].logs) {db.bots[vpsId].logs = [];}
  const lines = String(message).split('\n');
  for (const line of lines) {
  const trimmed = line.trimEnd();
@@ -1268,20 +1314,20 @@ function startBotProcess(vpsId, filename, runtime) {
  // Determine file
  let targetFile = filename;
  if (!targetFile) {
- if (fs.existsSync(path.join(wsDir, 'bot.py'))) targetFile = 'bot.py';
- else if (fs.existsSync(path.join(wsDir, 'main.py'))) targetFile = 'main.py';
- else if (fs.existsSync(path.join(wsDir, 'index.js'))) targetFile = 'index.js';
- else if (fs.existsSync(path.join(wsDir, 'bot.js'))) targetFile = 'bot.js';
- else targetFile = 'bot.py';
+ if (fs.existsSync(path.join(wsDir, 'bot.py'))) {targetFile = 'bot.py';}
+ else if (fs.existsSync(path.join(wsDir, 'main.py'))) {targetFile = 'main.py';}
+ else if (fs.existsSync(path.join(wsDir, 'index.js'))) {targetFile = 'index.js';}
+ else if (fs.existsSync(path.join(wsDir, 'bot.js'))) {targetFile = 'bot.js';}
+ else {targetFile = 'bot.py';}
  }
 
  // Determine runtime
  let targetRuntime = runtime;
  if (!targetRuntime) {
- if (targetFile.endsWith('.py')) targetRuntime = 'python';
- else if (targetFile.endsWith('.js')) targetRuntime = 'node';
- else if (targetFile.endsWith('.sh')) targetRuntime = 'bash';
- else targetRuntime = 'python';
+ if (targetFile.endsWith('.py')) {targetRuntime = 'python';}
+ else if (targetFile.endsWith('.js')) {targetRuntime = 'node';}
+ else if (targetFile.endsWith('.sh')) {targetRuntime = 'bash';}
+ else {targetRuntime = 'python';}
  }
 
  // Load custom environment from .env file
@@ -1302,20 +1348,20 @@ function startBotProcess(vpsId, filename, runtime) {
  }
 
  if (db.bots[vpsId]?.user_token) {
- if (!customEnv.DISCORD_USER_TOKEN) customEnv.DISCORD_USER_TOKEN = db.bots[vpsId].user_token;
- if (!customEnv.USER_TOKEN) customEnv.USER_TOKEN = db.bots[vpsId].user_token;
+ if (!customEnv.DISCORD_USER_TOKEN) {customEnv.DISCORD_USER_TOKEN = db.bots[vpsId].user_token;}
+ if (!customEnv.USER_TOKEN) {customEnv.USER_TOKEN = db.bots[vpsId].user_token;}
  }
  if (db.bots[vpsId]?.bot_token) {
- if (!customEnv.DISCORD_BOT_TOKEN) customEnv.DISCORD_BOT_TOKEN = db.bots[vpsId].bot_token;
+ if (!customEnv.DISCORD_BOT_TOKEN) {customEnv.DISCORD_BOT_TOKEN = db.bots[vpsId].bot_token;}
  }
  if (db.bots[vpsId]?.token) {
- if (!customEnv.DISCORD_TOKEN) customEnv.DISCORD_TOKEN = db.bots[vpsId].token;
- if (!customEnv.TOKEN) customEnv.TOKEN = db.bots[vpsId].token;
+ if (!customEnv.DISCORD_TOKEN) {customEnv.DISCORD_TOKEN = db.bots[vpsId].token;}
+ if (!customEnv.TOKEN) {customEnv.TOKEN = db.bots[vpsId].token;}
  if (db.bots[vpsId]?.token_type === 'user') {
- if (!customEnv.DISCORD_USER_TOKEN) customEnv.DISCORD_USER_TOKEN = db.bots[vpsId].token;
- if (!customEnv.USER_TOKEN) customEnv.USER_TOKEN = db.bots[vpsId].token;
+ if (!customEnv.DISCORD_USER_TOKEN) {customEnv.DISCORD_USER_TOKEN = db.bots[vpsId].token;}
+ if (!customEnv.USER_TOKEN) {customEnv.USER_TOKEN = db.bots[vpsId].token;}
  } else {
- if (!customEnv.DISCORD_BOT_TOKEN) customEnv.DISCORD_BOT_TOKEN = db.bots[vpsId].token;
+ if (!customEnv.DISCORD_BOT_TOKEN) {customEnv.DISCORD_BOT_TOKEN = db.bots[vpsId].token;}
  }
  }
 
@@ -1325,7 +1371,7 @@ function startBotProcess(vpsId, filename, runtime) {
  PYTHONUNBUFFERED: '1',
  NODE_ENV: 'production',
  HOME: wsDir,
- NODE_PATH: path.join(__dirname, 'node_modules') + ':' + path.join(wsDir, 'node_modules')
+ NODE_PATH: `${path.join(__dirname, 'node_modules')  }:${  path.join(wsDir, 'node_modules')}`
  };
 
  let execCmd = 'python3';
@@ -1370,7 +1416,7 @@ function startBotProcess(vpsId, filename, runtime) {
 
  activeBots.set(vpsId, botRecord);
 
- if (!db.bots[vpsId]) db.bots[vpsId] = { logs: [] };
+ if (!db.bots[vpsId]) {db.bots[vpsId] = { logs: [] };}
  db.bots[vpsId].status = 'running';
  db.bots[vpsId].running = true;
  db.bots[vpsId].pid = child.pid;
@@ -1432,11 +1478,11 @@ app.post('/api/vps/:vps_id/bot/start', authRequired, vpsOwnerRequired, (req, res
  const { filename = 'bot.py', runtime = 'python', token, user_token, bot_token, token_type } = req.body || {};
 
  initVpsWorkspace(vpsId);
- if (!db.bots[vpsId]) db.bots[vpsId] = { logs: [] };
- if (token !== undefined && token !== '') db.bots[vpsId].token = token;
- if (user_token !== undefined && user_token !== '') db.bots[vpsId].user_token = user_token;
- if (bot_token !== undefined && bot_token !== '') db.bots[vpsId].bot_token = bot_token;
- if (token_type !== undefined) db.bots[vpsId].token_type = token_type;
+ if (!db.bots[vpsId]) {db.bots[vpsId] = { logs: [] };}
+ if (token !== undefined && token !== '') {db.bots[vpsId].token = token;}
+ if (user_token !== undefined && user_token !== '') {db.bots[vpsId].user_token = user_token;}
+ if (bot_token !== undefined && bot_token !== '') {db.bots[vpsId].bot_token = bot_token;}
+ if (token_type !== undefined) {db.bots[vpsId].token_type = token_type;}
  saveDb();
 
  const child = startBotProcess(vpsId, filename, runtime);
@@ -1465,11 +1511,11 @@ app.post('/api/vps/:vps_id/bot/restart', authRequired, vpsOwnerRequired, (req, r
  const { token, user_token, bot_token, token_type } = req.body || {};
 
  initVpsWorkspace(vpsId);
- if (!db.bots[vpsId]) db.bots[vpsId] = { logs: [] };
- if (token !== undefined && token !== '') db.bots[vpsId].token = token;
- if (user_token !== undefined && user_token !== '') db.bots[vpsId].user_token = user_token;
- if (bot_token !== undefined && bot_token !== '') db.bots[vpsId].bot_token = bot_token;
- if (token_type !== undefined) db.bots[vpsId].token_type = token_type;
+ if (!db.bots[vpsId]) {db.bots[vpsId] = { logs: [] };}
+ if (token !== undefined && token !== '') {db.bots[vpsId].token = token;}
+ if (user_token !== undefined && user_token !== '') {db.bots[vpsId].user_token = user_token;}
+ if (bot_token !== undefined && bot_token !== '') {db.bots[vpsId].bot_token = bot_token;}
+ if (token_type !== undefined) {db.bots[vpsId].token_type = token_type;}
  saveDb();
 
  startBotProcess(vpsId, filename, runtime);
@@ -1513,11 +1559,11 @@ app.post('/api/vps/:vps_id/bot/token', authRequired, vpsOwnerRequired, (req, res
  const { token = '', user_token = '', bot_token = '', token_type = 'bot' } = req.body || {};
  initVpsWorkspace(vpsId);
 
- if (!db.bots[vpsId]) db.bots[vpsId] = { logs: [] };
+ if (!db.bots[vpsId]) {db.bots[vpsId] = { logs: [] };}
  db.bots[vpsId].token = token;
- if (user_token !== undefined) db.bots[vpsId].user_token = user_token;
- if (bot_token !== undefined) db.bots[vpsId].bot_token = bot_token;
- if (token_type !== undefined) db.bots[vpsId].token_type = token_type;
+ if (user_token !== undefined) {db.bots[vpsId].user_token = user_token;}
+ if (bot_token !== undefined) {db.bots[vpsId].bot_token = bot_token;}
+ if (token_type !== undefined) {db.bots[vpsId].token_type = token_type;}
 
  // Auto-write tokens into .env file
  const envPath = path.join(INSTANCES_DIR, vpsId, '.env');
@@ -1559,7 +1605,7 @@ app.post('/api/vps/:vps_id/bot/token', authRequired, vpsOwnerRequired, (req, res
  setEnvVar('TOKEN', primaryToken);
  }
 
- fs.writeFileSync(envPath, envContent.trim() + '\n', 'utf8');
+ fs.writeFileSync(envPath, `${envContent.trim()  }\n`, 'utf8');
  } catch (e) {
  console.warn('[Env Token Write Error]:', e.message);
  }
@@ -1647,7 +1693,7 @@ const handlePackageInstall = (req, res) => {
  const installCmd = `npm install ${pkgs} --save`;
  child_process.exec(installCmd, { cwd: wsDir, timeout: 90000 }, (err, stdout, stderr) => {
  const output = stdout || stderr || '';
- if (output) appendBotLog(vpsId, output);
+ if (output) {appendBotLog(vpsId, output);}
 
  if (err) {
  appendBotLog(vpsId, `[${new Date().toLocaleTimeString()}] [Install Error] ${err.message}`);
@@ -1664,9 +1710,9 @@ const handlePackageInstall = (req, res) => {
  let cur = fs.existsSync(reqPath) ? fs.readFileSync(reqPath, 'utf8') : '';
  const list = pkgs.split(/\s+/);
  list.forEach(p => {
- if (p && !cur.toLowerCase().includes(p.toLowerCase())) cur += `\n${p}`;
+ if (p && !cur.toLowerCase().includes(p.toLowerCase())) {cur += `\n${p}`;}
  });
- fs.writeFileSync(reqPath, cur.trim() + '\n', 'utf8');
+ fs.writeFileSync(reqPath, `${cur.trim()  }\n`, 'utf8');
  } catch (e) {}
 
  let hasPip = false;
@@ -1681,7 +1727,7 @@ const handlePackageInstall = (req, res) => {
  const pipBin = child_process.execSync('which pip3 || which pip', { encoding: 'utf8' }).trim();
  child_process.exec(`${pipBin} install --break-system-packages ${pkgs}`, { cwd: wsDir, timeout: 90000 }, (err, stdout, stderr) => {
  const output = stdout || stderr || '';
- if (output) appendBotLog(vpsId, output);
+ if (output) {appendBotLog(vpsId, output);}
  appendBotLog(vpsId, `[${new Date().toLocaleTimeString()}] [Package Downloader] Successfully installed: ${pkgs}`);
  res.json({ success: true, message: `Installed ${pkgs}`, output: output || `Successfully installed ${pkgs}`, logs: db.bots[vpsId]?.logs });
  });
@@ -1704,7 +1750,7 @@ app.post('/api/vps/:vps_id/packages/uninstall', authRequired, vpsOwnerRequired, 
  const wsDir = path.join(INSTANCES_DIR, vpsId);
  initVpsWorkspace(vpsId);
 
- if (!pkgName) return res.status(400).json({ error: 'Package name required' });
+ if (!pkgName) {return res.status(400).json({ error: 'Package name required' });}
 
  appendBotLog(vpsId, `[${new Date().toLocaleTimeString()}] [Package Downloader] Uninstalling: ${pkgName}...`);
 
@@ -1712,8 +1758,8 @@ app.post('/api/vps/:vps_id/packages/uninstall', authRequired, vpsOwnerRequired, 
  const uninstallCmd = isNode ? `npm uninstall ${pkgName}` : `pip uninstall -y ${pkgName}`;
 
  child_process.exec(uninstallCmd, { cwd: wsDir, timeout: 45000 }, (err, stdout, stderr) => {
- if (stdout) appendBotLog(vpsId, stdout);
- if (stderr) appendBotLog(vpsId, stderr);
+ if (stdout) {appendBotLog(vpsId, stdout);}
+ if (stderr) {appendBotLog(vpsId, stderr);}
 
  if (!isNode) {
  const reqPath = path.join(wsDir, 'requirements.txt');
@@ -1721,7 +1767,7 @@ app.post('/api/vps/:vps_id/packages/uninstall', authRequired, vpsOwnerRequired, 
  try {
  const lines = fs.readFileSync(reqPath, 'utf8').split('\n');
  const filtered = lines.filter(l => !l.toLowerCase().includes(pkgName.toLowerCase()));
- fs.writeFileSync(reqPath, filtered.join('\n').trim() + '\n', 'utf8');
+ fs.writeFileSync(reqPath, `${filtered.join('\n').trim()  }\n`, 'utf8');
  } catch (e) {}
  }
  }
@@ -1791,7 +1837,7 @@ app.get('/api/vps/:vps_id/packages/status', authRequired, vpsOwnerRequired, (req
  },
  system_tools: {
  git: gitVer || 'Installed',
- curl: curlVer ? curlVer.split(' ')[0] + ' ' + curlVer.split(' ')[1] : 'Installed',
+ curl: curlVer ? `${curlVer.split(' ')[0]  } ${  curlVer.split(' ')[1]}` : 'Installed',
  description: 'System CLI tools (git, curl, wget, unzip, jq)'
  }
  }
@@ -1872,12 +1918,12 @@ RUNNER
  appendBotLog(vpsId, `[${new Date().toLocaleTimeString()}] [PC Center] Installing ${label}...`);
 
  child_process.exec(script, { cwd: wsDir, timeout: 120000 }, (err, stdout, stderr) => {
- if (stdout) appendBotLog(vpsId, stdout);
- if (stderr) appendBotLog(vpsId, stderr);
+ if (stdout) {appendBotLog(vpsId, stdout);}
+ if (stderr) {appendBotLog(vpsId, stderr);}
 
  if (err) {
  appendBotLog(vpsId, `[${new Date().toLocaleTimeString()}] [PC Center Error] ${err.message}`);
- return res.status(500).json({ success: false, error: err.message, output: (stdout || '') + '\n' + (stderr || '') });
+ return res.status(500).json({ success: false, error: err.message, output: `${stdout || ''  }\n${  stderr || ''}` });
  }
 
  appendBotLog(vpsId, `[${new Date().toLocaleTimeString()}] [PC Center] ${label} finished successfully [ONLINE]`);
@@ -1947,15 +1993,15 @@ app.get('/api/vps/:vps_id/pc/processes', (req, res) => {
  if (parts.length >= 10) {
  const user = parts[0];
  const pid = parseInt(parts[1], 10);
- const cpu = parts[2] + '%';
- const mem = parts[3] + '%';
+ const cpu = `${parts[2]  }%`;
+ const mem = `${parts[3]  }%`;
  const cmd = parts.slice(10).join(' ');
  const name = path.basename(parts[10] || 'process');
 
  processes.push({
  pid,
  user,
- name: name.length > 25 ? name.substring(0, 25) + '...' : name,
+ name: name.length > 25 ? `${name.substring(0, 25)  }...` : name,
  full_command: cmd,
  cpu,
  mem,
@@ -2150,7 +2196,7 @@ app.post('/api/hardware/cgnat-tunnel', authRequired, (req, res) => {
  success: true,
  tunnel: {
  host: 'tunnel-us.cloudvps.io',
- port: port,
+ port,
  command: `ssh root@tunnel-us.cloudvps.io -p ${port}`,
  termux_command: `pkg install openssh && ssh root@tunnel-us.cloudvps.io -p ${port}`,
  status: 'active',
@@ -2246,7 +2292,7 @@ app.post('/api/vps/:vps_id/github/clone', authRequired, vpsOwnerRequired, async 
  const deps = { ...(pkgData.dependencies || {}), ...(pkgData.devDependencies || {}) };
  if (deps['discord.js'] || deps['eris'] || deps['oceanic.js']) {
  detectedType = 'discord_bot_node';
- startCommand = 'node ' + (pkgData.main || 'index.js');
+ startCommand = `node ${  pkgData.main || 'index.js'}`;
  } else if (deps['express'] || deps['fastify'] || deps['koa'] || deps['hono']) {
  detectedType = 'node_server';
  startCommand = 'npm start';
@@ -2264,12 +2310,12 @@ app.post('/api/vps/:vps_id/github/clone', authRequired, vpsOwnerRequired, async 
  encoding: 'utf8'
  });
  } catch (npmErr) {
- installOutput = 'NPM install warning: ' + (npmErr.message || '');
+ installOutput = `NPM install warning: ${  npmErr.message || ''}`;
  }
  }
  } else if (hasReqs || hasBotPy) {
  detectedType = 'discord_bot_python';
- startCommand = 'python3 ' + (fs.existsSync(path.join(targetDir, 'bot.py')) ? 'bot.py' : 'main.py');
+ startCommand = `python3 ${  fs.existsSync(path.join(targetDir, 'bot.py')) ? 'bot.py' : 'main.py'}`;
  if (auto_install && hasReqs) {
  try {
  installOutput = child_process.execSync('pip3 install -r requirements.txt', {
@@ -2278,7 +2324,7 @@ app.post('/api/vps/:vps_id/github/clone', authRequired, vpsOwnerRequired, async 
  encoding: 'utf8'
  });
  } catch (pipErr) {
- installOutput = 'Pip install notice: ' + (pipErr.message || '');
+ installOutput = `Pip install notice: ${  pipErr.message || ''}`;
  }
  }
  } else if (hasLune) {
@@ -2293,10 +2339,10 @@ app.post('/api/vps/:vps_id/github/clone', authRequired, vpsOwnerRequired, async 
  const suffix = '.cloudvps.site';
  const fullDomain = `${cleanSubdomain}${suffix}`;
 
- if (!db.vps[vpsId].domains) db.vps[vpsId].domains = [];
+ if (!db.vps[vpsId].domains) {db.vps[vpsId].domains = [];}
  const domObj = {
  subdomain: cleanSubdomain,
- suffix: suffix,
+ suffix,
  full_domain: fullDomain,
  target_path: target_folder,
  detected_type: detectedType,
@@ -2319,7 +2365,7 @@ app.post('/api/vps/:vps_id/github/clone', authRequired, vpsOwnerRequired, async 
 
  // Auto configure Discord bot if detected
  if (detectedType.startsWith('discord_bot')) {
- if (!db.bots[vpsId]) db.bots[vpsId] = {};
+ if (!db.bots[vpsId]) {db.bots[vpsId] = {};}
  db.bots[vpsId].filename = hasBotPy ? (fs.existsSync(path.join(targetDir, 'bot.py')) ? 'bot.py' : 'main.py') : 'index.js';
  db.bots[vpsId].runtime = detectedType === 'discord_bot_python' ? 'python' : 'node';
  db.bots[vpsId].watchdog = true;
@@ -2414,7 +2460,7 @@ app.get('/api/vps/:vps_id/github/info', authRequired, vpsOwnerRequired, (req, re
  success: true,
  has_repo: true,
  remote_url: remote,
- branch: branch,
+ branch,
  last_commit: lastCommit,
  status: status || 'Clean working directory',
  target_folder: folder
@@ -2470,7 +2516,7 @@ app.get('/api/vps/:vps_id/domains', authRequired, vpsOwnerRequired, (req, res) =
 app.get('/api/vps/:vps_id/domains/verify', authRequired, vpsOwnerRequired, (req, res) => {
  const vpsId = req.params.vps_id;
  const vps = db.vps[vpsId];
- if (!vps) return res.status(404).json({ error: 'VPS not found' });
+ if (!vps) {return res.status(404).json({ error: 'VPS not found' });}
 
  const domain = vps.primary_domain || `${vpsId}.cloudvps.site`;
  const ip = vps.ip || '172.20.0.45';
@@ -2523,7 +2569,7 @@ app.post('/api/vps/:vps_id/domains/allocate', authRequired, vpsOwnerRequired, (r
 
  const fullDomain = `${cleanSub}${suffix}`;
  const vps = db.vps[vpsId];
- if (!vps.domains) vps.domains = [];
+ if (!vps.domains) {vps.domains = [];}
 
  const existing = vps.domains.find(d => d.subdomain === cleanSub && d.suffix === suffix);
  if (existing) {
@@ -2531,9 +2577,9 @@ app.post('/api/vps/:vps_id/domains/allocate', authRequired, vpsOwnerRequired, (r
  } else {
  vps.domains.unshift({
  subdomain: cleanSub,
- suffix: suffix,
+ suffix,
  full_domain: fullDomain,
- target_path: target_path,
+ target_path,
  ssl: 'Active (TLS 1.3 Let’s Encrypt)',
  status: 'online',
  created_at: new Date().toISOString()
@@ -2577,7 +2623,7 @@ app.delete('/api/vps/:vps_id/domains/:subdomain', authRequired, vpsOwnerRequired
 let genaiClient = null;
 function getGenAI() {
  const key = process.env.GEMINI_API_KEY;
- if (!key) return null;
+ if (!key) {return null;}
  if (!genaiClient) {
  try {
  const { GoogleGenAI } = require('@google/genai');
@@ -2727,7 +2773,7 @@ Return a structured JSON object with these exact keys:
  let cloneSuccess = false;
  let cloneLog = '';
  try {
- const branchCmd = `git clone --depth 1 "${repoUrl.startsWith('http') ? repoUrl : 'https://github.com/' + repoUrl}" "${siteDir}"`;
+ const branchCmd = `git clone --depth 1 "${repoUrl.startsWith('http') ? repoUrl : `https://github.com/${  repoUrl}`}" "${siteDir}"`;
  cloneLog = child_process.execSync(branchCmd, { cwd: wsDir, timeout: 35000, encoding: 'utf8', env: { ...process.env, GIT_TERMINAL_PROMPT: '0' } });
  cloneSuccess = true;
  } catch (err) {
@@ -2744,7 +2790,7 @@ Return a structured JSON object with these exact keys:
  });
 
  // Step 2: Auto allocate free domain
- if (!vps.domains) vps.domains = [];
+ if (!vps.domains) {vps.domains = [];}
  const newDomain = {
  subdomain: cleanSub,
  suffix: '.cloudvps.site',
@@ -2808,7 +2854,7 @@ while True:
 `, 'utf8');
  }
 
- if (!db.bots[vpsId]) db.bots[vpsId] = {};
+ if (!db.bots[vpsId]) {db.bots[vpsId] = {};}
  db.bots[vpsId].filename = 'bot.py';
  db.bots[vpsId].runtime = 'python';
  db.bots[vpsId].watchdog = true;
@@ -2884,7 +2930,7 @@ Your Discord bot environment is fully configured in the Cloud VPS container:
 </html>`;
  fs.writeFileSync(path.join(siteDir, 'index.html'), siteHtml, 'utf8');
 
- if (!vps.domains) vps.domains = [];
+ if (!vps.domains) {vps.domains = [];}
  vps.domains.unshift({
  subdomain: cleanSub,
  suffix: '.cloudvps.site',
@@ -2974,9 +3020,9 @@ You can ask me to:
  success: true,
  thinking: thinkingSteps.join('\n'),
  duration_seconds: durationSec,
- actions: actions,
+ actions,
  reply: markdownReply,
- artifact: artifact
+ artifact
  });
 });
 
@@ -3052,8 +3098,8 @@ app.use('/sites/:vps_id', (req, res, next) => {
 app.use('/domains/:subdomain', (req, res) => {
  const sub = req.params.subdomain.toLowerCase();
  const vps = Object.values(db.vps).find(v => {
- if (v.subdomain === sub) return true;
- if (v.domains && v.domains.some(d => d.subdomain === sub)) return true;
+ if (v.subdomain === sub) {return true;}
+ if (v.domains && v.domains.some(d => d.subdomain === sub)) {return true;}
  return false;
  });
 
@@ -3066,10 +3112,10 @@ app.use('/d/:domain', (req, res) => {
  const raw = (req.params.domain || '').toLowerCase().trim();
  const clean = raw.replace(/^https?:\/\//, '').split('/')[0];
  const vps = Object.values(db.vps).find(v => {
- if (v.id.toLowerCase() === clean) return true;
- if (v.subdomain && v.subdomain.toLowerCase() === clean) return true;
- if (v.primary_domain && (v.primary_domain.toLowerCase() === clean || v.primary_domain.toLowerCase().startsWith(clean + '.'))) return true;
- if (v.domains && v.domains.some(d => d.subdomain.toLowerCase() === clean || d.full_domain.toLowerCase() === clean)) return true;
+ if (v.id.toLowerCase() === clean) {return true;}
+ if (v.subdomain && v.subdomain.toLowerCase() === clean) {return true;}
+ if (v.primary_domain && (v.primary_domain.toLowerCase() === clean || v.primary_domain.toLowerCase().startsWith(`${clean  }.`))) {return true;}
+ if (v.domains && v.domains.some(d => d.subdomain.toLowerCase() === clean || d.full_domain.toLowerCase() === clean)) {return true;}
  return false;
  });
 
@@ -3077,19 +3123,35 @@ app.use('/d/:domain', (req, res) => {
  res.redirect(`/sites/${vpsId}`);
 });
 
+import swaggerUi from 'swagger-ui-express';
+import yaml from 'yamljs';
+
+const swaggerDocument = yaml.load(join(BASE_DIR, 'openapi.yaml'));
+
+if (process.env.ENABLE_SWAGGER !== 'false') {
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
+    explorer: true,
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: 'CloudVPS API Documentation',
+  }));
+  app.get('/api-docs.json', (req, res) => {
+    res.json(swaggerDocument);
+  });
+}
+
 // ---------------------- STATIC ASSETS & FALLBACK ----------------------
 
 // Serve static assets from project root
-app.use(express.static(path.join(__dirname), { index: false }));
+app.use(express.static(join(__dirname), { index: false }));
 
 // Fallback to index.html for UI SPA routes
 app.use((req, res) => {
- res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(join(__dirname, 'index.html'));
 });
 
 // Start listening on port 3000
 loadDb();
 app.listen(PORT, '0.0.0.0', () => {
- console.log(`[CloudVPS Native] Server running ultra-fast on http://0.0.0.0:${PORT}`);
- console.log(`[CloudVPS Native] Local Native Sandbox Engine online with zero external latency`);
+  console.log(`[CloudVPS Native] Server running ultra-fast on http://0.0.0.0:${PORT}`);
+  console.log(`[CloudVPS Native] Local Native Sandbox Engine online with zero external latency`);
 });
